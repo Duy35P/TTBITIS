@@ -67,6 +67,15 @@ public class PosService {
             invoice.setTongTien(request.getTotalAmount());
             invoice.setPhuongThucTt(request.getPaymentMethod());
             invoice.setDaXuLy(true); // Mặc định hợp lệ
+            
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                String skusJson = mapper.writeValueAsString(request.getSkus());
+                invoice.setSanPhamJson(skusJson);
+            } catch (Exception e) {
+                invoice.setSanPhamJson("[]");
+            }
+            
             invoiceRepository.save(invoice);
         }
 
