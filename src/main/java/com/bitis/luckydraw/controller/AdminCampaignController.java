@@ -23,8 +23,15 @@ public class AdminCampaignController {
     }
 
     @PostMapping("/save")
-    public String saveCampaign(@ModelAttribute Campaign campaign) {
-        campaignRepository.save(campaign);
+    public String saveCampaign(@ModelAttribute Campaign campaign, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        try {
+            campaignRepository.save(campaign);
+        } catch (Exception e) {
+            String errorMsg = e.getCause() != null && e.getCause().getCause() != null 
+                ? e.getCause().getCause().getMessage() 
+                : e.getMessage();
+            redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
+        }
         return "redirect:/admin/campaigns";
     }
 
