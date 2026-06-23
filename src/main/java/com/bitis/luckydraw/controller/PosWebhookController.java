@@ -11,6 +11,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/pos")
+@CrossOrigin(origins = "*")
 public class PosWebhookController {
 
     private final TurnManagementService turnManagementService;

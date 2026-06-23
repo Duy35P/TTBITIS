@@ -100,7 +100,7 @@
 
   <!-- Header -->
   <header class="pos-header">
-    <h1><span style="font-size: 24px;">🏪</span> Kiot POS <span class="badge-api">Đã kết nối API LuckyDraw</span></h1>
+    <h1><span style="font-size: 24px;"></span> Kiot POS <span class="badge-api">Đã kết nối API LuckyDraw</span></h1>
     <div class="store-info">
       <span>Nhân viên: <strong>Trần Văn B</strong></span> | 
       <span>Chi nhánh: <strong>TLC Hà Đông</strong></span>
@@ -114,7 +114,7 @@
     <div class="pos-products">
       <div class="category-tabs">
         <div class="cat-tab active">Tất cả</div>
-        <div class="cat-tab">Điện thoại</div>
+        <div class="cat-tab">Giày</div>
         <div class="cat-tab">Phụ kiện</div>
         <div class="cat-tab">Dịch vụ</div>
       </div>
@@ -127,12 +127,13 @@
     <!-- Right: Cart -->
     <div class="pos-cart">
       <div class="customer-section">
-        <input type="text" class="customer-input" id="customerPhone" placeholder="📱 Nhập SĐT khách hàng (Bắt buộc để tích điểm)...">
+        <input type="text" class="customer-input" id="customerPhone" placeholder="Nhập SĐT khách hàng (Bắt buộc để tích điểm)..." style="margin-bottom: 10px;">
+        <input type="text" class="customer-input" id="originalInvoiceCode" placeholder="Mã HĐ Gốc (Chỉ điền nếu là Đổi hàng)...">
       </div>
       
       <div class="cart-items" id="cartItems">
         <div class="empty-cart" id="emptyCart">
-          <span style="font-size: 40px; margin-bottom: 10px;">🛒</span>
+          <span style="font-size: 40px; margin-bottom: 10px;"></span>
           Chưa có sản phẩm nào
         </div>
         <!-- Cart Items injected via JS -->
@@ -164,8 +165,8 @@
     <div class="receipt-modal">
       <div class="receipt-paper">
         <div class="r-header">
-          <div class="r-title">TLC SHOWROOM HÀ ĐÔNG</div>
-          <div class="r-info">123 Quang Trung, Hà Đông, Hà Nội<br>SĐT: 024.1234.5678</div>
+          <div class="r-title">Biti's Quận 1</div>
+          <div class="r-info">123 abc quận 1 TPHCM<br>SĐT: 024.1234.5678</div>
         </div>
         <div class="r-info" style="margin-bottom: 10px;">
           Ngày: <span id="rDate"></span><br>
@@ -205,12 +206,9 @@
   <script>
     // --- Mock Data ---
     const products = [
-      { id: 1, name: 'iPhone 16 Pro Max 256GB', price: 34990000, sku: 'IPHONE-16-PM', icon: '📱' },
-      { id: 2, name: 'AirPods Pro 2', price: 6200000, sku: 'AIRPOD-PRO-2', icon: '🎧' },
-      { id: 3, name: 'Ốp lưng dẻo trong suốt', price: 150000, sku: 'OP-LUNG-TRONG', icon: '🛡️' },
-      { id: 4, name: 'Sạc dự phòng Anker 10000mAh', price: 850000, sku: 'ANKER-10K', icon: '🔋' },
-      { id: 5, name: 'Cáp sạc Type-C 2m', price: 250000, sku: 'CAP-TYPE-C', icon: '🔌' },
-      { id: 6, name: 'Dán cường lực KingKong', price: 120000, sku: 'DAN-CUONG-LUC', icon: '✨' },
+      { id: 1, name: 'Giày loại 1', price: 34990000, sku: 'GIAY-1' },
+      { id: 2, name: 'Giày loại 2', price: 6200000, sku: 'GIAY-2'},
+      { id: 3, name: 'Giày loại 3', price: 150000, sku: 'GIAY-3' },
     ];
 
     let cart = [];
@@ -264,18 +262,18 @@
       const empty = document.getElementById('emptyCart');
       const btnCheckout = document.getElementById('btnCheckout');
       
+      // Xóa các item cũ khỏi DOM
+      document.querySelectorAll('.cart-item').forEach(el => el.remove());
+      
       if (cart.length === 0) {
-        container.innerHTML = '';
-        container.appendChild(empty);
-        empty.style.display = 'flex';
+        if(empty) empty.style.display = 'flex';
         btnCheckout.disabled = true;
         document.getElementById('totalQty').innerText = '0';
         document.getElementById('totalPrice').innerText = '0 đ';
         return;
       }
 
-      empty.style.display = 'none';
-      container.innerHTML = '';
+      if(empty) empty.style.display = 'none';
       
       let totalQty = 0;
       let totalPrice = 0;
@@ -364,6 +362,7 @@
 
       const phone = document.getElementById('customerPhone').value;
       const invoiceCode = document.getElementById('rInvoiceCode').innerText;
+      const originalCode = document.getElementById('originalInvoiceCode').value.trim();
       
       // Tính toán skuList từ giỏ hàng thực tế
       let totalAmount = 0;
@@ -375,7 +374,7 @@
       // Tạo payload chuẩn với InvoiceRequestDTO
       const payload = {
           invoiceNumber: invoiceCode,
-          originalInvoiceNumber: null, // Hóa đơn mua mới
+          originalInvoiceNumber: originalCode !== '' ? originalCode : null, // Trả hàng nếu có điền
           totalAmount: totalAmount,
           paymentMethod: currentPayment === 'Tiền mặt' ? 'CASH' : (currentPayment === 'Chuyển khoản' ? 'BANK' : 'CARD'),
           customerPhone: phone,
@@ -420,6 +419,7 @@
       // Reset cart
       cart = [];
       document.getElementById('customerPhone').value = '';
+      document.getElementById('originalInvoiceCode').value = '';
       renderCart();
     }
 

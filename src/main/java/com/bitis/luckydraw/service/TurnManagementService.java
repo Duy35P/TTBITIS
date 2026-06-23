@@ -22,9 +22,9 @@ public class TurnManagementService {
     private final CustomerTurnRepository customerTurnRepo;
     private final TurnTransactionRepository turnTransactionRepo;
     private final GameAccessTokenRepository tokenRepo;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public TurnManagementService(CustomerRepository customerRepo, InvoiceRepository invoiceRepo, CampaignStoreRepository campaignStoreRepo, DeltaRuleEngine ruleEngine, CustomerTurnRepository customerTurnRepo, TurnTransactionRepository turnTransactionRepo, GameAccessTokenRepository tokenRepo, ObjectMapper objectMapper) {
+    public TurnManagementService(CustomerRepository customerRepo, InvoiceRepository invoiceRepo, CampaignStoreRepository campaignStoreRepo, DeltaRuleEngine ruleEngine, CustomerTurnRepository customerTurnRepo, TurnTransactionRepository turnTransactionRepo, GameAccessTokenRepository tokenRepo) {
         this.customerRepo = customerRepo;
         this.invoiceRepo = invoiceRepo;
         this.campaignStoreRepo = campaignStoreRepo;
@@ -32,7 +32,6 @@ public class TurnManagementService {
         this.customerTurnRepo = customerTurnRepo;
         this.turnTransactionRepo = turnTransactionRepo;
         this.tokenRepo = tokenRepo;
-        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -74,26 +73,13 @@ public class TurnManagementService {
             int turns = ruleEngine.calculateTurns(campaignId, deltaAmount, request.getPaymentMethod(), request.getSkuList());
 
             if (turns > 0) {
-                // Pessimistic Lock
-                CustomerTurn turn = customerTurnRepo.findByIdKhachHangAndIdChienDich(customer.getCustomerId(), campaignId)
-                        .orElseGet(() -> {
-                            CustomerTurn newTurn = new CustomerTurn();
-                            newTurn.setIdKhachHang(customer.getCustomerId());
-                            newTurn.setIdChienDich(campaignId);
-                            newTurn.setLuotConLai(0);
-                            return customerTurnRepo.save(newTurn);
-                        });
-
-                turn.setLuotConLai(turn.getLuotConLai() + turns);
-                customerTurnRepo.save(turn);
-
-                TurnTransaction transaction = new TurnTransaction();
-                transaction.setIdKhachHang(customer.getCustomerId());
-                transaction.setIdChienDich(campaignId);
-                transaction.setLoai(1); // 1 = Cộng lượt
-                transaction.setSoLuong(turns);
-                transaction.setNguonThamChieu("INVOICE:" + invoice.getMaHoaDon());
-                turnTransactionRepo.save(transaction);
+                // Gọi Stored Procedure (SP tự quản lý Upsert Lock và Ghi Transaction)
+                customerTurnRepo.addCustomerTurnsSafe(
+                        customer.getCustomerId(),
+                        campaignId,
+                        turns,
+                        "INVOICE:" + invoice.getMaHoaDon()
+                );
 
                 totalTurnsGrantedAcrossCampaigns += turns;
             }
