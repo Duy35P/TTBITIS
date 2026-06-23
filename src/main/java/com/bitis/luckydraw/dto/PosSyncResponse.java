@@ -1,16 +1,14 @@
 package com.bitis.luckydraw.dto;
 
 import lombok.Data;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import lombok.Builder;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Builder
 public class PosSyncResponse {
-    private String status;
+    private String status; // "SUCCESS", "ERROR"
     private String message;
-    private int totalTurns;
     private List<String> appliedCampaigns;
+    private int totalTurns;
 }

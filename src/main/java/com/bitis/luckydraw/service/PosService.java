@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PosService {
@@ -38,99 +39,113 @@ public class PosService {
     }
 
     @Transactional
-    public PosSyncResponse syncInvoice(PosSyncRequest request) {
-        // 1. Resolve Customer
-        Customer customer = customerRepository.findByPhone(request.getSoDienThoai())
-                .orElseGet(() -> {
-                    Customer newCustomer = new Customer();
-                    newCustomer.setPhone(request.getSoDienThoai());
-                    newCustomer.setTenKhach(request.getTenKhachHang());
-                    newCustomer.setTrangThai(1);
-                    return customerRepository.save(newCustomer);
-                });
+    public PosSyncResponse processInvoice(PosSyncRequest request) {
+        // 1. Ensure Customer exists
+        String phone = request.getCustomerPhone();
+        if (phone == null || phone.trim().isEmpty()) {
+            return PosSyncResponse.builder().status("ERROR").message("Số điện thoại không được để trống").build();
+        }
+        
+        Customer customer = customerRepository.findByPhone(phone).orElseGet(() -> {
+            Customer newCustomer = new Customer();
+            newCustomer.setPhone(phone);
+            newCustomer.setTenKhach("Khách hàng " + phone);
+            newCustomer.setTrangThai(1);
+            return customerRepository.save(newCustomer);
+        });
 
         // 2. Save Invoice
-        Invoice invoice = new Invoice();
-        invoice.setIdKhachHang(customer.getCustomerId());
-        invoice.setIdCuaHang(request.getStoreId());
-        invoice.setTongTien(request.getTongTien());
-        String maHoaDon = "INV-" + System.currentTimeMillis();
-        invoice.setMaHoaDon(maHoaDon);
-        invoiceRepository.save(invoice);
+        if (request.getInvoiceCode() != null && !request.getInvoiceCode().isEmpty()) {
+            Optional<Invoice> existingInvoice = invoiceRepository.findByMaHoaDon(request.getInvoiceCode());
+            if (existingInvoice.isPresent()) {
+                return PosSyncResponse.builder().status("ERROR").message("Hóa đơn đã được đồng bộ trước đó!").build();
+            }
+            Invoice invoice = new Invoice();
+            invoice.setIdCuaHang(request.getStoreId());
+            invoice.setIdKhachHang(customer.getCustomerId());
+            invoice.setMaHoaDon(request.getInvoiceCode());
+            invoice.setTongTien(request.getTotalAmount());
+            invoice.setPhuongThucTt(request.getPaymentMethod());
+            invoice.setDaXuLy(true); // Mặc định hợp lệ
+            invoiceRepository.save(invoice);
+        }
 
         // 3. Process Campaigns
-        List<CampaignStore> storeLinks = campaignStoreRepository.findByIdCuaHang(request.getStoreId());
-        int totalEarnedTurns = 0;
-        List<String> appliedCampaigns = new ArrayList<>();
+        List<CampaignStore> storeCampaigns = campaignStoreRepository.findByIdCuaHang(request.getStoreId());
         LocalDateTime now = LocalDateTime.now();
+        List<String> appliedCampaigns = new ArrayList<>();
+        int totalTurnsEarned = 0;
 
-        for (CampaignStore cs : storeLinks) {
-            Campaign campaign = campaignRepository.findById(cs.getIdChienDich()).orElse(null);
-            if (campaign != null) {
-                // Check if campaign is active and within date range
+        for (CampaignStore cs : storeCampaigns) {
+            Optional<Campaign> optCampaign = campaignRepository.findById(cs.getIdChienDich());
+            if (optCampaign.isPresent()) {
+                Campaign campaign = optCampaign.get();
                 if (campaign.getTrangThai() == 1 &&
-                        !now.isBefore(campaign.getNgayBatDau()) &&
-                        !now.isAfter(campaign.getNgayKetThuc())) {
-
+                    campaign.getNgayBatDau().isBefore(now) &&
+                    campaign.getNgayKetThuc().isAfter(now)) {
+                    
                     int turnsForThisCampaign = calculateTurns(campaign.getCampaignId(), request);
-
                     if (turnsForThisCampaign > 0) {
-                        // Add turns via Stored Procedure
+                        // Call Stored Procedure
                         customerTurnRepository.addCustomerTurnsSafe(
-                                customer.getCustomerId(),
-                                campaign.getCampaignId(),
-                                turnsForThisCampaign,
-                                "Hóa đơn POS: " + maHoaDon
+                            customer.getCustomerId(),
+                            campaign.getCampaignId(),
+                            turnsForThisCampaign,
+                            request.getInvoiceCode() != null ? request.getInvoiceCode() : "POS-SYNC"
                         );
-                        totalEarnedTurns += turnsForThisCampaign;
-                        appliedCampaigns.add(campaign.getTenChienDich() + " (+" + turnsForThisCampaign + " lượt)");
+                        appliedCampaigns.add(campaign.getTenChienDich());
+                        totalTurnsEarned += turnsForThisCampaign;
                     }
                 }
             }
         }
 
-        PosSyncResponse response = new PosSyncResponse();
-        if (totalEarnedTurns > 0) {
-            response.setStatus("SUCCESS");
-            response.setMessage("Hóa đơn đã được đồng bộ. Khách hàng nhận được " + totalEarnedTurns + " lượt quay.");
+        if (totalTurnsEarned > 0) {
+            return PosSyncResponse.builder()
+                .status("SUCCESS")
+                .message("Đã cộng thành công " + totalTurnsEarned + " lượt!")
+                .appliedCampaigns(appliedCampaigns)
+                .totalTurns(totalTurnsEarned)
+                .build();
         } else {
-            response.setStatus("NO_TURNS");
-            response.setMessage("Hóa đơn đã được đồng bộ nhưng không thỏa điều kiện cộng lượt quay nào.");
+            return PosSyncResponse.builder()
+                .status("SUCCESS")
+                .message("Hóa đơn hợp lệ nhưng không đủ điều kiện nhận lượt từ chiến dịch nào.")
+                .appliedCampaigns(appliedCampaigns)
+                .totalTurns(0)
+                .build();
         }
-        response.setTotalTurns(totalEarnedTurns);
-        response.setAppliedCampaigns(appliedCampaigns);
-
-        return response;
     }
 
     private int calculateTurns(Long campaignId, PosSyncRequest request) {
         int turns = 0;
 
-        // Rule 1: Basic Order Value
-        CampaignRule basicRule = campaignRuleRepository.findByIdChienDich(campaignId).orElse(null);
-        if (basicRule != null && basicRule.getGiaTriDonHangToiThieu() != null && basicRule.getGiaTriDonHangToiThieu() > 0) {
-            if (request.getTongTien() != null && request.getTongTien() >= basicRule.getGiaTriDonHangToiThieu()) {
-                turns += (int) (request.getTongTien() / basicRule.getGiaTriDonHangToiThieu());
+        // 1. Basic Rule
+        Optional<CampaignRule> optRule = campaignRuleRepository.findByIdChienDich(campaignId);
+        if (optRule.isPresent() && optRule.get().getGiaTriDonHangToiThieu() != null && optRule.get().getGiaTriDonHangToiThieu() > 0) {
+            Double minOrderValue = optRule.get().getGiaTriDonHangToiThieu();
+            if (request.getTotalAmount() != null && request.getTotalAmount() >= minOrderValue) {
+                turns += (int) (request.getTotalAmount() / minOrderValue);
             }
         }
 
-        // Rule 2: Payment Method
-        if (request.getPhuongThucThanhToan() != null) {
-            List<CampaignRulePayment> paymentRules = campaignRulePaymentRepository.findByIdChienDich(campaignId);
-            for (CampaignRulePayment pr : paymentRules) {
-                if (pr.getPhuongThucThanhToan().equalsIgnoreCase(request.getPhuongThucThanhToan())) {
-                    turns += pr.getSoLuotThuong();
+        // 2. Payment Rule
+        if (request.getPaymentMethod() != null) {
+            List<CampaignRulePayment> payments = campaignRulePaymentRepository.findByIdChienDich(campaignId);
+            for (CampaignRulePayment p : payments) {
+                if (p.getPhuongThucThanhToan().equalsIgnoreCase(request.getPaymentMethod())) {
+                    turns += p.getSoLuotThuong();
                 }
             }
         }
 
-        // Rule 3: SKUs
-        if (request.getDanhSachSku() != null && !request.getDanhSachSku().isEmpty()) {
+        // 3. SKU Rule
+        if (request.getSkus() != null && !request.getSkus().isEmpty()) {
             List<CampaignRuleSku> skuRules = campaignRuleSkuRepository.findByIdChienDich(campaignId);
-            for (String sku : request.getDanhSachSku()) {
-                for (CampaignRuleSku sr : skuRules) {
-                    if (sr.getMaSku().equalsIgnoreCase(sku.trim())) {
-                        turns += sr.getSoLuotThuong();
+            for (String purchasedSku : request.getSkus()) {
+                for (CampaignRuleSku rule : skuRules) {
+                    if (rule.getMaSku().equalsIgnoreCase(purchasedSku)) {
+                        turns += rule.getSoLuotThuong();
                     }
                 }
             }

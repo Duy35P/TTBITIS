@@ -5,10 +5,10 @@ import java.util.List;
 
 @Data
 public class PosSyncRequest {
-    private Long storeId;
-    private String soDienThoai;
-    private String tenKhachHang;
-    private Double tongTien;
-    private String phuongThucThanhToan;
-    private List<String> danhSachSku;
+    private Long storeId; // Mock field for UI selection
+    private String invoiceCode;
+    private String customerPhone;
+    private Double totalAmount;
+    private String paymentMethod;
+    private List<String> skus;
 }

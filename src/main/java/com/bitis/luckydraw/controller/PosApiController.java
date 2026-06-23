@@ -19,13 +19,17 @@ public class PosApiController {
     @PostMapping("/sync")
     public ResponseEntity<PosSyncResponse> syncInvoice(@RequestBody PosSyncRequest request) {
         try {
-            PosSyncResponse response = posService.syncInvoice(request);
+            PosSyncResponse response = posService.processInvoice(request);
+            if ("ERROR".equals(response.getStatus())) {
+                return ResponseEntity.badRequest().body(response);
+            }
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            PosSyncResponse err = new PosSyncResponse();
-            err.setStatus("ERROR");
-            err.setMessage(e.getMessage());
-            return ResponseEntity.badRequest().body(err);
+            return ResponseEntity.internalServerError()
+                .body(PosSyncResponse.builder()
+                        .status("ERROR")
+                        .message(e.getMessage())
+                        .build());
         }
     }
 }
