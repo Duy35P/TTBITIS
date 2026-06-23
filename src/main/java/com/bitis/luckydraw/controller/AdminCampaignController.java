@@ -17,6 +17,7 @@ import com.bitis.luckydraw.repository.CampaignRuleRepository;
 import com.bitis.luckydraw.repository.CampaignRulePaymentRepository;
 import com.bitis.luckydraw.repository.CampaignRuleSkuRepository;
 import com.bitis.luckydraw.dto.CampaignRuleForm;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -121,48 +122,56 @@ public class AdminCampaignController {
     }
 
     @PostMapping("/{campaignId}/rules/save")
-    public String saveCampaignRules(@PathVariable Long campaignId, @ModelAttribute CampaignRuleForm form) {
-        // 1. Delete old rules
-        campaignRuleRepository.deleteByIdChienDich(campaignId);
-        campaignRulePaymentRepository.deleteByIdChienDich(campaignId);
-        campaignRuleSkuRepository.deleteByIdChienDich(campaignId);
-        
-        // 2. Save Basic Rule
-        if (form.getGiaTriDonHangToiThieu() != null) {
-            CampaignRule rule = new CampaignRule();
-            rule.setIdChienDich(campaignId);
-            rule.setGiaTriDonHangToiThieu(form.getGiaTriDonHangToiThieu());
-            campaignRuleRepository.save(rule);
-        }
-        
-        // 3. Save Payment Rules
-        if (form.getPaymentMethods() != null && form.getPaymentTurns() != null) {
-            for (int i = 0; i < form.getPaymentMethods().size(); i++) {
-                String method = form.getPaymentMethods().get(i);
-                Integer turn = form.getPaymentTurns().get(i);
-                if (method != null && !method.trim().isEmpty() && turn != null && turn > 0) {
-                    CampaignRulePayment payment = new CampaignRulePayment();
-                    payment.setIdChienDich(campaignId);
-                    payment.setPhuongThucThanhToan(method);
-                    payment.setSoLuotThuong(turn);
-                    campaignRulePaymentRepository.save(payment);
+    public String saveCampaignRules(@PathVariable Long campaignId, @ModelAttribute CampaignRuleForm form, RedirectAttributes redirectAttributes) {
+        try {
+            // 1. Delete old rules
+            campaignRuleRepository.deleteByIdChienDich(campaignId);
+            campaignRulePaymentRepository.deleteByIdChienDich(campaignId);
+            campaignRuleSkuRepository.deleteByIdChienDich(campaignId);
+            
+            // 2. Save Basic Rule
+            if (form.getGiaTriDonHangToiThieu() != null) {
+                CampaignRule rule = new CampaignRule();
+                rule.setIdChienDich(campaignId);
+                rule.setGiaTriDonHangToiThieu(form.getGiaTriDonHangToiThieu());
+                campaignRuleRepository.save(rule);
+            }
+            
+            // 3. Save Payment Rules
+            if (form.getPaymentMethods() != null && form.getPaymentTurns() != null) {
+                for (int i = 0; i < form.getPaymentMethods().size(); i++) {
+                    String method = form.getPaymentMethods().get(i);
+                    Integer turn = form.getPaymentTurns().get(i);
+                    if (method != null && !method.trim().isEmpty() && turn != null) {
+                        CampaignRulePayment payment = new CampaignRulePayment();
+                        payment.setIdChienDich(campaignId);
+                        payment.setPhuongThucThanhToan(method);
+                        payment.setSoLuotThuong(turn);
+                        campaignRulePaymentRepository.save(payment);
+                    }
                 }
             }
-        }
-        
-        // 4. Save SKU Rules
-        if (form.getSkuCodes() != null && form.getSkuTurns() != null) {
-            for (int i = 0; i < form.getSkuCodes().size(); i++) {
-                String sku = form.getSkuCodes().get(i);
-                Integer turn = form.getSkuTurns().get(i);
-                if (sku != null && !sku.trim().isEmpty() && turn != null && turn > 0) {
-                    CampaignRuleSku ruleSku = new CampaignRuleSku();
-                    ruleSku.setIdChienDich(campaignId);
-                    ruleSku.setMaSku(sku);
-                    ruleSku.setSoLuotThuong(turn);
-                    campaignRuleSkuRepository.save(ruleSku);
+            
+            // 4. Save SKU Rules
+            if (form.getSkuCodes() != null && form.getSkuTurns() != null) {
+                for (int i = 0; i < form.getSkuCodes().size(); i++) {
+                    String sku = form.getSkuCodes().get(i);
+                    Integer turn = form.getSkuTurns().get(i);
+                    if (sku != null && !sku.trim().isEmpty() && turn != null) {
+                        CampaignRuleSku ruleSku = new CampaignRuleSku();
+                        ruleSku.setIdChienDich(campaignId);
+                        ruleSku.setMaSku(sku);
+                        ruleSku.setSoLuotThuong(turn);
+                        campaignRuleSkuRepository.save(ruleSku);
+                    }
                 }
             }
+        } catch (Exception e) {
+            String errorMsg = "Đã xảy ra lỗi khi lưu cấu hình luật.";
+            if (e.getCause() != null && e.getCause().getCause() != null) {
+                errorMsg = e.getCause().getCause().getMessage();
+            }
+            redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
         }
         
         return "redirect:/admin/campaigns";
