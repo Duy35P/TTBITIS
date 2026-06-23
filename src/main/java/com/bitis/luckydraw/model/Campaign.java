@@ -22,9 +22,11 @@ public class Campaign {
     @Column(name = "ten_chien_dich", nullable = false, length = 255)
     private String tenChienDich;
 
+    @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
     @Column(name = "ngay_bat_dau")
     private LocalDateTime ngayBatDau;
 
+    @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
     @Column(name = "ngay_ket_thuc")
     private LocalDateTime ngayKetThuc;
 

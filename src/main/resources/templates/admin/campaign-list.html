@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head th:replace="~{admin/fragments/layout :: head('Quản lý Chiến Dịch')}">
+</head>
+  .content-wrapper {
+    margin-left: 230px;
+    margin-top: 50px;
+    padding: 15px;
+    width: calc(100% - 230px);
+  }
+  
+  /* Content Header */
+  .content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .content-header h1 {
+    font-size: 24px;
+    font-weight: 400;
+  }
+  .content-header h1 small {
+    font-size: 15px;
+    color: #777;
+    font-weight: 300;
+    margin-left: 10px;
+  }
+  
+  .breadcrumb {
+    display: flex;
+    list-style: none;
+    font-size: 12px;
+    color: #444;
+  }
+  .breadcrumb li {
+    display: flex;
+    align-items: center;
+  }
+  .breadcrumb li + li::before {
+    content: '>\00a0';
+    padding: 0 5px;
+    color: #ccc;
+  }
+  .breadcrumb a {
+    color: #444;
+    text-decoration: none;
+  }
+  .breadcrumb a:hover {
+    color: #3c8dbc;
+  }
+  
+  /* Box / Card */
+  .box {
+    background-color: #fff;
+    border-top: 3px solid #3c8dbc;
+    border-radius: 3px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+  }
+  .box-header {
+    padding: 15px;
+    border-bottom: 1px solid #f4f4f4;
+  }
+  .box-title {
+    font-size: 18px;
+    font-weight: 400;
+  }
+  .box-tools { display: flex; gap: 10px; }
+  .search-box { padding: 6px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px; width: 250px; outline: none; }
+  .search-box:focus { border-color: #3c8dbc; }
+  .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+  .bg-green { background-color: #00a65a; color: #fff; }
+  .bg-red { background-color: #dd4b39; color: #fff; }
+  .box-body {
+    padding: 15px;
+    overflow-x: auto;
+  }
+  
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th, td {
+    padding: 12px 8px;
+    text-align: left;
+    border-bottom: 1px solid #f4f4f4;
+    font-size: 14px;
+  }
+  th {
+    font-weight: 700;
+    color: #333;
+  }
+  .table-striped tbody tr:nth-of-type(odd) {
+    background-color: #f9f9f9;
+  }
+  
+  /* Actions */
+  .action-links {
+    color: #3c8dbc;
+  }
+  .action-links a {
+    color: #3c8dbc;
+    text-decoration: none;
+  }
+  .action-links a:hover {
+    color: #72afd2;
+  }
+  .action-separator {
+    color: #ccc;
+    margin: 0 5px;
+  }
+
+  /* ===== Modal ===== */
+  .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+  .modal.active { display: flex; }
+  .modal-content { background-color: #fff; padding: 20px; border-radius: 4px; width: 100%; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideDown 0.3s ease-out; }
+  @keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f4f4f4; padding-bottom: 15px; margin-bottom: 15px; }
+  .modal-title { font-size: 18px; font-weight: 600; }
+  .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #888; }
+  .close-btn:hover { color: #333; }
+  .form-group { margin-bottom: 15px; }
+  .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+  .form-control { width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px; outline: none; font-family: inherit; }
+  .form-control:focus { border-color: #3c8dbc; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f4f4f4; padding-top: 15px; margin-top: 15px; }
+  .btn-default { background-color: #f4f4f4; color: #444; padding: 6px 12px; border-radius: 3px; border: 1px solid #ddd; cursor: pointer; font-family: inherit; font-weight: 600; }
+  .btn-primary { background-color: #3c8dbc; color: #fff; padding: 6px 12px; border-radius: 3px; border: 1px solid #367fa9; cursor: pointer; font-family: inherit; font-weight: 600; }
+  .btn-warning { background-color: #f39c12; color: #fff; padding: 6px 12px; border-radius: 3px; border: 1px solid #e08e0b; cursor: pointer; font-family: inherit; font-weight: 600; }
+</style>
+</head>
+<body>
+
+ <!-- Header -->
+  <header class="main-header">
+    <a href="campaign-list.html" class="logo">LuckyDraw</a>
+    <nav class="navbar">
+      <div class="sidebar-toggle">☰</div>
+      <div class="user-menu">
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=fff&color=3c8dbc" alt="User Image">
+        <span>Admin User</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="main-sidebar">
+    <div class="user-panel">
+      <img src="https://ui-avatars.com/api/?name=Admin+User&background=fff&color=3c8dbc" alt="User Image">
+      <div class="user-panel-info"><p>Admin User</p></div>
+    </div>
+    
+    <ul class="sidebar-menu">
+      <li class="header">Menu Quản Trị</li>
+      <li><a href="index.html">📊 <span>Tổng quan</span></a></li>
+      <li class="active"><a href="campaign-list.html">📁 <span>Chiến dịch</span></a></li>
+      <li><a href="customer-list.html">👥 <span>Khách hàng</span></a></li>
+      <li><a href="store-list.html">🏪 <span>Cửa hàng / Đại lý</span></a></li>
+      <li><a href="prize-list.html">🎁 <span>Kho giải thưởng</span></a></li>
+      <li><a href="voucher-list.html">🎟️ <span>Quản lý Voucher</span></a></li>
+      <li><a href="#">⚙️ <span>Cài đặt</span></a></li>
+    </ul>
+  </aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>
+        Chiến dịch
+        <small>Quản lý chương trình khuyến mãi</small>
+      </h1>
+      <ul class="breadcrumb">
+        <li><a href="campaign-list.html">🏠 LuckyDraw</a></li>
+        <li>Chiến dịch</li>
+      </ul>
+    </section>
+    
+    <section class="content">
+      <div class="box">
+        <div class="box-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 class="box-title">Danh sách Chiến Dịch</h3>
+          <div class="box-tools">
+            <input type="text" class="search-box" placeholder="Tìm tên chiến dịch...">
+            <button style="background-color: #3c8dbc; border: none; color: #fff; padding: 6px 12px; border-radius: 3px; font-size: 14px; font-weight: 600; cursor: pointer;" onclick="openAddCampaignModal()">+ Thêm mới</button>
+          </div>
+        </div>
+        <div class="box-body">
+          <table class="table-striped">
+            <thead>
+              <tr>
+                <th>Tên Chiến Dịch</th>
+                <th>Ngày Bắt Đầu</th>
+                <th>Ngày Kết Thúc</th>
+                <th>Tổng Lượt Quay</th>
+                <th>Trạng Thái</th>
+                <th>Đường link truy cập</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="campaign : ${campaigns}">
+                <td><strong th:text="${campaign.tenChienDich}">Tên Chiến Dịch</strong></td>
+                <td th:text="${#temporals.format(campaign.ngayBatDau, 'dd/MM/yyyy HH:mm')}">01/06/2026</td>
+                <td th:text="${#temporals.format(campaign.ngayKetThuc, 'dd/MM/yyyy HH:mm')}">30/06/2026</td>
+                <td th:text="${campaign.tongLuotDuKien != null ? campaign.tongLuotDuKien : 0}">0</td>
+                <td>
+                  <span class="badge bg-green" th:if="${campaign.trangThai == 1}">Hoạt động</span>
+                  <span class="badge bg-red" th:if="${campaign.trangThai == 0}">Tạm ngưng</span>
+                  <span class="badge" style="background-color: #f39c12; color: #fff;" th:if="${campaign.trangThai == 2}">Bản nháp</span>
+                </td>
+                <td><a th:href="@{/play/{slug}(slug=${campaign.duongDanSlug})}" target="_blank">Link</a></td>
+                <td class="action-links">
+                  <!-- Actions -->
+                  <a href="#" style="color: #f39c12;">Phân bổ CH</a> <span class="action-separator">|</span> 
+                  <a href="#" style="color: #00a65a;">Luật chơi</a> <span class="action-separator">|</span> 
+                  <a href="javascript:void(0)" 
+                     th:data-id="${campaign.campaignId}"
+                     th:data-name="${campaign.tenChienDich}"
+                     th:data-start="${campaign.ngayBatDau}"
+                     th:data-end="${campaign.ngayKetThuc}"
+                     th:data-turns="${campaign.tongLuotDuKien}"
+                     th:data-slug="${campaign.duongDanSlug}"
+                     th:data-status="${campaign.trangThai}"
+                     onclick="openEditCampaignModal(this)">Sửa</a> <span class="action-separator">|</span>
+                     
+                  <form th:action="@{/admin/campaigns/toggle-status}" method="post" style="display:inline;">
+                    <input type="hidden" name="campaignId" th:value="${campaign.campaignId}" />
+                    <input type="hidden" name="status" th:value="${campaign.trangThai == 1 ? 0 : 1}" />
+                    <button type="submit" 
+                            style="background:none; border:none; cursor:pointer; font-weight:600; padding:0; font-family:inherit; font-size:inherit; color: #dd4b39;" 
+                            th:text="${campaign.trangThai == 1 ? 'Tạm ngưng' : 'Kích hoạt'}"
+                            onclick="return confirm('Thay đổi trạng thái chiến dịch?')"></button>
+                  </form>
+                </td>
+              </tr>
+            </tbody>
+           
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal Thêm/Sửa Chiến Dịch -->
+  <div id="campaignModal" class="modal">
+    <div class="modal-content">
+      <form th:action="@{/admin/campaigns/save}" method="post">
+        <input type="hidden" name="campaignId" id="campaignId">
+        
+        <div class="modal-header">
+          <div class="modal-title" id="campaignModalTitle">Thêm Chiến Dịch Mới</div>
+          <button type="button" class="close-btn" onclick="closeModal('campaignModal')">&times;</button>
+        </div>
+        <div class="form-group">
+          <label>Tên chiến dịch *</label>
+          <input type="text" class="form-control" name="tenChienDich" id="campaignName" placeholder="Nhập tên chiến dịch..." required>
+        </div>
+        <div style="display: flex; gap: 20px;">
+          <div class="form-group" style="flex: 1;">
+            <label>Ngày bắt đầu *</label>
+            <!-- DateTimeLocal in Spring needs 'T' formatting handled by @DateTimeFormat -->
+            <input type="datetime-local" class="form-control" name="ngayBatDau" id="campaignStart" required>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label>Ngày kết thúc *</label>
+            <input type="datetime-local" class="form-control" name="ngayKetThuc" id="campaignEnd" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Đường dẫn Slug (Tùy chọn)</label>
+          <input type="text" class="form-control" name="duongDanSlug" id="campaignSlug" placeholder="VD: vui-he-2026">
+        </div>
+        <div class="form-group">
+          <label>Tổng lượt quay dự kiến</label>
+          <input type="number" class="form-control" name="tongLuotDuKien" id="campaignSpins" placeholder="VD: 5000">
+        </div>
+        <div class="form-group">
+          <label>Trạng thái</label>
+          <select class="form-control" name="trangThai" id="campaignStatus">
+            <option value="1">Hoạt động</option>
+            <option value="0">Tạm ngưng</option>
+            <option value="2">Bản nháp</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Mô tả chi tiết</label>
+          <textarea class="form-control" name="moTa" id="campaignDesc" rows="3" placeholder="Nhập mô tả về sự kiện..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-default" onclick="closeModal('campaignModal')">Hủy bỏ</button>
+          <button type="submit" class="btn-primary" id="saveCampaignBtn">Lưu chiến dịch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openAddCampaignModal() {
+      document.getElementById('campaignModal').classList.add('active');
+      document.getElementById('campaignModalTitle').textContent = 'Thêm Chiến Dịch Mới';
+      document.getElementById('saveCampaignBtn').className = 'btn-primary';
+      document.getElementById('saveCampaignBtn').textContent = 'Lưu chiến dịch';
+      
+      document.getElementById('campaignId').value = '';
+      document.getElementById('campaignName').value = '';
+      document.getElementById('campaignStart').value = '';
+      document.getElementById('campaignEnd').value = '';
+      document.getElementById('campaignSpins').value = '';
+      document.getElementById('campaignSlug').value = '';
+      document.getElementById('campaignStatus').value = '1';
+      document.getElementById('campaignDesc').value = '';
+    }
+
+    function openEditCampaignModal(btn) {
+      document.getElementById('campaignModal').classList.add('active');
+      document.getElementById('campaignModalTitle').textContent = 'Sửa Chiến Dịch';
+      document.getElementById('saveCampaignBtn').className = 'btn-warning';
+      document.getElementById('saveCampaignBtn').textContent = 'Lưu thay đổi';
+      
+      document.getElementById('campaignId').value = btn.getAttribute('data-id');
+      document.getElementById('campaignName').value = btn.getAttribute('data-name');
+      document.getElementById('campaignStart').value = btn.getAttribute('data-start');
+      document.getElementById('campaignEnd').value = btn.getAttribute('data-end');
+      document.getElementById('campaignSpins').value = btn.getAttribute('data-turns');
+      document.getElementById('campaignSlug').value = btn.getAttribute('data-slug');
+      document.getElementById('campaignStatus').value = btn.getAttribute('data-status');
+    }
+    
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    function saveRule() {
+      alert('Đã lưu cấu hình luật cộng lượt thành công!');
+      closeModal('ruleModal');
+    }
+
+    function saveStoreAssignment() {
+      alert('Đã lưu cấu hình phân bổ cửa hàng thành công! Các cửa hàng bị bỏ chọn sẽ không còn tham gia chiến dịch này nữa.');
+      closeModal('storeAssignModal');
+    }
+
+    function toggleAllStores(source) {
+      const checkboxes = document.querySelectorAll('input[name="storeCheckbox"]');
+      for(let i=0; i<checkboxes.length; i++) {
+        checkboxes[i].checked = source.checked;
+      }
+    }
+
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        event.target.classList.remove('active');
+      }
+    }
+  </script>
+
+  <!-- Modal Phân Bổ Cửa Hàng -->
+  <div id="storeAssignModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title" id="storeAssignModalTitle">Phân Bổ Chiến Dịch Cho Cửa Hàng</div>
+        <button class="close-btn" onclick="closeModal('storeAssignModal')">&times;</button>
+      </div>
+      <div class="box-body" style="max-height: 60vh; overflow-y: auto;">
+        <p style="margin-bottom: 15px; color: #555; font-size: 14px;">
+          Chọn các cửa hàng được phép triển khai chiến dịch này. Nếu bạn muốn <strong>ngừng/bỏ chương trình</strong> ở một cửa hàng nào đó, chỉ cần <strong>bỏ tích</strong> cửa hàng đó.
+        </p>
+        
+        <div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+          <label style="display: flex; align-items: center; gap: 10px; font-weight: bold; cursor: pointer;">
+            <input type="checkbox" onclick="toggleAllStores(this)" checked style="width: 18px; height: 18px;"> 
+            Chọn tất cả cửa hàng / đại lý
+          </label>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px; padding-left: 10px;">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" name="storeCheckbox" checked style="width: 16px; height: 16px;"> 
+            <span>TLC Showroom Hà Đông (ID: 1)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" name="storeCheckbox" checked style="width: 16px; height: 16px;"> 
+            <span>Đại lý Cấp 1 - Hưng Yên (ID: 2)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" name="storeCheckbox" style="width: 16px; height: 16px;"> 
+            <span style="color: #888;">TLC Showroom Đà Nẵng (ID: 3)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" name="storeCheckbox" checked style="width: 16px; height: 16px;"> 
+            <span>Đại lý Cấp 2 - Bình Dương (ID: 4)</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" name="storeCheckbox" checked style="width: 16px; height: 16px;"> 
+            <span>TLC Store Quận 1 - TP.HCM (ID: 5)</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer" style="margin-top: 20px;">
+        <button class="btn-default" onclick="closeModal('storeAssignModal')">Hủy bỏ</button>
+        <button class="btn-warning" onclick="saveStoreAssignment()">Lưu Phân Bổ</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal Cấu hình Luật -->
+  <div id="ruleModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <div class="modal-title">Cấu hình Luật Cộng Lượt</div>
+        <button class="close-btn" onclick="closeModal('ruleModal')">&times;</button>
+      </div>
+      <div class="box-body" style="max-height: 70vh; overflow-y: auto;">
+        <h4 style="margin-bottom: 10px; color: #3c8dbc; border-bottom: 1px solid #f4f4f4; padding-bottom: 5px;">1. Luật Cơ Bản (Giá trị đơn hàng)</h4>
+        <div class="form-group">
+          <label>Giá trị đơn hàng tối thiểu để được 1 lượt quay (VNĐ)</label>
+          <input type="number" class="form-control" placeholder="VD: 500000">
+          <small style="color:#777;">Nếu để trống, hệ thống không cộng lượt dựa trên giá trị hóa đơn.</small>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-bottom: 1px solid #f4f4f4; padding-bottom: 5px; margin-bottom: 10px;">
+          <h4 style="color: #3c8dbc; margin: 0;">2. Thưởng Phương Thức Thanh Toán</h4>
+          <button class="btn-primary" style="padding: 2px 10px; font-size: 12px; background-color: #00a65a; border: none;" onclick="alert('Tính năng Thêm Dòng sẽ được xử lý bằng Javascript')">+ Thêm Phương Thức</button>
+        </div>
+        <!-- Dòng 1 -->
+        <div style="display: flex; gap: 15px; margin-bottom: 10px; align-items: center;">
+          <div class="form-group" style="flex: 2; margin-bottom: 0;">
+            <select class="form-control">
+              <option value="card" selected>Thẻ tín dụng / Thẻ ghi nợ (Card)</option>
+              <option value="bank_transfer">Chuyển khoản / Mã QR</option>
+              <option value="cash">Tiền mặt</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <input type="number" class="form-control" value="2" placeholder="Số lượt">
+          </div>
+          <button style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
+        </div>
+        <!-- Dòng 2 -->
+        <div style="display: flex; gap: 15px; margin-bottom: 10px; align-items: center;">
+          <div class="form-group" style="flex: 2; margin-bottom: 0;">
+            <select class="form-control">
+              <option value="card">Thẻ tín dụng / Thẻ ghi nợ (Card)</option>
+              <option value="bank_transfer" selected>Chuyển khoản / Mã QR</option>
+              <option value="cash">Tiền mặt</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <input type="number" class="form-control" value="1" placeholder="Số lượt">
+          </div>
+          <button style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-bottom: 1px solid #f4f4f4; padding-bottom: 5px; margin-bottom: 10px;">
+          <h4 style="color: #3c8dbc; margin: 0;">3. Thưởng Sản Phẩm (SKU Ưu Tiên)</h4>
+          <button class="btn-primary" style="padding: 2px 10px; font-size: 12px; background-color: #00a65a; border: none;" onclick="alert('Tính năng Thêm Dòng sẽ được xử lý bằng Javascript')">+ Thêm SKU</button>
+        </div>
+        <small style="color:#777; display: block; margin-bottom: 10px;">Cấu hình mức thưởng riêng lẻ cho từng mã sản phẩm khi khách mua trúng.</small>
+        <!-- Dòng 1 -->
+        <div style="display: flex; gap: 15px; margin-bottom: 10px; align-items: center;">
+          <div class="form-group" style="flex: 2; margin-bottom: 0;">
+            <input type="text" class="form-control" value="IPHONE-16-PRO" placeholder="Nhập mã SKU">
+          </div>
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <input type="number" class="form-control" value="5" placeholder="Số lượt thưởng">
+          </div>
+          <button style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
+        </div>
+        <!-- Dòng 2 -->
+        <div style="display: flex; gap: 15px; margin-bottom: 10px; align-items: center;">
+          <div class="form-group" style="flex: 2; margin-bottom: 0;">
+            <input type="text" class="form-control" value="AIRPOD-PRO-2" placeholder="Nhập mã SKU">
+          </div>
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <input type="number" class="form-control" value="2" placeholder="Số lượt thưởng">
+          </div>
+          <button style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-default" onclick="closeModal('ruleModal')">Hủy</button>
+        <button class="btn-primary" onclick="saveRule()">Lưu Cấu Hình</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
+
+
+
+
+
