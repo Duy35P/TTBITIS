@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucky Draw - Cổng Xác Nhận Đổi Quà (Cửa Hàng)</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #ecf0f5;
+    color: #333;
+    display: flex;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  /* ===== Header ===== */
+  .main-header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background-color: #3c8dbc; z-index: 1000; display: flex; }
+  .logo { width: 230px; height: 50px; background-color: #367fa9; color: #fff; font-size: 20px; font-weight: 700; line-height: 50px; text-align: center; text-decoration: none; flex-shrink: 0; }
+  .navbar { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; }
+  .sidebar-toggle { color: #fff; font-size: 20px; cursor: pointer; padding: 10px; }
+  .sidebar-toggle:hover { background-color: #367fa9; }
+  .user-menu { display: flex; align-items: center; color: #fff; cursor: pointer; padding: 10px; }
+  .user-menu:hover { background-color: #367fa9; }
+  .user-menu img { width: 25px; height: 25px; border-radius: 50%; margin-right: 10px; }
+  .user-menu span { font-size: 14px; }
+
+  /* ===== Sidebar ===== */
+  .main-sidebar { position: fixed; top: 50px; left: 0; bottom: 0; width: 230px; background-color: #222d32; z-index: 800; overflow-y: auto; }
+  .user-panel { padding: 10px; display: flex; align-items: center; }
+  .user-panel img { width: 45px; height: 45px; border-radius: 50%; margin-right: 15px; }
+  .user-panel-info { color: #fff; }
+  .user-panel-info p { font-weight: 600; margin-bottom: 5px; font-size: 14px; }
+  .user-panel-info a { color: #fff; text-decoration: none; font-size: 11px; display: flex; align-items: center; }
+  
+  .sidebar-menu { list-style: none; margin: 0; padding: 0; margin-top: 20px;}
+  .sidebar-menu .header { color: #4b646f; background: #1a2226; padding: 10px 25px 10px 15px; font-size: 12px; text-transform: uppercase; }
+  .sidebar-menu li { position: relative; margin: 0; padding: 0; }
+  .sidebar-menu li a { padding: 12px 15px 12px 15px; display: flex; align-items: center; color: #b8c7ce; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+  .sidebar-menu li a:hover, .sidebar-menu li.active a { color: #fff; background: #1e282c; border-left-color: #3c8dbc; }
+  .sidebar-menu li a span { margin-left: 10px; flex: 1; }
+
+  /* ===== Content Wrapper ===== */
+  .content-wrapper { margin-left: 230px; margin-top: 50px; padding: 20px; width: calc(100% - 230px); }
+  
+  .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+  .content-header h1 { font-size: 26px; font-weight: 600; color: #111; }
+  
+  /* ===== Search/Scanner Section ===== */
+  .scanner-box { background-color: #fff; border-radius: 8px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin-bottom: 25px; border-top: 4px solid #00a65a; }
+  .scanner-box h2 { font-size: 20px; margin-bottom: 20px; color: #444; font-weight: 400; }
+  .search-container { display: flex; max-width: 600px; margin: 0 auto; gap: 10px; }
+  .search-input { flex: 1; padding: 15px 20px; font-size: 18px; border: 2px solid #ddd; border-radius: 4px; outline: none; font-family: monospace; text-transform: uppercase; letter-spacing: 2px; }
+  .search-input:focus { border-color: #00a65a; }
+  .btn-check { background-color: #00a65a; color: #fff; border: none; padding: 0 30px; font-size: 16px; font-weight: 600; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+  .btn-check:hover { background-color: #008d4c; }
+
+  /* ===== Result Section ===== */
+  .result-box { background-color: #fff; border-radius: 8px; padding: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; display: none; margin-bottom: 25px; }
+  .result-box.active { display: block; animation: slideUp 0.3s ease; }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  
+  .result-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background-color: #f9fafb; border-bottom: 1px solid #eee; }
+  .result-title { font-size: 16px; font-weight: 600; color: #333; }
+  
+  /* Status Badges */
+  .status-badge { padding: 6px 15px; border-radius: 20px; font-size: 14px; font-weight: 700; }
+  .status-valid { background-color: #dcfce7; color: #166534; }
+  .status-invalid { background-color: #fee2e2; color: #991b1b; }
+  
+  .result-body { padding: 30px; display: flex; gap: 30px; }
+  .prize-icon { width: 100px; height: 100px; background-color: #f0fdf4; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #00a65a; flex-shrink: 0; }
+  .prize-icon.invalid { background-color: #fef2f2; color: #dc2626; }
+  
+  .info-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .info-item label { display: block; font-size: 13px; color: #777; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .info-item .value { font-size: 18px; font-weight: 600; color: #111; }
+  .info-item .value.code { font-family: monospace; color: #00a65a; font-size: 22px; letter-spacing: 1px; }
+  
+  .result-footer { padding: 20px; background-color: #f9fafb; border-top: 1px solid #eee; text-align: right; }
+  .btn-redeem { background-color: #f39c12; color: #fff; border: none; padding: 12px 30px; font-size: 16px; font-weight: 700; border-radius: 4px; cursor: pointer; transition: 0.2s; box-shadow: 0 3px 6px rgba(243,156,18,0.3); }
+  .btn-redeem:hover { background-color: #e08e0b; }
+  .btn-redeem:disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
+
+  /* ===== Recent History ===== */
+  .history-box { background-color: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+  .history-box h3 { font-size: 16px; margin-bottom: 15px; color: #333; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #f4f4f4; font-size: 14px; }
+  th { background-color: #f9fafb; color: #555; font-weight: 600; }
+  
+</style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="main-header">
+    <a href="index.html" class="logo">LuckyDraw</a>
+    <nav class="navbar">
+      <div class="sidebar-toggle">☰</div>
+      <div class="user-menu">
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=fff&color=3c8dbc" alt="User Image">
+        <span>Admin User</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="main-sidebar">
+    <div class="user-panel">
+      <img src="https://ui-avatars.com/api/?name=Admin+User&background=fff&color=3c8dbc" alt="User Image">
+      <div class="user-panel-info"><p>Admin User</p></div>
+    </div>
+    <ul class="sidebar-menu">
+      <li class="header">Menu Quản Trị</li>
+      <li><a href="index.html">📊 <span>Tổng quan</span></a></li>
+      <li><a href="campaign-list.html">📁 <span>Chiến dịch</span></a></li>
+      <li><a href="customer-list.html">👥 <span>Khách hàng</span></a></li>
+      <li><a href="store-list.html">🏪 <span>Cửa hàng / Đại lý</span></a></li>
+      <li><a href="prize-list.html">🎁 <span>Kho giải thưởng</span></a></li>
+      <li><a href="voucher-list.html">🎟️ <span>Quản lý Voucher</span></a></li>
+      <li class="active"><a href="staff-redemption.html">🎁 <span>Đổi Quà (Gạch mã)</span></a></li>
+      <li><a href="#">⚙️ <span>Cài đặt</span></a></li>
+    </ul>
+  </aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>Cổng Xác Nhận Đổi Quà (Redemption Portal)</h1>
+    </section>
+    
+    <section class="content">
+      
+      <!-- Scanner Area -->
+      <div class="scanner-box">
+        <h2>Nhập hoặc Quét mã Voucher của khách hàng</h2>
+        <div class="search-container">
+          <input type="text" class="search-input" id="voucherCodeInput" placeholder="VD: VCH-8A9X-214P" autocomplete="off" onkeypress="handleEnter(event)">
+          <button class="btn-check" onclick="checkVoucher()">Kiểm tra mã</button>
+          <button class="btn-check" onclick="openCamera()">Mở camera</button>
+        </div>       
+      </div>
+
+      <!-- Result Area (Hidden by default) -->
+      <div class="result-box" id="resultBox">
+        <div class="result-header">
+          <div class="result-title">Thông tin Phiếu Thưởng</div>
+          <div id="statusBadge" class="status-badge status-valid">Mã Hợp Lệ</div>
+        </div>
+        
+        <div class="result-body">
+          <div class="prize-icon" id="prizeIcon">🎁</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Mã Voucher</label>
+              <div class="value code" id="resCode">VCH-8A9X-214P</div>
+            </div>
+            <div class="info-item">
+              <label>Phần Thưởng</label>
+              <div class="value" id="resPrize" style="color: #d35400;">Voucher Giảm 500K</div>
+            </div>
+            <div class="info-item">
+              <label>Khách hàng trúng</label>
+              <div class="value" id="resName">Nguyễn Văn A</div>
+            </div>
+            <div class="info-item">
+              <label>Số điện thoại (SĐT)</label>
+              <div class="value" id="resPhone">0909***123</div>
+            </div>
+            <div class="info-item" id="errorReasonContainer" style="display:none; grid-column: 1 / -1; background: #fef2f2; padding: 15px; border-left: 4px solid #dc2626; border-radius: 4px;">
+              <label style="color: #dc2626;">Lý do không hợp lệ</label>
+              <div class="value" id="errorReason" style="color: #dc2626; font-size: 15px;">Mã đã được sử dụng vào lúc 10:30 ngày 16/06 tại Cửa hàng X.</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="result-footer">
+          <button class="btn-default" style="margin-right: 10px; padding: 12px 20px; border-radius: 4px;" onclick="resetScanner()">Hủy / Quét mã khác</button>
+          <button class="btn-redeem" id="btnRedeem" onclick="confirmRedemption()">Tiến Hành Đổi Quà (Gạch Mã)</button>
+        </div>
+      </div>
+
+      <!-- Recent History (Table) -->
+      <div class="history-box">
+        <h3>Lịch sử gạch mã hôm nay (Tại cửa hàng này)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Thời gian</th>
+              <th>Mã Voucher</th>
+              <th>Khách hàng</th>
+              <th>Giải thưởng</th>
+              <th>Nhân viên thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <tr>
+              <td>10:15 - 17/06/2026</td>
+              <td><strong style="font-family: monospace;">VCH-1122-AABB</strong></td>
+              <td>Trần Thị B (0988***456)</td>
+              <td>Tai nghe AirPods Pro</td>
+              <td>Trần Văn B</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+  </div>
+
+  <script>
+    function handleEnter(e) {
+      if(e.key === 'Enter') checkVoucher();
+    }
+
+    function checkVoucher() {
+      const input = document.getElementById('voucherCodeInput').value.trim().toUpperCase();
+      const resultBox = document.getElementById('resultBox');
+      const badge = document.getElementById('statusBadge');
+      const icon = document.getElementById('prizeIcon');
+      const btnRedeem = document.getElementById('btnRedeem');
+      const errContainer = document.getElementById('errorReasonContainer');
+      const resCode = document.getElementById('resCode');
+
+      if(!input) {
+        alert("Vui lòng nhập mã Voucher!");
+        return;
+      }
+
+      // Giả lập Logic tra cứu Backend
+      resCode.textContent = input;
+      resultBox.classList.add('active');
+
+      if(input === 'INVALID' || input.includes('USED')) {
+        // Kịch bản: Mã không hợp lệ hoặc đã dùng
+        badge.textContent = "Mã Không Hợp Lệ";
+        badge.className = "status-badge status-invalid";
+        icon.className = "prize-icon invalid";
+        icon.textContent = "❌";
+        btnRedeem.disabled = true;
+        btnRedeem.style.backgroundColor = "#ccc";
+        errContainer.style.display = "block";
+        
+        if(input.includes('USED')) {
+          document.getElementById('errorReason').textContent = "Mã này đã được sử dụng / Đổi quà rồi.";
+        } else {
+          document.getElementById('errorReason').textContent = "Mã không tồn tại trong hệ thống.";
+        }
+      } else {
+        // Kịch bản: Mã Hợp lệ
+        badge.textContent = "Mã Hợp Lệ";
+        badge.className = "status-badge status-valid";
+        icon.className = "prize-icon";
+        icon.textContent = "🎁";
+        btnRedeem.disabled = false;
+        btnRedeem.style.backgroundColor = "#f39c12";
+        errContainer.style.display = "none";
+        
+        // Mock data update
+        document.getElementById('resPrize').textContent = "Voucher Giảm 500K";
+        document.getElementById('resName').textContent = "Nguyễn Văn " + String.fromCharCode(65 + Math.floor(Math.random() * 5));
+      }
+    }
+
+    function confirmRedemption() {
+      const code = document.getElementById('resCode').textContent;
+      if(confirm(`Xác nhận đổi quà cho mã ${code}?\nHành động này không thể hoàn tác.`)) {
+        alert("Đổi quà thành công! Đã ghi nhận hệ thống.");
+        
+        // Add to history table mock
+        const tbody = document.getElementById('historyTableBody');
+        const tr = document.createElement('tr');
+        const now = new Date();
+        const timeStr = `${now.getHours()}:${now.getMinutes()} - ${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+        
+        tr.innerHTML = `
+          <td>${timeStr}</td>
+          <td><strong style="font-family: monospace;">${code}</strong></td>
+          <td>Khách vãng lai</td>
+          <td>Voucher Giảm 500K</td>
+          <td>Trần Văn B</td>
+        `;
+        tbody.insertBefore(tr, tbody.firstChild);
+        
+        resetScanner();
+      }
+    }
+
+    function resetScanner() {
+      document.getElementById('voucherCodeInput').value = '';
+      document.getElementById('resultBox').classList.remove('active');
+      document.getElementById('voucherCodeInput').focus();
+    }
+  </script>
+</body>
+</html>
+
+

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chương Trình Khuyến Mãi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-main: #111827;
+            --text-muted: #4b5563;
+            --border: #e5e7eb;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Nav */
+        nav {
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 5vw;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .logo svg {
+            width: 24px; height: 24px;
+            color: var(--primary);
+        }
+
+        .btn-login {
+            background: #ffffff;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 8px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-login:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        /* Header */
+        .page-header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .page-header h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+        }
+
+        .page-header p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Grid */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 5vw 80px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025);
+            transform: translateY(-4px);
+        }
+
+        .card-img {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            position: relative;
+        }
+
+        /* Gentle pastel background colors for the image area */
+        .bg-blue { background-color: #eff6ff; }
+        .bg-pink { background-color: #fdf2f8; }
+        .bg-green { background-color: #f0fdf4; }
+        .bg-gray { background-color: #f3f4f6; filter: grayscale(100%); }
+
+        .status-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #ffffff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .status-active { color: #16a34a; }
+        .status-upcoming { color: #d97706; }
+        .status-ended { color: #6b7280; }
+
+        .card-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 24px;
+            flex: 1;
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+
+        .card-date {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .btn-action {
+            color: var(--primary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .btn-action svg {
+            width: 16px; height: 16px;
+            transition: transform 0.2s;
+        }
+
+        .card:hover .btn-action svg {
+            transform: translateX(4px);
+        }
+
+        /* Disabled state */
+        .card.disabled {
+            pointer-events: none;
+        }
+        
+        .card.disabled .btn-action {
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="#" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+            </svg>
+            LuckyDraw
+        </a>
+        <a href="login.html" class="btn-login">Đăng nhập</a>
+    </nav>
+
+    <div class="page-header">
+        <h1>Chương Trình Ưu Đãi</h1>
+        <p>Tham gia ngay các trò chơi giải trí và nhận về những phần quà giá trị dành riêng cho khách hàng của chúng tôi.</p>
+    </div>
+
+    <div class="container">
+        
+        <!-- Card 1 -->
+        <a href="spin-wheel-demo.html" class="card">
+            <div class="card-img bg-blue">
+                <span class="status-badge status-active">Đang diễn ra</span>
+                🎡
+            </div>
+            <div class="card-body">
+                <h2 class="card-title">Vòng Quay May Mắn</h2>
+                <p class="card-desc">Cơ hội trúng iPhone 15 Pro Max, Voucher mua sắm và hàng ngàn quà tặng cao cấp khác.</p>
+                <div class="card-footer">
+                    <span class="card-date">Hết hạn: 31/12/2024</span>
+                    <span class="btn-action">
+                        Tham gia
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </span>
+                </div>
+            </div>
+        </a>
+
+        <!-- Card 2 -->
+        <a href="#" class="card disabled">
+            <div class="card-img bg-pink">
+                <span class="status-badge status-upcoming">Sắp ra mắt</span>
+                🎟️
+            </div>
+            <div class="card-body">
+                <h2 class="card-title">Thẻ Cào Bí Mật</h2>
+                <p class="card-desc">Cào lớp bạc điện tử để khám phá món quà bất ngờ nhân dịp sinh nhật cửa hàng.</p>
+                <div class="card-footer">
+                    <span class="card-date">Bắt đầu: 15/07/2024</span>
+                    <span class="btn-action">Sắp mở</span>
+                </div>
+            </div>
+        </a>
+
+        <!-- Card 3 -->
+        <a href="#" class="card disabled">
+            <div class="card-img bg-green">
+                <span class="status-badge status-upcoming">Mùa hè 2024</span>
+                ☀️
+            </div>
+            <div class="card-body">
+                <h2 class="card-title">Điểm Danh Nhận Quà</h2>
+                <p class="card-desc">Đăng nhập liên tục 7 ngày để thu thập huy hiệu vàng và đổi quà tặng siêu giới hạn.</p>
+                <div class="card-footer">
+                    <span class="card-date">Sắp diễn ra</span>
+                    <span class="btn-action">Sắp mở</span>
+                </div>
+            </div>
+        </a>
+
+        <!-- Card 4 -->
+        <a href="#" class="card disabled">
+            <div class="card-img bg-gray">
+                <span class="status-badge status-ended">Đã kết thúc</span>
+                🎁
+            </div>
+            <div class="card-body">
+                <h2 class="card-title">Tri Ân Khách Hàng 2023</h2>
+                <p class="card-desc">Chương trình đã khép lại với 100.000 phần quà. Xin cảm ơn sự đồng hành của bạn.</p>
+                <div class="card-footer">
+                    <span class="card-date">Đã kết thúc</span>
+                    <span class="btn-action">Xem kết quả</span>
+                </div>
+            </div>
+        </a>
+
+    </div>
+
+</body>
+</html>

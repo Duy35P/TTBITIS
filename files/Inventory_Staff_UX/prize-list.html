@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucky Draw - Quản lý Kho Quà</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #ecf0f5; color: #333; display: flex; min-height: 100vh; overflow-x: hidden; }
+  
+  /* ===== Header & Sidebar ===== */
+  .main-header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background-color: #3c8dbc; z-index: 1000; display: flex; }
+  .logo { width: 230px; height: 50px; background-color: #367fa9; color: #fff; font-size: 20px; font-weight: 700; line-height: 50px; text-align: center; text-decoration: none; flex-shrink: 0; }
+  .navbar { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; }
+  .sidebar-toggle { color: #fff; font-size: 20px; cursor: pointer; padding: 10px; }
+  .user-menu { display: flex; align-items: center; color: #fff; cursor: pointer; padding: 10px; }
+  .user-menu img { width: 25px; height: 25px; border-radius: 50%; margin-right: 10px; }
+  
+  .main-sidebar { position: fixed; top: 50px; left: 0; bottom: 0; width: 230px; background-color: #222d32; z-index: 800; overflow-y: auto; }
+  .user-panel { padding: 10px; display: flex; align-items: center; }
+  .user-panel img { width: 45px; height: 45px; border-radius: 50%; margin-right: 15px; }
+  .user-panel-info { color: #fff; }
+  .user-panel-info p { font-weight: 600; margin-bottom: 5px; font-size: 14px; }
+  
+  .sidebar-menu { list-style: none; margin: 0; padding: 0; }
+  .sidebar-menu .header { color: #4b646f; background: #1a2226; padding: 10px 25px 10px 15px; font-size: 12px; text-transform: uppercase; }
+  .sidebar-menu li a { padding: 12px 15px; display: flex; align-items: center; color: #b8c7ce; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+  .sidebar-menu li a:hover { color: #fff; background: #1e282c; border-left-color: #3c8dbc; }
+  .sidebar-menu li.active a { color: #fff; background: #1e282c; border-left-color: #3c8dbc; }
+  .sidebar-menu li a span { margin-left: 10px; flex: 1; }
+
+  /* ===== Content Wrapper ===== */
+  .content-wrapper { margin-left: 230px; margin-top: 50px; padding: 15px; width: calc(100% - 230px); }
+  
+  .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .content-header h1 { font-size: 24px; font-weight: 400; }
+  .breadcrumb { display: flex; list-style: none; font-size: 12px; color: #444; }
+  .breadcrumb li + li::before { content: '>\00a0'; padding: 0 5px; color: #ccc; }
+  .breadcrumb a { color: #444; text-decoration: none; }
+  .breadcrumb a:hover { color: #3c8dbc; }
+  
+  /* ===== Box / Table ===== */
+  .box { background-color: #fff; border-top: 3px solid #f39c12; border-radius: 3px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+  .box-header { padding: 15px; border-bottom: 1px solid #f4f4f4; display: flex; justify-content: space-between; align-items: center; }
+  .box-title { font-size: 18px; font-weight: 400; }
+  
+  .btn-primary { background-color: #3c8dbc; color: #fff; padding: 6px 12px; border-radius: 3px; text-decoration: none; font-size: 14px; font-weight: 600; border: none; cursor: pointer; }
+  .btn-warning { background-color: #f39c12; color: #fff; padding: 6px 12px; border-radius: 3px; text-decoration: none; font-size: 14px; font-weight: 600; border: none; cursor: pointer; }
+  .btn-primary:hover { background-color: #367fa9; }
+  .btn-warning:hover { background-color: #e08e0b; }
+
+  .box-body { padding: 15px; overflow-x: auto; }
+  
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #f4f4f4; font-size: 14px; vertical-align: middle; }
+  th { font-weight: 700; color: #333; }
+  .table-striped tbody tr:nth-of-type(odd) { background-color: #f9f9f9; }
+  
+  .prize-info { display: flex; flex-direction: column; }
+  .prize-name { font-weight: 600; font-size: 15px; color: #333; margin-bottom: 2px; }
+  .prize-campaign { font-size: 12px; color: #777; background: #eee; padding: 2px 6px; border-radius: 4px; display: inline-block; width: max-content; }
+
+  .progress-group { width: 100%; max-width: 150px; }
+  .progress-text { font-size: 12px; font-weight: 600; margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .progress-bar { width: 100%; height: 8px; background-color: #e5e5e5; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; background-color: #00a65a; }
+  .progress-fill.warning { background-color: #f39c12; }
+  .progress-fill.danger { background-color: #dd4b39; }
+
+  .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+  .bg-blue { background-color: #0073b7; color: #fff; }
+
+  .action-links a { color: #3c8dbc; text-decoration: none; font-weight: 600; cursor: pointer; }
+  .action-links a:hover { color: #72afd2; text-decoration: underline; }
+  .action-separator { color: #ccc; margin: 0 5px; }
+
+  /* Tab Navigation */
+  .nav-tabs { display: flex; border-bottom: 1px solid #ddd; margin-bottom: 15px; }
+  .nav-tabs button { background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; color: #666; border-bottom: 3px solid transparent; }
+  .nav-tabs button.active { color: #3c8dbc; border-bottom-color: #3c8dbc; }
+  .nav-tabs button:hover { color: #3c8dbc; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  /* ===== Modal ===== */
+  .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+  .modal.active { display: flex; }
+  .modal-content { background-color: #fff; padding: 20px; border-radius: 4px; width: 100%; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideDown 0.3s ease-out; }
+  @keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f4f4f4; padding-bottom: 15px; margin-bottom: 15px; }
+  .modal-title { font-size: 18px; font-weight: 600; }
+  .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #888; }
+  .close-btn:hover { color: #333; }
+  .form-group { margin-bottom: 15px; }
+  .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+  .form-control { width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px; outline: none; font-family: inherit; }
+  .form-control:focus { border-color: #3c8dbc; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f4f4f4; padding-top: 15px; margin-top: 15px; }
+  .btn-default { background-color: #f4f4f4; color: #444; padding: 6px 12px; border-radius: 3px; border: 1px solid #ddd; cursor: pointer; font-family: inherit; font-weight: 600; }
+
+</style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="main-header">
+    <a href="campaign-list.html" class="logo">LuckyDraw</a>
+    <nav class="navbar">
+      <div class="sidebar-toggle">☰</div>
+      <div class="user-menu">
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=fff&color=3c8dbc" alt="User Image">
+        <span>Admin User</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="main-sidebar">
+    <div class="user-panel">
+      <img src="https://ui-avatars.com/api/?name=Admin+User&background=fff&color=3c8dbc" alt="User Image">
+      <div class="user-panel-info"><p>Admin User</p></div>
+    </div>
+    
+     <ul class="sidebar-menu">
+      <li class="header">Menu Quản Trị</li>
+      <li><a href="index.html">📊 <span>Tổng quan</span></a></li>
+      <li><a href="campaign-list.html">📁 <span>Chiến dịch</span></a></li>
+      <li><a href="customer-list.html">👥 <span>Khách hàng</span></a></li>
+      <li><a href="store-list.html">🏪 <span>Cửa hàng / Đại lý</span></a></li>
+      <li class="active"><a href="prize-list.html">🎁 <span>Kho giải thưởng</span></a></li>
+      <li><a href="voucher-list.html">🎟️ <span>Quản lý Voucher</span></a></li>
+      <li><a href="#">⚙️ <span>Cài đặt</span></a></li>
+    </ul>
+  </aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>
+        Kho Quà Tặng
+        <small>Quản lý giải thưởng và Phân bổ</small>
+      </h1>
+      <ul class="breadcrumb">
+        <li><a href="campaign-list.html">🏠 LuckyDraw</a></li>
+        <li>Kho giải thưởng</li>
+      </ul>
+    </section>
+    
+    <section class="content">
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">Nghiệp vụ Quản lý Giải Thưởng</h3>
+        </div>
+        <div class="box-body">
+          
+          <div class="nav-tabs">
+            <button class="active" onclick="switchTab('prizes', this)">Danh Sách Giải Thưởng</button>
+            <button onclick="switchTab('allocations', this)">Phân Bổ Cửa Hàng</button>
+          </div>
+
+          <!-- Tab 1: Danh Sách Giải Thưởng -->
+          <div id="prizes" class="tab-content active">
+            <div style="margin-bottom: 15px; display: flex; justify-content: flex-end;">
+              <button class="btn-primary" onclick="openModal('prizeModal', 'Thêm Giải Thưởng Mới')">+ Thêm Giải Thưởng Mới</button>
+            </div>
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th>Giải Thưởng</th>
+                  <th>Thuộc Chiến Dịch</th>
+                  <th>Tỷ lệ trúng</th>
+                  <th>Tiến độ phát quà</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="prize-info">
+                      <span class="prize-name">iPhone 16 Pro Max 256GB</span>
+                    </div>
+                  </td>
+                  <td><span class="prize-campaign">Vui Hè Cực Đỉnh 2026</span></td>
+                  <td><strong>0.01%</strong></td>
+                  <td>
+                    <div class="progress-group">
+                      <div class="progress-text"><span>Đã phát: 1/5</span> <span>Còn 4</span></div>
+                      <div class="progress-bar"><div class="progress-fill" style="width: 20%;"></div></div>
+                    </div>
+                  </td>
+                  <td><span class="badge bg-blue">Đang chạy</span></td>
+                  <td class="action-links">
+                    <a onclick="openModal('prizeModal', 'Sửa Giải Thưởng', 'iPhone 16 Pro Max 256GB')">Sửa</a> <span class="action-separator">|</span> <a onclick="return confirm('Xóa giải này?')">Xóa</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="prize-info">
+                      <span class="prize-name">Voucher Giảm 500K</span>
+                    </div>
+                  </td>
+                  <td><span class="prize-campaign">Vui Hè Cực Đỉnh 2026</span></td>
+                  <td><strong>5.00%</strong></td>
+                  <td>
+                    <div class="progress-group">
+                      <div class="progress-text"><span>Đã phát: 950/1000</span> <span>Còn 50</span></div>
+                      <div class="progress-bar"><div class="progress-fill warning" style="width: 95%;"></div></div>
+                    </div>
+                  </td>
+                  <td><span class="badge bg-blue">Đang chạy</span></td>
+                  <td class="action-links">
+                    <a onclick="openModal('prizeModal', 'Sửa Giải Thưởng', 'Voucher Giảm 500K')">Sửa</a> <span class="action-separator">|</span> <a onclick="return confirm('Xóa giải này?')">Xóa</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="prize-info">
+                      <span class="prize-name">Tai nghe AirPods Pro</span>
+                    </div>
+                  </td>
+                  <td><span class="prize-campaign">Tri ân khách hàng tháng 6</span></td>
+                  <td><strong>0.50%</strong></td>
+                  <td>
+                    <div class="progress-group">
+                      <div class="progress-text"><span>Đã phát: 50/50</span> <span style="color:#dd4b39">Hết quà</span></div>
+                      <div class="progress-bar"><div class="progress-fill danger" style="width: 100%;"></div></div>
+                    </div>
+                  </td>
+                  <td><span class="badge bg-blue">Đang chạy</span></td>
+                  <td class="action-links">
+                    <a onclick="openModal('prizeModal', 'Sửa Giải Thưởng', 'Tai nghe AirPods Pro')">Sửa</a> <span class="action-separator">|</span> <a onclick="return confirm('Xóa giải này?')">Xóa</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Tab 2: Phân Bổ Đại Lý -->
+          <div id="allocations" class="tab-content">
+            <div style="margin-bottom: 15px; background: #f9f9f9; padding: 15px; border-radius: 4px; border: 1px solid #ddd;">
+              <h4 style="margin-bottom: 10px; font-weight: 600; font-size: 15px;">Phân bổ giải thưởng cho cửa hàng</h4>
+              <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+                <div>
+                  <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Chọn Cửa Hàng</label>
+                  <select style="padding: 6px; width: 200px; border: 1px solid #ccc; border-radius: 3px;">
+                    <option>TLC Showroom Hà Đông</option>
+                    <option>Đại lý Cấp 1 - Hưng Yên</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Chọn Giải Thưởng</label>
+                  <select style="padding: 6px; width: 200px; border: 1px solid #ccc; border-radius: 3px;">
+                    <option>Voucher Giảm 500K (Còn 50)</option>
+                    <option>iPhone 16 Pro Max (Còn 4)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Số lượng cấp</label>
+                  <input type="number" style="padding: 6px; width: 100px; border: 1px solid #ccc; border-radius: 3px;" value="10">
+                </div>
+                <div>
+                  <button class="btn-warning">Ghi nhận Phân Bổ</button>
+                </div>
+              </div>
+            </div>
+
+            <table class="table-striped">
+              <thead>
+                <tr>
+                  <th>Cửa Hàng / Đại Lý</th>
+                  <th>Giải Thưởng</th>
+                  <th>Chiến Dịch</th>
+                  <th>SL Phân bổ</th>
+                  <th>Đã trúng tại CH</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>TLC Showroom Hà Đông</td>
+                  <td><strong>iPhone 16 Pro Max 256GB</strong></td>
+                  <td>Vui Hè Cực Đỉnh 2026</td>
+                  <td>1</td>
+                  <td>0</td>
+                  <td class="action-links"><a href="#" style="color:#dd4b39">Thu hồi</a></td>
+                </tr>
+                <tr>
+                  <td>TLC Showroom Hà Đông</td>
+                  <td><strong>Voucher Giảm 500K</strong></td>
+                  <td>Vui Hè Cực Đỉnh 2026</td>
+                  <td>20</td>
+                  <td>5</td>
+                  <td class="action-links"><a href="#" style="color:#3c8dbc">Chỉnh sửa SL</a> <span class="action-separator">|</span> <a href="#" style="color:#dd4b39">Thu hồi</a></td>
+                </tr>
+                <tr>
+                  <td>Đại lý Cấp 1 - Hưng Yên</td>
+                  <td><strong>Voucher Giảm 500K</strong></td>
+                  <td>Vui Hè Cực Đỉnh 2026</td>
+                  <td>10</td>
+                  <td>10 (Đã hết)</td>
+                  <td class="action-links"><a href="#" style="color:#3c8dbc">Bổ sung thêm</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal Thêm/Sửa Giải Thưởng -->
+  <div id="prizeModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="prizeModalTitle">Thêm Giải Thưởng Mới</div>
+        <button class="close-btn" onclick="closeModal('prizeModal')">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Tên giải thưởng *</label>
+        <input type="text" class="form-control" id="prizeName" placeholder="Ví dụ: iPhone 16 Pro Max 256GB">
+      </div>
+      <div style="display: flex; gap: 15px;">
+        <div class="form-group" style="flex: 1;">
+          <label>Loại giải *</label>
+          <select class="form-control" id="prizeType">
+            <option value="0">Hiện vật (SP / Quà tặng)</option>
+            <option value="1">Voucher / Mã điện tử</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label>Giới hạn trúng/người</label>
+          <input type="number" class="form-control" id="prizeLimit" placeholder="Để trống = Không giới hạn">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Thuộc chiến dịch *</label>
+        <select class="form-control" id="prizeCampaign">
+          <option>Vui Hè Cực Đỉnh 2026</option>
+          <option>Tri ân khách hàng tháng 6</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 15px;">
+        <div class="form-group" style="flex: 1;">
+          <label>Tổng số lượng *</label>
+          <input type="number" class="form-control" id="prizeTotal" placeholder="100">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label>Tỷ lệ trúng (%) *</label>
+          <input type="number" step="0.01" class="form-control" id="prizeProb" placeholder="0.5">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Trạng thái</label>
+        <select class="form-control" id="prizeStatus">
+          <option value="active">Đang kích hoạt</option>
+          <option value="inactive">Tạm ngưng</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-default" onclick="closeModal('prizeModal')">Hủy</button>
+        <button class="btn-primary" id="savePrizeBtn" onclick="savePrize()">Lưu Giải Thưởng</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tabId, element) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.nav-tabs button').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      element.classList.add('active');
+    }
+
+    function openModal(modalId, title, prizeName) {
+      document.getElementById(modalId).classList.add('active');
+      if(title && document.getElementById('prizeModalTitle')) {
+        document.getElementById('prizeModalTitle').textContent = title;
+        if(title === 'Sửa Giải Thưởng') {
+           document.getElementById('savePrizeBtn').style.backgroundColor = '#f39c12';
+           document.getElementById('savePrizeBtn').style.borderColor = '#e08e0b';
+           document.getElementById('savePrizeBtn').textContent = 'Lưu thay đổi';
+           
+           document.getElementById('prizeName').value = prizeName;
+           document.getElementById('prizeTotal').value = prizeName.includes('iPhone') ? '5' : (prizeName.includes('Voucher') ? '1000' : '50');
+           document.getElementById('prizeProb').value = prizeName.includes('iPhone') ? '0.01' : (prizeName.includes('Voucher') ? '5.00' : '0.50');
+        } else {
+           document.getElementById('savePrizeBtn').style.backgroundColor = '#3c8dbc';
+           document.getElementById('savePrizeBtn').style.borderColor = '#367fa9';
+           document.getElementById('savePrizeBtn').textContent = 'Lưu Giải Thưởng';
+           
+           document.getElementById('prizeName').value = '';
+           document.getElementById('prizeTotal').value = '';
+           document.getElementById('prizeProb').value = '';
+        }
+      }
+    }
+    
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    function savePrize() {
+      alert('Đã lưu thông tin giải thưởng thành công!');
+      closeModal('prizeModal');
+    }
+
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        event.target.classList.remove('active');
+      }
+    }
+  </script>
+</body>
+</html>
+
+
+
+
+
+

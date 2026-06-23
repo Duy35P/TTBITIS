@@ -1,0 +1,214 @@
+BỘ CÔNG THƯƠNG
+TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG
+THÀNH PHỐ HỒ CHÍ MINH	CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+Độc lập - Tự do - Hạnh phúc
+
+
+HƯỚNG DẪN TRÌNH BÀY BÁO CÁO THỰC TẬP 
+Một báo cáo thực tập tốt nghiệp được sắp xếp theo thứ tự sau:
+-	Trang bìa;
+-	Lời cảm ơn;
+-	Nhận xét/ đánh giá của đơn vị học viên thực tập ;
+-	Rubric chấm điểm của đơn vị học viên thực tập;
+-	Nhật ký thực tập tại đơn vị học viên thực tập;
+-	Nhận xét/đánh giá của người hướng dẫn;
+-	Mục lục;
+-	Danh mục bảng biểu;
+-	Danh mục hình vẽ;
+-	Danh mục các từ viết tắt;
+-	Nội dung chính;
+-	Tài liệu tham khảo;
+-	Phụ lục.
+Giải thích
+. 	Trang bìa
+Chữ trên trang bìa phải viết hoa, font Times New Roman, cỡ chữ 14, riêng tiêu đề cuốn BC viết đậm và dùng cỡ chữ 20.  
+. 	Lời cảm ơn
+Nội dung và ngắt đoạn của lời cảm ơn do người viết quyết định.  
+Số trang trong mục này là i.
+. 	Nhận xét/ đánh giá của đơn vị học viên thực tập 
+Ghi lời nhận xét hoặc đánh giá của đơn vị nơi học viên thực tập.
+* Rubric chấm điểm của công ty 
+Mỗi học viên 1 bản
+* Nhật ký thực tập tại công ty
+Mỗi học viên 1 bản
+. 	Mục lục
+Chiều dài trang mục lục (nếu có thể) là một đến hai trang. 
+Các tiêu đề trong mục lục tối đa chỉ  mức thứ 3.  
+Chỉ có tiêu đề của Mục lục, Chương, tựa và trang được in đậm.
+Đầu đề các chương viết hoa, các chương nên được đánh số thứ tự là 1, 2, 3,…
+.	Header/ Footer
+Bắt đầu từ Nội dung báo cáo (từ chương 1 trở đi), phải có Header/Footer
+Header: 	- Phía trái: tên trường – tên Khoa
+Footer: 
+Bên trái: tên GVHD	
+ 
+
+TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP. HỒ CHÍ MINH 
+KHOA .........
+
+
+
+ 
+
+
+
+
+BÁO CÁO THỰC TẬP 
+TẠI CÔNG TY/NHÀ MÁY……(bold –center-size 20)
+
+
+
+
+
+
+
+	HVTH: ……. 
+	MSHV:………..
+	NGÀNH: .......
+	NGƯỜI HƯỚNG DẪN
+	1.
+	2.
+
+TP. Hồ Chí Minh, tháng …/20… (Italic-bold)
+ 
+
+MỤC LỤC
+
+Lời cảm ơn		                                                                                    	 ii
+Danh mục hình vẽ		vi
+Danh mục bảng biểu		vii
+Danh mục các từ viết tắt	viii
+
+CHƯƠNG 1. TỔNG QUAN VỀ ĐƠN VỊ THỰC TẬP	4
+1.1.	
+1.2.	                    		
+CHƯƠNG 2. QUY TRÌNH SẢN XUẤT/QUẢN LÝ……	20
+2.1.	
+2.2.	                    		
+CHƯƠNG 3. TỔNG HỢP – PHÂN TÍCH – ĐÁNH GIÁ 	40
+3.1. 			
+3.2. 	                    		
+CHƯƠNG 4.  KẾT LUẬN – KIẾN NGHỊ	50	
+4.1.
+4.2.
+……
+TÀI LIỆU THAM KHẢO	61
+PHỤ LỤC				62
+	Phụ lục I 	             	62
+	Phụ lục II 	             	70
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+NHẬN XÉT CỦA ĐƠN VỊ THỰC TẬP
+
+HỌC VIÊN: 
+MSHV:
+NGƯỜI HƯỚNG DẪN:
+1. 
+2.
+Thời gian thực tập: từ ………………….đến…………………………..
+Tại công ty … 
+Nhận xét :  ……………………………………………………………………………………………….
+……………………………………………………………………………………………….
+……………………………………………………………………………………………….
+……………………………………………………………………………………………….……………………………………………………………………………………………….
+……………………………………………………………………………………………….
+……………………………………………………………………………………………….
+……………………………………………………………………………………………….
+……………………………………………………………………………………………….
+……………………………………………………………………………………………….
+……………………………………………………………………………………………….
+……………………………………………………………………………………………….
+
+
+
+
+
+                                          …………………, ngày . ……tháng ……năm 20…                                                                          
+  	(ký tên, đóng dấu, ghi rõ họ và tên, chức danh của người nhận xét)
+ 
+Danh mục hình vẽ, bảng biểu và các từ viết tắt
+Danh mục hình ảnh, bảng biểu và các từ viết tắt được đề cập trong mục lục, bao gồm số thứ tự và tên của các hình ảnh, bảng biểu
+Danh mục viết tắt sẽ không nên dùng  nếu chỉ có ít hơn 4 từ viết tắt xuất hiện trong bài hoặc từ viết tắt không được sử dụng nhiều lần.
+
+Nội dung chính
+Tên các chương, số lượng và nội dung các chương do giáo viên hướng dẫn và học viên thực hiện quyết định. Thông thường bao gồm các chương:
+-	Tổng quan: giới thiệu về nhà máy, công ty, lịch sử hình thành, phát triển, cơ cấu tổ chức quản lý, các sản phẩm, thương hiệu,…
+-	Nội dung báo cáo thực tập: Trình bày các vấn đề đã được thực tập tại Cty/Nhà máy (các quy trình quản lý, quy trình công nghệ, quy trình vận hành, nguyên vật liệu, kiểm tra, phân tích, đánh giá, kiểm nghiệm, máy, thiết bị, an toàn phòng cháy chữa cháy…).
+-	Tài liệu tham khảo
+-	Phụ lục 
+
+Bảng biểu, hình vẽ và công thức
+Phải đánh số thứ tự hình vẽ, bảng biểu và công thức trong báo cáo thực tập và có dẫn giải bằng lời để giới thiệu hoặc nhắc đến trong nội dung báo cáo thực tập.  Thứ tự của hình vẽ, bảng biểu và công thức là thứ tự của nó trong chương.
+Ví dụ: 	Hình 2.3 là hình thứ 3 trong chương 2.
+		Bảng 2.3 là bảng thứ 3 trong chương 2.
+		Công thức 3.1 là công thức đầu tiên trong chương 3.
+Tên của bảng để trên bảng và ở bên trái bảng, cỡ chữ 12 in đậm.  Nếu cần ghi chú, giải thích các chữ viết tắt trong bảng hay nêu các nguồn thông tin của bảng sẽ để ngay bên dưới bảng biểu.
+Tên của hình để bên dưới và canh lề giữa hình, cỡ chữ 12 in nghiêng.
+Số thứ tự của công thức để cùng hàng với công thức nhưng được canh sát lề bên phải.
+
+Đánh số trang
+Bắt đầu trang bìa phía trong (không phải bìa cứng) đánh thứ tự 2,3,4… liên tục đến cuối.
+Số trang được để bên dưới và ở GÓC PHẢI. 
+Phần tài liệu tham khảo, phụ lục,…  có đánh số nhưng không tính vào số trang của báo cáo thực tập.
+
+
+
+ 
+Tài liệu tham khảo
+Trong báo cáo thực tập, nếu trích dẫn các thông tin từ các nguồn tại liệu khác như sách, tạp chí, kỷ yếu hội nghị … thì phải ghi rõ nguồn gốc của các thông tin đó bằng cách ngay sau phần thông tin được trích dẫn ghi số của tài liệu trong ngoặc vuông dạng [x,y,z] trong đó x,y, z là số thứ tự của tài liệu được liệt kê trong phần tài liệu tham khảo ở cuối báo cáo thực tập.
+Phần tài liệu tham khảo ở cuối báo cáo thực tập được ghi theo dạng như sau: 
+HƯỚNG DẪN XẾP TÀI LIỆU THAM KHẢO
+      1. Các tài liệu bằng tiếng nước ngoài phải giữ nguyên văn, không phiên âm, không dịch, kể cả tài liệu bằng tiếng Trung Quốc, Nhật, … (đối với những tài liệu bằng ngôn ngữ cịn ít người biết có thể thêm phần dịch tiếng Việt đi kèm theo mỗi tài liệu).
+      2. Tài liệu tham khảo xếp theo thứ tự ABC họ của tác giả:
+      - Tài liệu không có tên tác giả thì xếp theo thứ tự ABC từ đầu của tên cơ quan ban hành báo cáo hay ấn phẩm, ví dụ: Tổng cục Thống kê xếp vào vần T, Bộ Giáo dục và Đào tạo xếp vào vần B, v.v…
+      3. Tài liệu tham khảo là bài báo trong tạp chí, bài trong một cuốn sách… ghi đầy đủ các thông tin sau:
+o	tên các tác giả (không có dấu ngăn cách) 
+o	(năm công bố), (đặt trong ngoặc đơn, dấu phẩy sau ngoặc đơn) 
+o	“tên bài báo”, (đặt trong ngoặc kép, không in nghiêng, dấu phẩy cuối tên) 
+o	tên tạp chí (in nghiêng, cuối tên không có dấu phẩy) hoặc tên sách, (in nghiêng, dấu phẩy cuối tên) 
+o	tập (không có dấu ngăn cách) 
+o	(số),(đặt trong ngoặc đơn, dấu phẩy sau ngoặc đơn) 
+o	các số trang. (gạch ngang giữa hai chữ số, dấu chấm kết thúc) 
+      Dưới đây là một số thí dụ về cách trình bày trang tài liệu tham khảo.
+TÀI LIỆU THAM KHẢO
+[1]. Cao Chi, Phạm Khánh Vân (1983), "Lượng tử hóa trường chuẩn khi có tương tác với vật chất và hệ phương trình cho cc hm Green", Tạp chí Vật lý, VIII (1), tr. 11-18.
+[2]. Modder I.W. (1998), Structure and magnetism of metallic systems, Ph.D.   Thesis, University of Amsterdam, Amsterdam.
+[3]. Goedkoop J.B., Grioni M., Fuggle J.C. (1991), "X-ray dichroism as a probe of the electronic ground state in ultrathin rare-earth overlayers", Phys. Rev., B.43 (1), pp. 1179-1182.
+[4]. Vũ Đức Minh (2001), Phát triển hệ chương trình xử lý, phân tích t liệu phân cực kích thích ở Việt Nam, Luận án Tiến sĩ Vật lý, Đại học Quốc gia Hà Nội, Hà Nội.  
+
+ 
+
+HƯỚNG DẪN ĐỊNH DẠNG TRANG
+Orientation	: Portrait
+Top	: 2,5 cm
+Bottom	: 2,5cm
+Left	: 3 cm
+Right	: 2 cm
+Paragraph của văn bản:
+- 	Line spacing: 1,2 
+-	Before: 0 
+-	After: 0 
+Paragraph của bảng biểu:
+- 	Line spacing: Single
+-	Before: 3pt
+-	After: 3pt
+Header: 1,27 cm
+Footer: 1,27 cm
+Size: 13
+Font: Times New Roman
+End coding : Unicode
+ 
+ 
+

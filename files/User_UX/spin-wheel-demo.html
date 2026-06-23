@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vòng Quay May Mắn</title>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background: linear-gradient(180deg, #4da6e8 0%, #7ec8f0 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 1.8rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 24px;
+            text-shadow: 1px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .wheel-stage {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Kim chỉ vàng */
+        .pointer {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 44px solid #ffd700;
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+        }
+
+        
+        .wheel-wrapper {
+            position: relative;
+            width: 85vw;
+            max-width: 420px;
+            height: 85vw;
+            max-height: 420px;
+        }
+
+        /* Viền xanh dày */
+        .blue-ring {
+            position: absolute;
+            top: -22px;
+            left: -22px;
+            right: -22px;
+            bottom: -22px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #2b5ea7, #1e4a8a, #2b5ea7);
+            box-shadow: 0 6px 30px rgba(0,0,0,0.3), inset 0 2px 8px rgba(255,255,255,0.15);
+        }
+
+        .blue-ring-inner {
+            position: absolute;
+            top: 18px;
+            left: 18px;
+            right: 18px;
+            bottom: 18px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+
+        /* Viền trắng mỏng bên trong */
+        .white-ring {
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.6);
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        #wheelCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            z-index: 3;
+        }
+
+        /* Nút giữa */
+        .center-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #2b5ea7, #1a3f7a);
+            border: 4px solid #ffd700;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+            color: #fff;
+            line-height: 1.1;
+        }
+
+        .center-btn:hover {
+            transform: translate(-50%, -50%) scale(1.08);
+        }
+
+        .center-btn:active {
+            transform: translate(-50%, -50%) scale(0.95);
+        }
+
+        .center-btn .logo-text {
+            font-size: 0.9rem;
+            font-weight: 900;
+            color: #ffd700;
+        }
+
+        .center-btn .logo-sub {
+            font-size: 0.5rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.8);
+            letter-spacing: 1px;
+        }
+
+        .center-btn.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        /* Nút quay */
+        .spin-btn {
+            margin-top: 30px;
+            padding: 14px 50px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            color: #fff;
+            background: linear-gradient(to bottom, #2b5ea7, #1a3f7a);
+            border: 3px solid #ffd700;
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+        }
+
+        .spin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+        }
+
+        .spin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-box {
+            background: #fff;
+            border: 4px solid #2b5ea7;
+            border-radius: 20px;
+            padding: 36px;
+            text-align: center;
+            max-width: 360px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: popIn 0.4s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-box h2 { color: #2b5ea7; font-size: 1.4rem; margin-bottom: 8px; }
+        .modal-box .prize-name { font-size: 1.6rem; font-weight: 900; color: #1a3f7a; margin: 14px 0; }
+        .modal-box p { color: #666; margin-bottom: 18px; }
+
+        .modal-box button {
+            padding: 10px 36px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            color: #fff;
+            background: #2b5ea7;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+
+        .modal-box button:hover { background: #1a3f7a; }
+
+        @media (max-width: 500px) {
+            h1 { font-size: 1.3rem; }
+            .center-btn { width: 16vw; height: 16vw; max-width: 80px; max-height: 80px; }
+            .center-btn .logo-text { font-size: 0.75rem; }
+            .center-btn .logo-sub { font-size: 0.4rem; }
+            
+            .pointer {
+                top: -8px;
+                border-left-width: 14px;
+                border-right-width: 14px;
+                border-top-width: 32px;
+            }
+            .pointer::after {
+                top: -38px;
+                left: -10px;
+                width: 20px;
+                height: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav style="position:fixed;top:16px;left:16px;right:16px;z-index:50;display:flex;justify-content:space-between;">
+        <a href="account.html" style="color:#fff;background:rgba(30,74,138,0.7);padding:8px 16px;border-radius:50px;text-decoration:none;font-weight:700;font-size:0.9rem;border:2px solid rgba(255,255,255,0.3);transition:all 0.2s;display:flex;align-items:center;gap:6px;"
+           onmouseover="this.style.background='rgba(30,74,138,0.95)'" onmouseout="this.style.background='rgba(30,74,138,0.7)'">
+            👤 Tài khoản
+        </a>
+        <a href="history.html" style="color:#fff;background:rgba(30,74,138,0.7);padding:8px 16px;border-radius:50px;text-decoration:none;font-weight:700;font-size:0.9rem;border:2px solid rgba(255,255,255,0.3);transition:all 0.2s;display:flex;align-items:center;gap:6px;"
+           onmouseover="this.style.background='rgba(30,74,138,0.95)'" onmouseout="this.style.background='rgba(30,74,138,0.7)'">
+            🎁 Lịch sử
+        </a>
+    </nav>
+
+    <h1>VÒNG QUAY MAY MẮN</h1>
+
+    <div class="wheel-stage">
+        <div class="pointer"> </div>
+
+        <div class="wheel-wrapper">
+            <div class="blue-ring"><div class="blue-ring-inner"></div></div>
+            <div class="white-ring"></div>
+            <canvas id="wheelCanvas" width="840" height="840"></canvas>
+            <div class="center-btn" id="centerBtn">
+                <span class="logo-text">QUAY</span>
+                <span class="logo-sub">THƯỞNG</span>
+            </div>
+        </div>
+    </div>
+
+    <button class="spin-btn" id="spinBtn">Quay ngay</button>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-box">
+            <h2 id="modalTitle">Chúc mừng!</h2>
+            <div class="prize-name" id="modalPrize"></div>
+            <p id="modalDesc">Bạn đã nhận được phần thưởng!</p>
+            <button id="modalClose">Đóng</button>
+        </div>
+    </div>
+
+    <script>
+        const PRIZES = [
+            { name: 'Bóng đèn LED', color: '#1e4a8a' },
+            { name: 'Voucher 200K',  color: '#d6ecfa' },
+            { name: 'Đèn trang trí', color: '#1e4a8a' },
+            { name: 'Voucher 50K',   color: '#d6ecfa' },
+            { name: 'Đèn downlight', color: '#1e4a8a' },
+            { name: 'Voucher 100K',  color: '#d6ecfa' },
+            { name: 'Đèn pha LED',   color: '#1e4a8a' },
+            { name: 'Mất lượt',      color: '#d6ecfa' },
+        ];
+
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinBtn = document.getElementById('spinBtn');
+        const centerBtn = document.getElementById('centerBtn');
+        const modal = document.getElementById('modal');
+
+        let isSpinning = false;
+        let currentRotation = 0;
+
+        function drawWheel(rotation) {
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const r = cx - 16;
+            const n = PRIZES.length;
+            const slice = (2 * Math.PI) / n;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(rotation);
+
+            for (let i = 0; i < n; i++) {
+                const start = i * slice;
+                const end = start + slice;
+
+                // Ô
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, r, start, end);
+                ctx.closePath();
+                ctx.fillStyle = PRIZES[i].color;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Icon tròn placeholder
+                ctx.save();
+                ctx.rotate(start + slice / 2);
+                const iconX = r * 0.62;
+                const iconR = 36;
+                ctx.beginPath();
+                ctx.arc(iconX, 0, iconR, 0, 2 * Math.PI);
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Text trong icon
+                const isDark = PRIZES[i].color === '#1e4a8a';
+                ctx.fillStyle = isDark ? '#fff' : '#1e4a8a';
+                ctx.font = '32px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Draw a gift box icon instead of text
+                ctx.fillText('🎁', iconX, 0);
+
+                ctx.restore();
+            }
+
+            // Viền vòng tròn giữa
+            ctx.beginPath();
+            ctx.arc(0, 0, 48, 0, 2 * Math.PI);
+            ctx.fillStyle = '#1a3f7a';
+            ctx.fill();
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function spin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            spinBtn.disabled = true;
+            centerBtn.classList.add('disabled');
+
+            const n = PRIZES.length;
+            const sliceAngle = 360 / n;
+            const prizeIndex = Math.floor(Math.random() * n);
+            const extraSpins = 5 + Math.floor(Math.random() * 3);
+            const targetAngle = 360 - (prizeIndex * sliceAngle + sliceAngle / 2);
+            const totalRotation = currentRotation + extraSpins * 360 + targetAngle - (currentRotation % 360);
+
+            const startTime = performance.now();
+            const duration = 5000;
+            const startRot = currentRotation;
+
+            function animate(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 4);
+                currentRotation = startRot + (totalRotation - startRot) * eased;
+                drawWheel((currentRotation * Math.PI) / 180);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    isSpinning = false;
+                    spinBtn.disabled = false;
+                    centerBtn.classList.remove('disabled');
+                    showResult(PRIZES[prizeIndex]);
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function showResult(prize) {
+            document.getElementById('modalPrize').textContent = prize.name;
+            if (prize.name === 'Mất lượt') {
+                document.getElementById('modalTitle').textContent = 'Tiếc quá!';
+                document.getElementById('modalDesc').textContent = 'Chúc bạn may mắn lần sau!';
+            } else {
+                document.getElementById('modalTitle').textContent = 'Chúc mừng!';
+                document.getElementById('modalDesc').textContent = 'Bạn đã nhận được phần thưởng!';
+
+                // Lưu vào localStorage
+                const history = JSON.parse(localStorage.getItem('spinHistory') || '[]');
+                const code = 'TLC-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+                history.unshift({
+                    name: prize.name,
+                    time: new Date().toISOString(),
+                    code: code
+                });
+                localStorage.setItem('spinHistory', JSON.stringify(history));
+            }
+            modal.classList.add('active');
+        }
+
+        spinBtn.addEventListener('click', spin);
+        centerBtn.addEventListener('click', spin);
+        document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('active'));
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+
+        drawWheel(0);
+    </script>
+</body>
+</html>

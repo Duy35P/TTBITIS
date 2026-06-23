@@ -1,0 +1,627 @@
+KẾ HOẠCH TRIỂN KHAI CHI TIẾT
+Hệ thống Quay Thưởng O2O (Online-to-Offline)
+Tích hợp POS · SQL Server · Spring Boot
+6 Giai đoạn
+triển khai
+~18-24 ngày
+thời gian thực tế
+9 Entities
+SQL Server
+Thay đổi Quan trọng so với Bản Cũ
+🔴  Database: Chuyển hoàn toàn từ MySQL sang Microsoft SQL Server. Docker-compose, JDBC driver, và Hibernate dialect đều phải cập nhật theo.
+Hạng mục
+Bản cũ (Sai)
+Bản mới (O2O Đúng)
+Database
+MySQL
+Microsoft SQL Server
+Giai đoạn 2
+CRUD Admin thuần (không POS)
+Webhook POS + Delta Rule Engine
+Entity bị thiếu
+Không có INVOICE, GAME_ACCESS_TOKEN, STORE_PRIZE_INVENTORY
+Đủ 9 entities theo O2O schema
+Redeem flow
+User nhập promo code
+Thu ngân quét QR Voucher vật lý
+PromoCode entity
+Có (sai luồng O2O)
+Loại bỏ — không có trong plan_7
+Docker-compose DB
+app + MySQL
+app + SQL Server
+TỔNG QUAN 6 GIAI ĐOẠN
+Giai đoạn
+Tên
+Nội dung chính
+Thời gian
+GĐ 1
+Setup & SQL Server Migration
+Cấu hình project, 9 entities O2O, Spring Security
+3-4 ngày
+GĐ 2
+Webhook POS + Rule Engine
+API /api/pos/invoice, Delta Engine, sinh Token QR
+3-4 ngày
+GĐ 3
+Core Draw Engine
+Thuật toán quay, Pessimistic Lock, ngân sách giải
+4-5 ngày
+GĐ 4
+Redeem Station
+REWARD_VOUCHER, API thu ngân, STORE_PRIZE_INVENTORY
+3-4 ngày
+GĐ 5
+UI Portals
+Admin Portal, Store Portal (quét QR), Customer Web-App animation
+3-4 ngày
+GĐ 6
+Thống kê, Exception & Deploy
+Dashboard, GlobalExceptionHandler, Docker SQL Server, Docs
+3-4 ngày
+TỔNG CỘNG
+~18-24 ngày
+GIAI ĐOẠN 1: Setup & SQL Server Migration (3-4 ngày)
+Thiết lập nền tảng dự án và chuyển đổi toàn bộ database stack sang Microsoft SQL Server. Xây dựng đầy đủ 9 entities theo schema O2O.
+1.1 Chuyển đổi Database Stack
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+1.1.1
+Sửa pom.xml
+Xóa mysql-connector-j, thêm mssql-jdbc (com.microsoft.sqlserver)
+🔴
+1.1.2
+Sửa application.properties
+spring.datasource.url=jdbc:sqlserver://..., driver=SQLServerDriver, dialect=SQLServer2012Dialect
+🔴
+1.1.3
+Cấu hình HikariCP
+maximum-pool-size=30 (chống cạn kiệt connection khi Pessimistic Lock)
+🔴
+1.1.4
+Sửa docker-compose.yml
+Thay image MySQL → mcr.microsoft.com/mssql/server:2022-latest
+🔴
+1.2 Entities — 9 Bảng O2O Schema
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+1.2.1
+Entity STORE
+storeId, storeName, address, storeType (POS/ONLINE)
+1.2.2
+Entity CAMPAIGN
+campaignId, name, startDate, endDate, status, budgetLimit
+1.2.3
+Entity CAMPAIGN_RULE
+minOrderValue, paymentBonusTurns (MOMO/VNPAY), skuBonusTurns, ruleType
+1.2.4
+Entity PRIZE
+prizeId, name, globalRemainQuantity, probability, maxWinsPerUser, isWinningPrize (NOT NULL)
+1.2.5
+Entity INVOICE
+invoiceNumber, originalInvoiceNumber (đổi/trả), totalAmount, paymentMethod, customerId, storeId
+1.2.6
+Entity GAME_ACCESS_TOKEN
+token (UUID), invoiceId, expiresAt, isUsed — sinh ra mỗi hóa đơn hợp lệ
+⭐
+1.2.7
+Entity USER_TURN
+customerId, campaignId, remainTurns. UNIQUE(customerId, campaignId)
+1.2.8
+Entity TURN_TRANSACTION
+type (PLUS/MINUS), amount, sourceReference, timestamp — audit trail đầy đủ
+1.2.9
+Entity REWARD_VOUCHER
+voucherCode, prizeId, customerId, status (PENDING/REDEEMED/EXPIRED), storeId
+1.2.10
+Entity STORE_PRIZE_INVENTORY
+storeId, prizeId, localRemainQuantity — tồn kho vật lý tại từng cửa hàng
+⭐
+1.3 Spring Security & Cấu hình
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+1.3.1
+Spring Security
+Cấu hình role: ADMIN, STORE_CASHIER, CUSTOMER
+1.3.2
+JWT hoặc Session
+Xác thực cho 3 loại portal khác nhau
+1.3.3
+Khởi tạo dữ liệu mẫu
+DataInitializer: seed STORE, CAMPAIGN mẫu để test
+GIAI ĐOẠN 2: Webhook POS + Delta Rule Engine (3-4 ngày)
+Trái tim của hệ thống O2O — nhận tín hiệu từ máy POS, tính số lượt quay theo nghiệp vụ, và sinh mã token để POS in lên bill.
+2.1 API Webhook nhận hóa đơn POS
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+2.1.1
+PosWebhookController
+POST /api/pos/invoice — nhận payload JSON từ máy POS
+2.1.2
+InvoicePayload DTO
+invoiceNumber, originalInvoiceNumber, totalAmount, paymentMethod, skuList, customerId, storeId
+2.1.3
+Validate payload
+Kiểm tra invoiceNumber không trùng, storeId hợp lệ, campaign đang active
+2.1.4
+Lưu INVOICE vào DB
+Persist entity INVOICE trước khi tính lượt
+2.2 Delta Rule Engine — Tính lượt quay
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+2.2.1
+RuleEngineService
+Đọc CAMPAIGN_RULE theo campaignId hiện tại đang active
+2.2.2
+Rule 1: Giá trị đơn hàng
+turns += floor(totalAmount / minOrderValue)
+2.2.3
+Rule 2: Phương thức thanh toán
+Nếu paymentMethod = MOMO/VNPAY → +paymentBonusTurns
+2.2.4
+Rule 3: SKU đặc biệt
+Duyệt skuList, nếu khớp SKU trong rule → +skuBonusTurns mỗi SKU
+2.2.5
+Xử lý Đổi/Trả hàng (Delta)
+Nếu originalInvoiceNumber != null: tìm hóa đơn gốc, tính chênh lệch Delta. Nếu Delta âm → không sinh lượt, có thể trừ lượt
+🔴
+2.2.6
+Kiểm tra Delta âm
+turns = max(0, deltaCalculated) — tuyệt đối không sinh lượt âm cho INVOICE đổi trả giảm giá trị
+🔴
+2.3 Quản lý ví USER_TURN & Sinh Token
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+2.3.1
+TurnService.creditTurns()
+Upsert USER_TURN: nếu chưa có → tạo mới, nếu có → cộng thêm remainTurns
+2.3.2
+Ghi TURN_TRANSACTION
+type=PLUS, amount=turns, sourceReference=invoiceNumber, timestamp
+2.3.3
+Sinh GAME_ACCESS_TOKEN
+UUID token, liên kết invoiceId, expiresAt = now + 30 phút
+⭐
+2.3.4
+Response trả về POS
+{ tokenUrl: 'https://app.com/play?token=UUID', turnsGranted: N, totalRemainTurns: M }
+2.3.5
+POS in bill
+POS nhận URL, in QR code lên hóa đơn giấy cho khách quét
+2.4 Admin CRUD Campaign & Rule
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+2.4.1
+CampaignService
+CRUD: tạo, sửa, xóa, tạm dừng Campaign
+2.4.2
+CampaignRuleService
+Cấu hình minOrderValue, paymentMethod bonus, SKU bonus theo Campaign
+2.4.3
+AdminCampaignController
+GET/POST/PUT/DELETE /admin/campaigns và /admin/campaigns/{id}/rules
+2.4.4
+PrizeService
+CRUD giải thưởng + tự động tạo giải Trượt khi tạo campaign
+2.4.5
+Hard validation xác suất
+Backend chặn cứng nếu tổng xác suất giải thật > 100% → PrizeProbabilityExceededException
+🔴
+2.4.6
+Chặn xóa/sửa giải Trượt
+deletePrize() từ chối nếu isWinningPrize=false. Ẩn nút Xóa trên UI
+🔴
+GIAI ĐOẠN 3: Core Draw Engine (4-5 ngày)
+Thuật toán quay thưởng an toàn, chống Race Condition khi nhiều user cùng quay, bảo vệ ngân sách giải thưởng toàn cục.
+3.1 Token Validation & Luồng vào game
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+3.1.1
+GameController
+GET /play?token={UUID} — validate GAME_ACCESS_TOKEN
+3.1.2
+Kiểm tra token
+Tìm token trong DB: isUsed=false, expiresAt > now(), liên kết đúng customerId
+🔴
+3.1.3
+Kiểm tra lượt quay
+Đọc USER_TURN.remainTurns > 0 mới cho phép vào màn quay
+3.2 Thuật toán Quay số
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+3.2.1
+DrawService
+Thuật toán quay với SecureRandom + cumulative probability
+3.2.2
+Trừ lượt — Atomic UPDATE
+UPDATE USER_TURN SET remainTurns = remainTurns - 1 WHERE remainTurns > 0 — chống race condition
+⭐
+3.2.3
+Lọc giải theo maxWinsPerUser
+Đếm số lần user đã trúng từng giải, tự động bỏ qua giải đã đạt giới hạn
+3.2.4
+Pessimistic Lock 1 dòng
+findByIdWithPessimisticLock(prizeId) — chỉ lock dòng Prize đã random trúng
+⭐
+3.2.5
+Lock timeout 3 giây
+@QueryHints(lock.timeout=3000) — quá hạn → fallback trượt, không treo hệ thống
+🔴
+3.2.6
+Double-check sau lock
+Sau lock: kiểm tra lại globalRemainQuantity > 0 → nếu hết → fallback giải Trượt
+🔴
+3.2.7
+Trừ kho toàn cục
+UPDATE PRIZE SET globalRemainQuantity = globalRemainQuantity - 1 trong cùng transaction
+3.2.8
+Null-safe fallback giải Trượt
+getOrCreateLosePrize() — nếu DB trả null → tạo giải ảo trong RAM, không để NullPointerException
+🔴
+3.3 Ghi nhận kết quả & Bảo vệ Transaction
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+3.3.1
+Ghi TURN_TRANSACTION
+type=MINUS, sourceReference=LUCKY_DRAW, liên kết tokenId
+3.3.2
+Sinh REWARD_VOUCHER
+Nếu isWinningPrize=true → tạo REWARD_VOUCHER với voucherCode unique
+3.3.3
+Đánh dấu token đã dùng
+UPDATE GAME_ACCESS_TOKEN SET isUsed=true — chặn quay lại lần 2 cùng token
+🔴
+3.3.4
+@Transactional rollback
+Tất cả bước trên trong 1 transaction. Custom exception extend RuntimeException để trigger rollback
+🔴
+3.3.5
+DrawResultDTO response
+{ isWin, prizeName, voucherCode, message } trả về cho frontend
+3.3.6
+Rate Limiting
+Throttle API quay: tối đa 1 request/2 giây/user (Bucket4j hoặc custom filter)
+⭐
+3.4 Unit Test & Stress Test
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+3.4.1
+Unit test DrawService
+Test cumulative probability với seed cố định, test hết giải → fallback
+3.4.2
+Stress test concurrency
+100 thread cùng quay → assert remainQuantity >= 0 và remainTurns >= 0
+⭐
+3.4.3
+Test rollback
+Mock DB lỗi ở bước lưu REWARD_VOUCHER → assert remainTurns không bị trừ
+🔴
+3.4.4
+Test lock timeout
+Mock 1 thread giữ lock lâu → thread 2 phải trả về trượt sau 3s, không treo
+🔴
+3.4.5
+Test null-safe fallback
+Xóa giải Trượt khỏi DB → gọi draw() → assert trả về giải ảo, không lỗi 500
+🔴
+3.4.6
+Stress test Connection Pool
+50+ thread quay cùng lúc → assert không có ConnectionTimeoutException
+🔴
+GIAI ĐOẠN 4: Redeem Station — Đổi quà vật lý (3-4 ngày)
+Xây dựng hệ thống đổi quà tại cửa hàng vật lý — thu ngân quét mã voucher, kiểm tra tồn kho cục bộ và trừ kho an toàn.
+4.1 Luồng Đổi quà
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+4.1.1
+RedeemController
+POST /api/store/redeem — thu ngân nhập/quét voucherCode
+4.1.2
+Kiểm tra REWARD_VOUCHER
+Tìm voucher: status=PENDING, chưa expired, đúng prizeId
+4.1.3
+Kiểm tra STORE_PRIZE_INVENTORY
+Truy vấn localRemainQuantity theo storeId + prizeId hiện tại
+🔴
+4.1.4
+Nếu hết kho cục bộ
+Trả lỗi 'Cửa hàng này đã hết quà — vui lòng đến cửa hàng khác'
+🔴
+4.1.5
+Nếu còn hàng
+Pessimistic Lock dòng STORE_PRIZE_INVENTORY → trừ localRemainQuantity
+🔴
+4.1.6
+Cập nhật voucher
+UPDATE REWARD_VOUCHER SET status=REDEEMED, redeemedAt=now(), redeemedStoreId=storeId
+4.1.7
+@Transactional
+Lock → kiểm tra kho → trừ kho → cập nhật voucher trong 1 transaction
+🔴
+4.2 Admin phân bổ tồn kho cửa hàng
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+4.2.1
+StoreInventoryService
+Admin phân bổ số lượng quà vật lý xuống từng cửa hàng
+4.2.2
+API phân bổ
+POST /admin/campaigns/{id}/distribute-inventory — set localRemainQuantity cho từng store
+4.2.3
+Kiểm tra tổng phân bổ
+Tổng localRemainQuantity các cửa hàng <= globalRemainQuantity — cảnh báo nếu vượt
+🟡
+4.2.4
+Digital Voucher
+Giải thưởng digital (coupon/discount code) không cần STORE_PRIZE_INVENTORY, sinh mã trực tiếp
+📌  Phân biệt Physical vs Digital: REWARD_VOUCHER.voucherType=PHYSICAL cần kiểm tra kho cục bộ. DIGITAL thì gửi thẳng mã về app khách hàng.
+GIAI ĐOẠN 5: UI Portals (3-4 ngày)
+Ba giao diện phục vụ ba nhóm người dùng khác nhau: Admin quản trị, Thu ngân quét QR, và Khách hàng chơi game.
+5.1 Admin Portal
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+5.1.1
+Layout admin
+main-admin.html: sidebar navigation, header với tên user
+5.1.2
+campaigns.html
+Bảng danh sách campaign: tên, ngày, status, nút Tạo/Sửa/Tạm dừng
+5.1.3
+campaign-form.html
+Form tạo/sửa campaign với validation. Tabs: Thông tin chung / Cấu hình Rule / Giải thưởng
+5.1.4
+prizes.html
+Danh sách giải, cấu hình xác suất. Warning nếu tổng ≠ 100%. Ẩn nút Xóa giải Trượt
+5.1.5
+store-inventory.html
+Admin phân bổ số lượng quà xuống từng cửa hàng theo campaign
+5.1.6
+Admin Dashboard
+Tổng quan: campaign active, lượt đã phát, giải đã trao, alert hết kho
+5.2 Store Portal — Thu ngân
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+5.2.1
+store-login.html
+Đăng nhập riêng cho thu ngân theo storeId
+5.2.2
+redeem.html
+Giao diện quét QR / nhập voucherCode. Hiển thị thông tin giải, tình trạng kho
+⭐
+5.2.3
+Kết quả đổi quà
+Hiển thị rõ: Thành công / Hết kho tại cửa hàng này / Voucher không hợp lệ
+5.2.4
+Lịch sử đổi quà hôm nay
+Bảng các giao dịch đổi quà trong ngày tại cửa hàng đó
+5.3 Customer Web-App — Giao diện quay
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+5.3.1
+Vào game qua token URL
+/play?token=UUID — validate token trước khi load UI
+5.3.2
+draw.html
+Hiển thị: số lượt còn lại, danh sách giải thưởng, nút QUAY TO
+5.3.3
+draw.js — Animation quay
+Vòng quay tròn (Canvas) hoặc hộp quà 3D (CSS). Đồng bộ animation với API response
+⭐
+5.3.4
+Màn hình kết quả
+Popup ăn mừng nếu trúng (confetti animation). Hiển thị voucherCode để khách chụp màn hình
+5.3.5
+Lịch sử quay
+history.html: ngày quay, giải trúng/trượt, voucherCode, trạng thái đổi quà
+5.3.6
+Responsive mobile
+CSS responsive — 90% khách quét QR bằng điện thoại
+🔴
+5.3.7
+Loading states & UX
+Nút quay disabled khi đang xử lý. Toast notification kết quả. Chặn spam-click
+GIAI ĐOẠN 6: Thống kê, Exception & Deploy (3-4 ngày)
+Hoàn thiện hệ thống: dashboard thống kê thời gian thực, xử lý lỗi toàn diện, và đóng gói Docker để demo và deploy.
+6.1 Thống kê & Dashboard Admin
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+6.1.1
+StatisticsService
+Tổng lượt quay, giải đã phát, giải còn lại theo campaign
+6.1.2
+Tỷ lệ trúng thực tế real-time
+API getRealTimeWinRate(): tỷ lệ trúng/trượt thực tế. Cảnh báo khi tỷ lệ trượt > 95%
+🟡
+6.1.3
+statistics.html
+Dashboard biểu đồ Chart.js: lượt theo ngày, phân bổ giải, top người trúng
+6.1.4
+Bảng TurnTransaction
+Admin tra cứu lịch sử cộng/trừ lượt của từng khách hàng — phục vụ đối soát khiếu nại
+⭐
+6.1.5
+Báo cáo tồn kho
+So sánh globalRemainQuantity vs tổng localRemainQuantity các cửa hàng
+6.2 GlobalExceptionHandler
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+6.2.1
+NoTurnsException
+User hết lượt quay
+6.2.2
+CampaignNotActiveException
+Campaign đã tạm dừng hoặc hết hạn
+6.2.3
+InvalidTokenException
+Token QR không hợp lệ, đã dùng, hoặc hết hạn
+🔴
+6.2.4
+RateLimitExceededException
+Spam click quay quá nhanh
+6.2.5
+PrizeProbabilityExceededException
+Tổng xác suất giải > 100%
+6.2.6
+PessimisticLockingFailureException
+Không lock được Prize sau 3s → fallback trượt, không crash
+🔴
+6.2.7
+IllegalOperationException
+Cố xóa/sửa giải Trượt
+6.2.8
+StoreInventoryEmptyException
+Hết quà vật lý tại cửa hàng khi đổi
+6.3 Deploy & Documentation
+#
+Nhiệm vụ
+Chi tiết
+Mức độ
+6.3.1
+Dockerfile
+Multi-stage build: Maven build → JRE runtime
+6.3.2
+docker-compose.yml
+Services: app + mcr.microsoft.com/mssql/server:2022 + volume persist
+🔴
+6.3.3
+Tối ưu Database
+Index FK và cột thường query. N+1 query với @EntityGraph / JOIN FETCH
+6.3.4
+README.md
+Hướng dẫn: clone → docker-compose up → test Postman → demo
+6.3.5
+Postman Collection
+Export collection test đầy đủ: POS webhook, quay, đổi quà, admin CRUD
+VERIFICATION PLAN
+Automated Tests
+Loại
+Test Case
+Assert
+Unit
+DrawService: cumulative probability với seed cố định
+Kết quả đúng phân phối
+Unit
+Delta Engine: hóa đơn đổi trả giảm giá trị
+turns = 0, không cộng lượt
+Unit
+Xác suất giải > 100% → PrizeProbabilityExceededException
+Exception được ném
+Unit
+Xóa giải Trượt → IllegalOperationException
+Exception được ném
+Unit
+Null-safe fallback: xóa giải Trượt → gọi draw()
+Trả về giải ảo, không lỗi 500
+Unit
+Rollback: mock DB lỗi lúc lưu REWARD_VOUCHER
+remainTurns không bị trừ
+Stress
+100 thread cùng quay 1 campaign
+remainQuantity >= 0, remainTurns >= 0
+Stress
+50+ thread quay đồng thời — Connection Pool
+Không ConnectionTimeoutException
+Stress
+Lock timeout: 1 thread giữ lock lâu
+Thread 2 nhận trượt sau 3s, không treo
+Integration
+POST /api/pos/invoice → sinh token → GET /play?token
+Luồng end-to-end thành công
+Integration
+POST /api/store/redeem khi hết kho cục bộ
+Trả lỗi StoreInventoryEmptyException
+Integration
+Rate limiting: 5 request liên tục cùng user
+Chỉ request đầu thành công
+Manual Verification — 3 Kịch bản chính
+Kịch bản 1: Luồng mua hàng → Quay thưởng
+Dùng Postman gửi POST /api/pos/invoice với payload hóa đơn mới
+Kiểm tra response có tokenUrl, turnsGranted, totalRemainTurns
+Dán tokenUrl vào trình duyệt điện thoại → UI Customer hiển thị
+Bấm Quay → animation chạy → kết quả hiển thị (trúng/trượt)
+Kiểm tra DB: TURN_TRANSACTION ghi đúng, REWARD_VOUCHER tạo nếu trúng
+Kịch bản 2: Đổi quà vật lý tại cửa hàng
+Thu ngân đăng nhập Store Portal
+Nhập voucherCode khách đưa → hệ thống kiểm tra kho
+Nếu còn hàng: xác nhận đổi thành công, kho giảm 1
+Test 'hết kho': set localRemainQuantity=0 → phải báo lỗi hết kho
+Xác nhận voucher status=REDEEMED trong DB
+Kịch bản 3: Hóa đơn Đổi/Trả hàng
+Gửi invoice với originalInvoiceNumber = số hóa đơn gốc
+Nếu tổng tiền mới < gốc (Delta âm) → không sinh lượt, không sinh token
+Nếu tổng tiền mới > gốc (Delta dương) → sinh lượt cho phần chênh lệch
+📌  Test Admin Dashboard: khi giải hết hàng → tỷ lệ trượt thực tế tăng → cảnh báo hiển thị khi > 95%.
+TỔNG HỢP RỦI RO KỸ THUẬT & GIẢI PHÁP
+Mã
+Vấn đề
+Mức độ
+Giải pháp
+A
+Race condition trên USER_TURN.remainTurns — nhiều user quay cùng lúc
+🔴 Cao
+Atomic UPDATE với WHERE remainTurns > 0
+B
+Cạn kiệt Connection Pool khi Pessimistic Lock — toàn bộ hệ thống đơ
+🔴 Cao
+Lock timeout 3s + hikari.maximum-pool-size=30 + fallback trượt
+C
+NullPointerException khi giải Trượt bị xóa/sửa — crash 500 toàn bộ user
+🔴 Cao
+Chặn cứng xóa/sửa + getOrCreateLosePrize() tạo giải ảo trong RAM
+D
+Delta âm khi đổi trả → có thể sinh lượt sai nếu không kiểm tra
+🔴 Cao
+turns = max(0, delta). Tuyệt đối không sinh lượt âm
+E
+Tỷ lệ trượt thực tế phình to khi giải hết — Admin không hay biết
+🟡 Trung bình
+API getRealTimeWinRate() + cảnh báo dashboard khi trượt > 95%
+F
+Lưu REWARD_VOUCHER lỗi → user mất lượt không có lịch sử
+🟡 Trung bình
+@Transactional đảm bảo rollback toàn bộ khi RuntimeException
+G
+Admin nhập tổng xác suất giải > 100% → vỡ logic random
+🟡 Trung bình
+Hard validation backend: ném PrizeProbabilityExceededException
+H
+Token QR bị replay attack — dùng lại token cũ để quay nhiều lần
+🟢 Thấp
+isUsed=true sau lần quay đầu + expiresAt 30 phút
+✅  Tài liệu này thay thế hoàn toàn plan chi tiết cũ. Mọi entity, API endpoint, và luồng nghiệp vụ đều căn chỉnh theo plan_7 O2O với database Microsoft SQL Server.

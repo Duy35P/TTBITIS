@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucky Draw - Cấu Hình Zalo ZNS / SMS</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Source Sans Pro', sans-serif; background-color: #ecf0f5; color: #333; display: flex; min-height: 100vh; overflow-x: hidden; }
+  
+  /* ===== Header ===== */
+  .main-header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background-color: #3c8dbc; z-index: 1000; display: flex; }
+  .logo { width: 230px; height: 50px; background-color: #367fa9; color: #fff; font-size: 20px; font-weight: 700; line-height: 50px; text-align: center; text-decoration: none; flex-shrink: 0; }
+  .navbar { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; }
+  .sidebar-toggle { color: #fff; font-size: 20px; cursor: pointer; padding: 10px; }
+  .user-menu { display: flex; align-items: center; color: #fff; cursor: pointer; padding: 10px; }
+  .user-menu img { width: 25px; height: 25px; border-radius: 50%; margin-right: 10px; }
+
+  /* ===== Sidebar ===== */
+  .main-sidebar { position: fixed; top: 50px; left: 0; bottom: 0; width: 230px; background-color: #222d32; z-index: 800; overflow-y: auto; }
+  .sidebar-menu { list-style: none; margin: 0; padding: 0; margin-top: 20px;}
+  .sidebar-menu li a { padding: 12px 15px; display: flex; align-items: center; color: #b8c7ce; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+  .sidebar-menu li a:hover, .sidebar-menu li.active a { color: #fff; background: #1e282c; border-left-color: #3c8dbc; }
+
+  /* ===== Content ===== */
+  .content-wrapper { margin-left: 230px; margin-top: 50px; padding: 20px; width: calc(100% - 230px); }
+  .content-header { margin-bottom: 25px; }
+  .content-header h1 { font-size: 26px; font-weight: 600; color: #111; }
+  
+  .row { display: flex; flex-wrap: wrap; margin: 0 -10px; }
+  .col-md-4, .col-md-8 { padding: 0 10px; }
+  .col-md-4 { width: 33.333%; }
+  .col-md-8 { width: 66.666%; }
+
+  .box { background-color: #fff; border-top: 3px solid #00c0ef; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+  .box.box-success { border-top-color: #00a65a; }
+  .box-header { padding: 15px 20px; border-bottom: 1px solid #f4f4f4; }
+  .box-title { font-size: 18px; font-weight: 400; margin: 0; }
+  .box-body { padding: 20px; }
+  
+  .form-group { margin-bottom: 15px; }
+  .form-group label { display: block; font-size: 14px; font-weight: 600; color: #333; margin-bottom: 5px; }
+  .form-control { width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
+  textarea.form-control { height: 120px; resize: vertical; line-height: 1.5; }
+  
+  .btn-primary { background-color: #3c8dbc; color: #fff; padding: 10px 20px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 15px; }
+  .btn-success { background-color: #00a65a; color: #fff; padding: 10px 20px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 15px; width: 100%; margin-top: 15px;}
+  
+  .nav-tabs { border-bottom: 1px solid #ddd; margin-bottom: 20px; display: flex; }
+  .nav-tabs li { list-style: none; margin-bottom: -1px; }
+  .nav-tabs li a { display: block; padding: 10px 15px; color: #555; text-decoration: none; border: 1px solid transparent; border-radius: 4px 4px 0 0; }
+  .nav-tabs li.active a { color: #333; background-color: #fff; border-color: #ddd #ddd transparent; font-weight: bold; }
+  
+  .help-block { font-size: 13px; color: #777; margin-top: 5px; display: block; }
+  .badge-var { display: inline-block; background: #e0f2fe; border: 1px solid #bae6fd; color: #0284c7; padding: 2px 6px; border-radius: 4px; font-family: monospace; margin: 2px 0; font-size: 12px;}
+  
+  /* Toggle Switch */
+  .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+  .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+  input:checked + .slider { background-color: #00a65a; }
+  input:checked + .slider:before { transform: translateX(26px); }
+
+  .phone-mockup { width: 280px; height: 500px; border: 10px solid #333; border-radius: 30px; margin: 0 auto; background: #f0f0f0; position: relative; overflow: hidden; }
+  .phone-header { background: #0068ff; color: white; padding: 15px 10px; font-weight: bold; font-size: 14px; text-align: center; }
+  .zalo-msg { background: white; margin: 15px; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .zalo-msg-title { font-weight: bold; color: #0068ff; margin-bottom: 10px; font-size: 15px; }
+  .zalo-msg-content { font-size: 13px; line-height: 1.5; color: #333; }
+</style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="main-header">
+    <a href="index.html" class="logo">LuckyDraw</a>
+    <nav class="navbar">
+      <div class="sidebar-toggle">☰</div>
+      <div class="user-menu">
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=fff&color=3c8dbc" alt="User Image">
+        <span>Admin User</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="main-sidebar">
+    <ul class="sidebar-menu">
+      <li><a href="index.html">📊 <span>Tổng quan</span></a></li>
+      <li><a href="campaign-list.html">📁 <span>Chiến dịch</span></a></li>
+      <li><a href="customer-list.html">👥 <span>Khách hàng</span></a></li>
+      <li><a href="store-list.html">🏪 <span>Cửa hàng / Đại lý</span></a></li>
+      <li><a href="token-lookup.html">🔍 <span>Tra cứu Mã Dự Thưởng</span></a></li>
+      <li class="active"><a href="zalo-zns-config.html">💬 <span>Cấu hình Thông Báo ZNS</span></a></li>
+      <li><a href="minigame-builder.html">🎨 <span>Design Minigame</span></a></li>
+    </ul>
+  </aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>Cấu hình Gửi Thông báo (Zalo ZNS / SMS)</h1>
+    </section>
+    
+    <section class="content">
+      <div class="row">
+        <!-- Cột trái: Cấu hình chung -->
+        <div class="col-md-4">
+          <div class="box box-success">
+            <div class="box-header">
+              <h3 class="box-title">Kết nối Zalo OA (API Keys)</h3>
+            </div>
+            <div class="box-body">
+              <div class="form-group">
+                <label>Zalo App ID</label>
+                <input type="text" class="form-control" value="2394857102938475">
+              </div>
+              <div class="form-group">
+                <label>Secret Key</label>
+                <input type="password" class="form-control" value="xxxxxxxxxxxxxxxxxxxx">
+              </div>
+              <div class="form-group">
+                <label>OA Access Token (Refresh hàng tháng)</label>
+                <textarea class="form-control" style="height: 60px;">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWI...</textarea>
+              </div>
+              <button class="btn-success">Kiểm tra kết nối & Lưu</button>
+            </div>
+          </div>
+
+          <div class="box">
+            <div class="box-header">
+              <h3 class="box-title">Biến hệ thống (Variables)</h3>
+            </div>
+            <div class="box-body">
+              <span class="help-block" style="margin-top:0;">Dùng các biến này dán vào ô Nội dung Mẫu ZNS:</span>
+              <div style="margin-top: 10px;">
+                <span class="badge-var">{TenKhachHang}</span> : Tên người trúng<br>
+                <span class="badge-var">{TenGiaiThuong}</span> : Tên phần quà<br>
+                <span class="badge-var">{MaVoucher}</span> : Mã Code nhận thưởng<br>
+                <span class="badge-var">{TenChienDich}</span> : Tên chương trình<br>
+                <span class="badge-var">{NgayTrung}</span> : Thời gian trúng giải<br>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cột phải: Cấu hình Mẫu tin nhắn (Templates) -->
+        <div class="col-md-8">
+          <div class="box">
+            <div class="box-body" style="padding-top: 0;">
+              
+              <ul class="nav-tabs">
+                <li class="active"><a href="#">Trúng Giải Thưởng (Reward)</a></li>
+                <li><a href="#" style="color:#999;">Cấp Lượt Quay Mới (New Spins)</a></li>
+                <li><a href="#" style="color:#999;">Nhắc Hết Hạn (Expiring)</a></li>
+              </ul>
+
+              <div class="row">
+                <!-- Chỉnh sửa Text -->
+                <div class="col-md-7">
+                  <div class="form-group" style="display: flex; justify-content: space-between; align-items: center; background: #f4f4f4; padding: 10px; border-radius: 4px;">
+                    <label style="margin:0;">Kích hoạt Gửi Tin nhắn tự động</label>
+                    <label class="switch">
+                      <input type="checkbox" checked onchange="updatePreview()">
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label>ZNS Template ID (Duyệt bởi Zalo)</label>
+                    <input type="text" class="form-control" value="245638" style="font-family: monospace;">
+                    <span class="help-block">Mã mẫu tin nhắn bạn đã tạo trên Zalo Cloud.</span>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Nội dung mẫu (Chỉ để Preview, Map với Template ZNS)</label>
+                    <textarea class="form-control" id="templateText" oninput="updatePreview()">Chúc mừng {TenKhachHang} đã trúng thưởng chương trình {TenChienDich}!
+
+Phần quà của bạn: {TenGiaiThuong}
+Mã nhận quà: {MaVoucher}
+Thời gian trúng: {NgayTrung}
+
+Vui lòng đưa tin nhắn này cho nhân viên cửa hàng để nhận giải. Cảm ơn bạn!</textarea>
+                  </div>
+                  
+                  <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn-primary" onclick="alert('Đã lưu cấu hình Template thành công!')">💾 Lưu Mẫu Này</button>
+                    <button class="btn-primary" style="background: #f39c12;" onclick="alert('Gửi thử tin nhắn ZNS đến SĐT Admin: 0988xxx')">✉️ Gửi Test (SĐT Admin)</button>
+                  </div>
+                </div>
+
+                <!-- Preview Mobile -->
+                <div class="col-md-5">
+                  <div class="phone-mockup">
+                    <div class="phone-header">Zalo Chat - Nhãn hàng TLC</div>
+                    <div class="zalo-msg">
+                      <div class="zalo-msg-title">🎉 THÔNG BÁO TRÚNG THƯỞNG</div>
+                      <div class="zalo-msg-content" id="previewMsg">
+                        <!-- Nội dung render bằng JS -->
+                      </div>
+                      <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; text-align: center; color: #0068ff; font-weight: bold; font-size: 13px;">XEM CHI TIẾT</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function updatePreview() {
+      const template = document.getElementById('templateText').value;
+      
+      // Giả lập Dữ liệu thật
+      let previewText = template;
+      previewText = previewText.replace(/\{TenKhachHang\}/g, "<b>Nguyễn Văn A</b>");
+      previewText = previewText.replace(/\{TenChienDich\}/g, "<b>Vui Hè Cực Đỉnh</b>");
+      previewText = previewText.replace(/\{TenGiaiThuong\}/g, "<b style='color:#d35400;'>01 Máy Lạnh Daikin</b>");
+      previewText = previewText.replace(/\{MaVoucher\}/g, "<b style='color:green;'>VOU-84Y2-X9</b>");
+      previewText = previewText.replace(/\{NgayTrung\}/g, "23/06/2026 14:30");
+      
+      // Đổi xuống dòng thành <br>
+      previewText = previewText.replace(/\n/g, '<br>');
+      
+      document.getElementById('previewMsg').innerHTML = previewText;
+    }
+
+    // Init
+    updatePreview();
+  </script>
+</body>
+</html>

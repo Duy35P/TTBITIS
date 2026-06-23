@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucky Draw - Quản lý Khách Hàng</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #ecf0f5; color: #333; display: flex; min-height: 100vh; overflow-x: hidden; }
+  
+  /* ===== Header & Sidebar ===== */
+  .main-header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background-color: #3c8dbc; z-index: 1000; display: flex; }
+  .logo { width: 230px; height: 50px; background-color: #367fa9; color: #fff; font-size: 20px; font-weight: 700; line-height: 50px; text-align: center; text-decoration: none; flex-shrink: 0; }
+  .navbar { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; }
+  .sidebar-toggle { color: #fff; font-size: 20px; cursor: pointer; padding: 10px; }
+  .user-menu { display: flex; align-items: center; color: #fff; cursor: pointer; padding: 10px; }
+  .user-menu img { width: 25px; height: 25px; border-radius: 50%; margin-right: 10px; }
+  
+  .main-sidebar { position: fixed; top: 50px; left: 0; bottom: 0; width: 230px; background-color: #222d32; z-index: 800; overflow-y: auto; }
+  .user-panel { padding: 10px; display: flex; align-items: center; }
+  .user-panel img { width: 45px; height: 45px; border-radius: 50%; margin-right: 15px; }
+  .user-panel-info { color: #fff; }
+  .user-panel-info p { font-weight: 600; margin-bottom: 5px; font-size: 14px; }
+  
+  .sidebar-menu { list-style: none; margin: 0; padding: 0; }
+  .sidebar-menu .header { color: #4b646f; background: #1a2226; padding: 10px 25px 10px 15px; font-size: 12px; text-transform: uppercase; }
+  .sidebar-menu li a { padding: 12px 15px; display: flex; align-items: center; color: #b8c7ce; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+  .sidebar-menu li a:hover { color: #fff; background: #1e282c; border-left-color: #3c8dbc; }
+  .sidebar-menu li.active a { color: #fff; background: #1e282c; border-left-color: #3c8dbc; }
+  .sidebar-menu li a span { margin-left: 10px; flex: 1; }
+
+  /* ===== Content Wrapper ===== */
+  .content-wrapper { margin-left: 230px; margin-top: 50px; padding: 15px; width: calc(100% - 230px); }
+  
+  .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .content-header h1 { font-size: 24px; font-weight: 400; }
+  .breadcrumb { display: flex; list-style: none; font-size: 12px; color: #444; }
+  .breadcrumb li + li::before { content: '>\00a0'; padding: 0 5px; color: #ccc; }
+  .breadcrumb a { color: #444; text-decoration: none; }
+  .breadcrumb a:hover { color: #3c8dbc; }
+  
+  /* ===== Box / Table ===== */
+  .box { background-color: #fff; border-top: 3px solid #00a65a; border-radius: 3px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+  .box-header { padding: 15px; border-bottom: 1px solid #f4f4f4; display: flex; justify-content: space-between; align-items: center; }
+  .box-title { font-size: 18px; font-weight: 400; }
+  
+  .box-tools { display: flex; gap: 10px; }
+  .search-box {
+    padding: 6px 12px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    width: 200px;
+    outline: none;
+  }
+  .search-box:focus { border-color: #3c8dbc; }
+  
+  .btn-export {
+    background-color: #00a65a; color: #fff; padding: 6px 12px; border-radius: 3px;
+    text-decoration: none; font-size: 14px; font-weight: 600; border: none; cursor: pointer;
+  }
+  .btn-export:hover { background-color: #008d4c; }
+
+  .box-body { padding: 15px; overflow-x: auto; }
+  
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #f4f4f4; font-size: 14px; }
+  th { font-weight: 700; color: #333; }
+  .table-striped tbody tr:nth-of-type(odd) { background-color: #f9f9f9; }
+  
+  .customer-profile { display: flex; align-items: center; gap: 10px; }
+  .customer-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+  .customer-name { font-weight: 600; color: #333; }
+  .customer-zalo { font-size: 11px; color: #0068FF; font-weight: 700; background: #e0f2fe; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-top: 3px; }
+
+  .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+  .bg-green { background-color: #00a65a; color: #fff; }
+  .bg-red { background-color: #dd4b39; color: #fff; }
+
+  .action-links a { color: #3c8dbc; text-decoration: none; font-weight: 600; }
+  .action-links a:hover { color: #72afd2; text-decoration: underline; }
+  .action-separator { color: #ccc; margin: 0 5px; }
+  .text-danger { color: #dd4b39 !important; }
+</style>
+</head>
+<body>
+
+   <!-- Header -->
+  <header class="main-header">
+    <a href="campaign-list.html" class="logo">LuckyDraw</a>
+    <nav class="navbar">
+      <div class="sidebar-toggle">☰</div>
+      <div class="user-menu">
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=fff&color=3c8dbc" alt="User Image">
+        <span>Admin User</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="main-sidebar">
+    <div class="user-panel">
+      <img src="https://ui-avatars.com/api/?name=Admin+User&background=fff&color=3c8dbc" alt="User Image">
+      <div class="user-panel-info"><p>Admin User</p></div>
+    </div>
+    
+     <ul class="sidebar-menu">
+      <li class="header">Menu Quản Trị</li>
+      <li><a href="index.html">📊 <span>Tổng quan</span></a></li>
+      <li><a href="campaign-list.html">📁 <span>Chiến dịch</span></a></li>
+      <li class="active"><a href="customer-list.html">👥 <span>Khách hàng</span></a></li>
+      <li><a href="store-list.html">🏪 <span>Cửa hàng / Đại lý</span></a></li>
+      <li><a href="prize-list.html">🎁 <span>Kho giải thưởng</span></a></li>
+      <li><a href="voucher-list.html">🎟️ <span>Quản lý Voucher</span></a></li>
+      <li><a href="#">⚙️ <span>Cài đặt</span></a></li>
+    </ul>
+  </aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>
+        Khách hàng
+        <small>Quản lý tài khoản đăng nhập</small>
+      </h1>
+      <ul class="breadcrumb">
+        <li><a href="campaign-list.html">🏠 LuckyDraw</a></li>
+        <li>Khách hàng</li>
+      </ul>
+    </section>
+    
+    <section class="content">
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">Danh sách Khách hàng</h3>
+          <div class="box-tools">
+            <input type="text" class="search-box" placeholder="Tìm theo Tên hoặc SĐT...">
+            <button class="btn-export">Xuất Excel</button>
+          </div>
+        </div>
+        <div class="box-body">
+          <table class="table-striped">
+            <thead>
+              <tr>
+                <th>Khách hàng</th>
+                <th>SĐT / Zalo</th>
+                <th>Lượt quay khả dụng (Theo CD)</th>
+                <th>Quà đã trúng</th>
+                <th>Trạng thái</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="customer-profile">
+                    <img src="https://ui-avatars.com/api/?name=Nguyen+Van+A&background=e0f2fe&color=0369a1" class="customer-avatar" alt="Avatar">
+                    <div>
+                      <div class="customer-name">Nguyễn Văn A</div>
+                      <div class="customer-zalo">Zalo Login</div>
+                    </div>
+                  </div>
+                </td>
+                <td>090 123 4567</td>
+                <td>
+                  <span class="badge bg-green" style="margin-bottom:2px;">Vui hè 2026: 12</span><br>
+                  <span class="badge bg-yellow">Tri ân T6: 3</span>
+                </td>
+                <td>3 quà</td>
+                <td><span class="badge bg-green">Active</span></td>
+                <td class="action-links">
+                  <a href="#">Lịch sử</a> <span class="action-separator">|</span> <a href="#" class="text-danger" onclick="return confirm('Khóa tài khoản này?')">Khóa</a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="customer-profile">
+                    <img src="https://ui-avatars.com/api/?name=Tran+Thi+B&background=fce7f3&color=be185d" class="customer-avatar" alt="Avatar">
+                    <div>
+                      <div class="customer-name">Trần Thị B</div>
+                      <div class="customer-zalo">Zalo Login</div>
+                    </div>
+                  </div>
+                </td>
+                <td>098 765 4321</td>
+                <td>
+                  <span class="badge bg-green">Vui hè 2026: 8</span>
+                </td>
+                <td>1 quà</td>
+                <td><span class="badge bg-green">Active</span></td>
+                <td class="action-links">
+                  <a href="#">Lịch sử</a> <span class="action-separator">|</span> <a href="#" class="text-danger" onclick="return confirm('Khóa tài khoản này?')">Khóa</a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="customer-profile">
+                    <img src="https://ui-avatars.com/api/?name=Le+Van+C&background=fef3c7&color=b45309" class="customer-avatar" alt="Avatar">
+                    <div>
+                      <div class="customer-name">Lê Văn C</div>
+                      <div class="customer-zalo">Zalo Login</div>
+                    </div>
+                  </div>
+                </td>
+                <td>035 987 6543</td>
+                <td>
+                  <span class="badge bg-yellow">Tri ân T6: 45</span>
+                </td>
+                <td>12 quà</td>
+                <td><span class="badge bg-red">Banned</span></td>
+                <td class="action-links">
+                  <a href="#">Lịch sử</a> <span class="action-separator">|</span> <a href="#">Mở khóa</a>
+                </td>
+              </tr>
+            </tbody>
+            
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</body>
+</html>
+
+
+
+
+
+

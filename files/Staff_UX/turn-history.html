@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucky Draw - Lịch Sử Biến Động Lượt Quay</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body { font-family: 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #ecf0f5; color: #333; display: flex; min-height: 100vh; overflow-x: hidden; }
+  
+  /* ===== Header ===== */
+  .main-header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background-color: #3c8dbc; z-index: 1000; display: flex; }
+  .logo { width: 230px; height: 50px; background-color: #367fa9; color: #fff; font-size: 20px; font-weight: 700; line-height: 50px; text-align: center; text-decoration: none; flex-shrink: 0; }
+  .navbar { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; }
+  .sidebar-toggle { color: #fff; font-size: 20px; cursor: pointer; padding: 10px; }
+  .sidebar-toggle:hover { background-color: #367fa9; }
+  .user-menu { display: flex; align-items: center; color: #fff; cursor: pointer; padding: 10px; }
+  .user-menu:hover { background-color: #367fa9; }
+  .user-menu img { width: 25px; height: 25px; border-radius: 50%; margin-right: 10px; }
+  .user-menu span { font-size: 14px; }
+
+  /* ===== Sidebar ===== */
+  .main-sidebar { position: fixed; top: 50px; left: 0; bottom: 0; width: 230px; background-color: #222d32; z-index: 800; overflow-y: auto; }
+  .user-panel { padding: 10px; display: flex; align-items: center; }
+  .user-panel img { width: 45px; height: 45px; border-radius: 50%; margin-right: 15px; }
+  .user-panel-info { color: #fff; }
+  .user-panel-info p { font-weight: 600; margin-bottom: 5px; font-size: 14px; }
+  
+  .sidebar-menu { list-style: none; margin: 0; padding: 0; margin-top: 20px;}
+  .sidebar-menu .header { color: #4b646f; background: #1a2226; padding: 10px 25px 10px 15px; font-size: 12px; text-transform: uppercase; }
+  .sidebar-menu li { position: relative; margin: 0; padding: 0; }
+  .sidebar-menu li a { padding: 12px 15px 12px 15px; display: flex; align-items: center; color: #b8c7ce; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+  .sidebar-menu li a:hover, .sidebar-menu li.active a { color: #fff; background: #1e282c; border-left-color: #3c8dbc; }
+  .sidebar-menu li a span { margin-left: 10px; flex: 1; }
+
+  /* ===== Content Wrapper ===== */
+  .content-wrapper { margin-left: 230px; margin-top: 50px; padding: 20px; width: calc(100% - 230px); }
+  
+  .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+  .content-header h1 { font-size: 26px; font-weight: 600; color: #111; }
+  .content-header h1 small { font-size: 15px; color: #777; font-weight: 300; margin-left: 10px; }
+  
+  .breadcrumb { display: flex; list-style: none; font-size: 13px; color: #444; }
+  .breadcrumb li { display: flex; align-items: center; }
+  .breadcrumb li + li::before { content: '>\00a0'; padding: 0 8px; color: #ccc; }
+  .breadcrumb a { color: #444; text-decoration: none; }
+  .breadcrumb a:hover { color: #3c8dbc; }
+  
+  /* Box / Card */
+  .box { background-color: #fff; border-top: 3px solid #605ca8; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+  .box-header { padding: 15px 20px; border-bottom: 1px solid #f4f4f4; display: flex; justify-content: space-between; align-items: center; }
+  .box-title { font-size: 18px; font-weight: 400; margin: 0; }
+  .box-tools { display: flex; gap: 10px; }
+  .box-body { padding: 20px; overflow-x: auto; }
+  
+  /* Filter Area */
+  .filter-area { background-color: #f9fafb; padding: 15px; border-radius: 4px; border: 1px solid #eee; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
+  .filter-group { display: flex; flex-direction: column; flex: 1; min-width: 200px; }
+  .filter-group label { font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px; }
+  
+  /* Form Elements */
+  .form-control { width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none; font-family: inherit; }
+  .form-control:focus { border-color: #3c8dbc; }
+  
+  /* Buttons */
+  .btn-primary { background-color: #3c8dbc; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 14px; transition: 0.2s; }
+  .btn-primary:hover { background-color: #367fa9; }
+  .btn-success { background-color: #00a65a; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 14px; transition: 0.2s; }
+  .btn-success:hover { background-color: #008d4c; }
+  
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #f4f4f4; font-size: 14px; }
+  th { font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd; }
+  .table-striped tbody tr:nth-of-type(odd) { background-color: #fcfcfc; }
+  .table-striped tbody tr:hover { background-color: #f5f5f5; }
+  
+  /* Badge */
+  .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .bg-green { background-color: #dcfce7; color: #166534; }
+  .bg-red { background-color: #fee2e2; color: #991b1b; }
+  .bg-gray { background-color: #f3f4f6; color: #374151; }
+  
+  /* Text colors */
+  .text-success { color: #00a65a; font-weight: bold; font-size: 16px;}
+  .text-danger { color: #dd4b39; font-weight: bold; font-size: 16px;}
+
+</style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="main-header">
+    <a href="index.html" class="logo">LuckyDraw</a>
+    <nav class="navbar">
+      <div class="sidebar-toggle">☰</div>
+      <div class="user-menu">
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=fff&color=3c8dbc" alt="User Image">
+        <span>Admin User</span>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="main-sidebar">
+    <div class="user-panel">
+      <img src="https://ui-avatars.com/api/?name=Admin+User&background=fff&color=3c8dbc" alt="User Image">
+      <div class="user-panel-info"><p>Admin User</p></div>
+    </div>
+    <ul class="sidebar-menu">
+      <li class="header">Menu Quản Trị</li>
+      <li><a href="index.html">📊 <span>Tổng quan</span></a></li>
+      <li><a href="campaign-list.html">📁 <span>Chiến dịch</span></a></li>
+      <li><a href="customer-list.html">👥 <span>Khách hàng</span></a></li>
+      <li><a href="store-list.html">🏪 <span>Cửa hàng / Đại lý</span></a></li>
+      <li><a href="staff-list.html">👨‍💼 <span>Nhân viên</span></a></li>
+      <li><a href="prize-list.html">🎁 <span>Kho giải thưởng</span></a></li>
+      <li><a href="voucher-list.html">🎟️ <span>Quản lý Voucher</span></a></li>
+      <li class="active"><a href="turn-history.html">🔄 <span>Biến động Lượt quay</span></a></li>
+      <li><a href="staff-redemption.html">🎁 <span>Đổi Quà (Gạch mã)</span></a></li>
+      <li><a href="pos-invoice.html">🧾 <span>Nhập Hóa Đơn (POS)</span></a></li>
+      <li><a href="#">⚙️ <span>Cài đặt</span></a></li>
+    </ul>
+  </aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>Lịch sử Biến động Lượt Quay <small>Tra cứu nguồn gốc thêm/trừ lượt quay của khách hàng</small></h1>
+      <ul class="breadcrumb">
+        <li><a href="index.html">🏠 LuckyDraw</a></li>
+        <li>Biến động Lượt Quay</li>
+      </ul>
+    </section>
+    
+    <section class="content">
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">Sao kê Lượt quay (Turn Transactions)</h3>
+          <div class="box-tools">
+            <button class="btn-success" onclick="alert('Đang xuất file Excel (CSV)...')">📥 Xuất Báo Cáo</button>
+          </div>
+        </div>
+        <div class="box-body">
+          
+          <div class="filter-area">
+            <div class="filter-group">
+              <label>Số điện thoại Khách hàng</label>
+              <input type="text" class="form-control" placeholder="Nhập số điện thoại cần tra cứu...">
+            </div>
+            <div class="filter-group">
+              <label>Loại biến động</label>
+              <select class="form-control">
+                <option value="all">-- Tất cả --</option>
+                <option value="1">Được CỘNG (+) lượt quay</option>
+                <option value="0">Bị TRỪ (-) lượt quay</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Chiến dịch</label>
+              <select class="form-control">
+                <option value="all">-- Tất cả --</option>
+                <option value="1">Vui Hè Cực Đỉnh 2026</option>
+                <option value="2">Tri ân khách hàng tháng 6</option>
+              </select>
+            </div>
+            <div class="filter-group" style="flex: 0; justify-content: flex-end;">
+              <button class="btn-primary" style="height: 38px; white-space: nowrap;">Tra cứu</button>
+            </div>
+          </div>
+
+          <table class="table-striped">
+            <thead>
+              <tr>
+                <th>Mã GD</th>
+                <th>Thời gian</th>
+                <th>Khách Hàng (SĐT)</th>
+                <th>Chiến dịch</th>
+                <th>Biến Động</th>
+                <th>Phân loại</th>
+                <th>Nguồn tham chiếu (Ghi chú)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>#TRX-8902</td>
+                <td>17/06/2026 14:15:22</td>
+                <td><strong>0909123456</strong><br><small style="color:#777;">Nguyễn Văn A</small></td>
+                <td>Vui Hè Cực Đỉnh 2026</td>
+                <td><span class="text-danger">- 1</span></td>
+                <td><span class="badge bg-red">Tiêu Dùng (Play)</span></td>
+                <td>Khách hàng bấm nút Quay thưởng trên Mini-App</td>
+              </tr>
+              <tr>
+                <td>#TRX-8901</td>
+                <td>17/06/2026 10:15:00</td>
+                <td><strong>0909123456</strong><br><small style="color:#777;">Nguyễn Văn A</small></td>
+                <td>Vui Hè Cực Đỉnh 2026</td>
+                <td><span class="text-success">+ 4</span></td>
+                <td><span class="badge bg-green">Được Cấp (Earn)</span></td>
+                <td>Đồng bộ từ POS - Hóa đơn <a href="#" style="color:#3c8dbc; font-weight:bold;">HD-2026-0002</a> (Cửa hàng: TLC Hà Đông)</td>
+              </tr>
+              <tr>
+                <td>#TRX-8900</td>
+                <td>17/06/2026 09:30:11</td>
+                <td><strong>0933456789</strong><br><small style="color:#777;">Trần Thị B</small></td>
+                <td>Vui Hè Cực Đỉnh 2026</td>
+                <td><span class="text-success">+ 1</span></td>
+                <td><span class="badge bg-green">Được Cấp (Earn)</span></td>
+                <td>Đồng bộ từ POS - Hóa đơn <a href="#" style="color:#3c8dbc; font-weight:bold;">HD-2026-0001</a> (Cửa hàng: TLC Hà Đông)</td>
+              </tr>
+              <tr>
+                <td>#TRX-8899</td>
+                <td>16/06/2026 20:00:00</td>
+                <td><strong>0988111222</strong><br><small style="color:#777;">Lê Văn C</small></td>
+                <td>Tri ân khách hàng tháng 6</td>
+                <td><span class="text-success">+ 1</span></td>
+                <td><span class="badge bg-green">Được Cấp (Earn)</span></td>
+                <td>Thưởng chia sẻ sự kiện lên Facebook (Social Share)</td>
+              </tr>
+              <tr>
+                <td>#TRX-8898</td>
+                <td>16/06/2026 19:45:10</td>
+                <td><strong>0988111222</strong><br><small style="color:#777;">Lê Văn C</small></td>
+                <td>Tri ân khách hàng tháng 6</td>
+                <td><span class="text-danger">- 1</span></td>
+                <td><span class="badge bg-red">Tiêu Dùng (Play)</span></td>
+                <td>Khách hàng bấm nút Quay thưởng trên Mini-App</td>
+              </tr>
+              <tr>
+                <td>#TRX-8897</td>
+                <td>16/06/2026 10:00:00</td>
+                <td><strong>0911222333</strong><br><small style="color:#777;">Phạm D</small></td>
+                <td>Tri ân khách hàng tháng 6</td>
+                <td><span class="text-success">+ 5</span></td>
+                <td><span class="badge bg-green">Được Cấp (Earn)</span></td>
+                <td>Admin <span style="font-weight:bold;">admin.tong</span> tặng thủ công qua CMS (Lý do: Đền bù lỗi nạp điểm)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
