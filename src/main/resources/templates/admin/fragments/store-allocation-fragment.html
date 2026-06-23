@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <!-- Fragment to be loaded via AJAX into the modal body -->
+  <div th:fragment="content">
+    <form th:action="@{/admin/campaigns/{id}/stores/save(id=${campaignId})}" method="post">
+      <div class="box-body" style="max-height: 60vh; overflow-y: auto;">
+        <p style="margin-bottom: 15px; color: #555; font-size: 14px;">
+          Chọn các cửa hàng được phép triển khai chiến dịch này. Nếu bạn muốn <strong>ngừng/bỏ chương trình</strong> ở một cửa hàng nào đó, chỉ cần <strong>bỏ tích</strong> cửa hàng đó.
+        </p>
+        
+        <div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+          <label style="display: flex; align-items: center; gap: 10px; font-weight: bold; cursor: pointer;">
+            <input type="checkbox" onclick="toggleAllStores(this)" checked style="width: 18px; height: 18px;"> 
+            Chọn tất cả cửa hàng / đại lý
+          </label>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px; padding-left: 10px;">
+          <label th:each="store : ${activeStores}" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" name="storeIds" th:value="${store.storeId}" 
+                   th:checked="${assignedStoreIds != null and assignedStoreIds.contains(store.storeId)}" 
+                   class="store-checkbox" style="width: 16px; height: 16px;"> 
+            <span th:text="${store.tenCuaHang} + ' (ID: ' + ${store.storeId} + ')'">TLC Showroom</span>
+          </label>
+          <div th:if="${activeStores.isEmpty()}" style="color: #888;">
+            Không có cửa hàng nào đang hoạt động.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="margin-top: 20px;">
+        <button type="button" class="btn-default" onclick="closeModal('storeAssignModal')">Hủy bỏ</button>
+        <button type="submit" class="btn-warning">Lưu Phân Bổ</button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

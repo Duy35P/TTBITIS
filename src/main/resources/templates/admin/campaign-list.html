@@ -63,7 +63,10 @@
                 <td><a th:href="@{/play/{slug}(slug=${campaign.duongDanSlug})}" target="_blank">Link</a></td>
                 <td class="action-links">
                   <!-- Actions -->
-                  <a href="#" style="color: #f39c12;">Phân bổ CH</a> <span class="action-separator">|</span> 
+                  <a href="javascript:void(0)" 
+                     th:data-id="${campaign.campaignId}"
+                     th:data-name="${campaign.tenChienDich}"
+                     onclick="openStoreAllocationModal(this)" style="color: #f39c12;">Phân bổ CH</a> <span class="action-separator">|</span> 
                   <a href="#" style="color: #00a65a;">Luật chơi</a> <span class="action-separator">|</span> 
                   <a href="javascript:void(0)" 
                      th:data-id="${campaign.campaignId}"
@@ -187,13 +190,8 @@
       closeModal('ruleModal');
     }
 
-    function saveStoreAssignment() {
-      alert('Đã lưu cấu hình phân bổ cửa hàng thành công! Các cửa hàng bị bỏ chọn sẽ không còn tham gia chiến dịch này nữa.');
-      closeModal('storeAssignModal');
-    }
-
     function toggleAllStores(source) {
-      const checkboxes = document.querySelectorAll('input[name="storeCheckbox"]');
+      const checkboxes = document.querySelectorAll('.store-checkbox');
       for(let i=0; i<checkboxes.length; i++) {
         checkboxes[i].checked = source.checked;
       }
@@ -204,6 +202,27 @@
         event.target.classList.remove('active');
       }
     });
+
+    async function openStoreAllocationModal(btn) {
+      const campaignId = btn.getAttribute('data-id');
+      const campaignName = btn.getAttribute('data-name');
+      
+      document.getElementById('storeAssignModalTitle').textContent = 'Phân Bổ Cửa Hàng: ' + campaignName;
+      document.getElementById('storeAssignModal').classList.add('active');
+      document.getElementById('storeAssignModalContent').innerHTML = '<div style="text-align: center; padding: 20px;">Đang tải danh sách cửa hàng...</div>';
+      
+      try {
+        const response = await fetch('/admin/campaigns/' + campaignId + '/stores');
+        if (response.ok) {
+           const html = await response.text();
+           document.getElementById('storeAssignModalContent').innerHTML = html;
+        } else {
+           document.getElementById('storeAssignModalContent').innerHTML = '<div style="color:red; padding: 20px;">Lỗi khi tải dữ liệu!</div>';
+        }
+      } catch (e) {
+        document.getElementById('storeAssignModalContent').innerHTML = '<div style="color:red; padding: 20px;">Lỗi mạng! ' + e.message + '</div>';
+      }
+    }
   </script>
 
   <!-- Modal Phân Bổ Cửa Hàng -->
@@ -213,44 +232,8 @@
         <div class="modal-title" id="storeAssignModalTitle">Phân Bổ Chiến Dịch Cho Cửa Hàng</div>
         <button class="close-btn" onclick="closeModal('storeAssignModal')">&times;</button>
       </div>
-      <div class="box-body" style="max-height: 60vh; overflow-y: auto;">
-        <p style="margin-bottom: 15px; color: #555; font-size: 14px;">
-          Chọn các cửa hàng được phép triển khai chiến dịch này. Nếu bạn muốn <strong>ngừng/bỏ chương trình</strong> ở một cửa hàng nào đó, chỉ cần <strong>bỏ tích</strong> cửa hàng đó.
-        </p>
-        
-        <div style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
-          <label style="display: flex; align-items: center; gap: 10px; font-weight: bold; cursor: pointer;">
-            <input type="checkbox" onclick="toggleAllStores(this)" checked style="width: 18px; height: 18px;"> 
-            Chọn tất cả cửa hàng / đại lý
-          </label>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 12px; padding-left: 10px;">
-          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-            <input type="checkbox" name="storeCheckbox" checked style="width: 16px; height: 16px;"> 
-            <span>TLC Showroom Hà Đông (ID: 1)</span>
-          </label>
-          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-            <input type="checkbox" name="storeCheckbox" checked style="width: 16px; height: 16px;"> 
-            <span>Đại lý Cấp 1 - Hưng Yên (ID: 2)</span>
-          </label>
-          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-            <input type="checkbox" name="storeCheckbox" style="width: 16px; height: 16px;"> 
-            <span style="color: #888;">TLC Showroom Đà Nẵng (ID: 3)</span>
-          </label>
-          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-            <input type="checkbox" name="storeCheckbox" checked style="width: 16px; height: 16px;"> 
-            <span>Đại lý Cấp 2 - Bình Dương (ID: 4)</span>
-          </label>
-          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-            <input type="checkbox" name="storeCheckbox" checked style="width: 16px; height: 16px;"> 
-            <span>TLC Store Quận 1 - TP.HCM (ID: 5)</span>
-          </label>
-        </div>
-      </div>
-      <div class="modal-footer" style="margin-top: 20px;">
-        <button class="btn-default" onclick="closeModal('storeAssignModal')">Hủy bỏ</button>
-        <button class="btn-warning" onclick="saveStoreAssignment()">Lưu Phân Bổ</button>
+      <!-- Nơi chứa nội dung form được load từ server -->
+      <div id="storeAssignModalContent">
       </div>
     </div>
   </div>

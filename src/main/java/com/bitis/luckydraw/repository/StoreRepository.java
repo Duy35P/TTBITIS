@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface StoreRepository extends JpaRepository<Store, Long> {
     Optional<Store> findByMaStore(String maStore);
+    java.util.List<Store> findByTrangThai(Integer trangThai);
 }
