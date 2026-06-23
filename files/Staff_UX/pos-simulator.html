@@ -353,7 +353,7 @@
       document.getElementById('receiptModal').classList.add('active');
     }
 
-    function simulateWebhook() {
+    async function simulateWebhook() {
       const toast = document.getElementById('apiToast');
       const msg = document.getElementById('toastMessage');
       const loader = document.getElementById('toastLoader');
@@ -362,15 +362,57 @@
       loader.style.display = 'block';
       msg.innerHTML = 'Đang đẩy dữ liệu hóa đơn qua Webhook tới LuckyDraw...';
 
+      const phone = document.getElementById('customerPhone').value;
+      const invoiceCode = document.getElementById('rInvoiceCode').innerText;
+      
+      // Tính toán skuList từ giỏ hàng thực tế
+      let totalAmount = 0;
+      const skuList = cart.map(item => {
+          totalAmount += item.price * item.qty;
+          return { sku: item.sku, quantity: item.qty };
+      });
+
+      // Tạo payload chuẩn với InvoiceRequestDTO
+      const payload = {
+          invoiceNumber: invoiceCode,
+          originalInvoiceNumber: null, // Hóa đơn mua mới
+          totalAmount: totalAmount,
+          paymentMethod: currentPayment === 'Tiền mặt' ? 'CASH' : (currentPayment === 'Chuyển khoản' ? 'BANK' : 'CARD'),
+          customerPhone: phone,
+          storeId: 1, // ID giả định cho cửa hàng
+          skuList: skuList
+      };
+
+      try {
+          const response = await fetch('http://localhost:8080/api/pos/invoice', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload)
+          });
+          
+          const result = await response.json();
+          loader.style.display = 'none';
+
+          if (response.ok) {
+              if (result.token) {
+                  msg.innerHTML = `✅ <strong>Thành công!</strong> Khách hàng được cộng <strong>${result.turnsGranted}</strong> lượt quay. <br> <span style="font-size: 12px; margin-top:5px; display:block;">Mã Token: ${result.token}</span>`;
+              } else {
+                  msg.innerHTML = `✅ <strong>Thành công!</strong> ${result.message}`;
+              }
+          } else {
+              msg.innerHTML = `❌ <strong>Lỗi xử lý API!</strong> ${result.message || 'Hệ thống từ chối hóa đơn'}`;
+          }
+      } catch (error) {
+          loader.style.display = 'none';
+          msg.innerHTML = `❌ <strong>Lỗi kết nối!</strong> Không thể gửi webhook. Hãy chắc chắn Spring Boot Server đang chạy ở port 8080.`;
+      }
+
       setTimeout(() => {
-        loader.style.display = 'none';
-        msg.innerHTML = '✅ <strong>Đồng bộ thành công!</strong> Hệ thống LuckyDraw đã nhận Hóa đơn và tự động cấp lượt quay cho khách hàng.';
-        
-        setTimeout(() => {
           toast.classList.remove('show');
           closeModal();
-        }, 4000);
-      }, 2000);
+      }, 6000);
     }
 
     function closeModal() {

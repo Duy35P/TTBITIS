@@ -38,6 +38,7 @@ CREATE TABLE [dbo].[vai_tro] (
 )
 GO
 
+
 --. Bảng nhân viên 
 CREATE TABLE [dbo].[staff] (
     [staff_id]      BIGINT          NOT NULL IDENTITY(1,1),
@@ -298,3 +299,8 @@ JOIN [dbo].[prize]      p ON p.[prize_id]    = spi.[id_giai_thuong]
 JOIN [dbo].[campaign]   c ON c.[campaign_id] = p.[id_chien_dich]
 WHERE c.[trang_thai] = 1
 GO
+
+
+select * from vai_tro
+select * from staff
+select * from store

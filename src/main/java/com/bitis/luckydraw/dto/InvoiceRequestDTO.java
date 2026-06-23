@@ -7,11 +7,21 @@ public class InvoiceRequestDTO {
 
     private String invoiceNumber;
     private String originalInvoiceNumber;
-    private BigDecimal totalAmount;
+    private Double totalAmount;
     private String paymentMethod;
-    private Long customerId;
+    private String customerPhone;
     private Long storeId;
-    private List<String> skuList;
+    private List<SkuItem> skuList;
+
+    public static class SkuItem {
+        private String sku;
+        private Integer quantity;
+
+        public String getSku() { return sku; }
+        public void setSku(String sku) { this.sku = sku; }
+        public Integer getQuantity() { return quantity; }
+        public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    }
 
     // Getters and Setters
     public String getInvoiceNumber() {
@@ -30,11 +40,11 @@ public class InvoiceRequestDTO {
         this.originalInvoiceNumber = originalInvoiceNumber;
     }
 
-    public BigDecimal getTotalAmount() {
+    public Double getTotalAmount() {
         return totalAmount;
     }
 
-    public void setTotalAmount(BigDecimal totalAmount) {
+    public void setTotalAmount(Double totalAmount) {
         this.totalAmount = totalAmount;
     }
 
@@ -46,12 +56,12 @@ public class InvoiceRequestDTO {
         this.paymentMethod = paymentMethod;
     }
 
-    public Long getCustomerId() {
-        return customerId;
+    public String getCustomerPhone() {
+        return customerPhone;
     }
 
-    public void setCustomerId(Long customerId) {
-        this.customerId = customerId;
+    public void setCustomerPhone(String customerPhone) {
+        this.customerPhone = customerPhone;
     }
 
     public Long getStoreId() {
@@ -62,11 +72,11 @@ public class InvoiceRequestDTO {
         this.storeId = storeId;
     }
 
-    public List<String> getSkuList() {
+    public List<SkuItem> getSkuList() {
         return skuList;
     }
 
-    public void setSkuList(List<String> skuList) {
+    public void setSkuList(List<SkuItem> skuList) {
         this.skuList = skuList;
     }
 }
