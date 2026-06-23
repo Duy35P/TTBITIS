@@ -23,13 +23,14 @@ public class AdminStoreController {
     }
 
     @PostMapping("/save")
-    public String saveStore(@RequestParam(required = false) Long storeId,
+    public String saveStore(@RequestParam(name = "storeId", required = false) String storeIdStr,
                             @RequestParam String tenCuaHang,
                             @RequestParam String maStore,
                             @RequestParam String diaChiStore,
                             @RequestParam Integer trangThai) {
         Store store;
-        if (storeId != null) {
+        if (storeIdStr != null && !storeIdStr.trim().isEmpty()) {
+            Long storeId = Long.parseLong(storeIdStr);
             store = storeRepository.findById(storeId).orElse(new Store());
         } else {
             store = new Store();
