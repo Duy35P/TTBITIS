@@ -144,11 +144,11 @@
     }
 
     // Đóng modal khi click ra ngoài
-    window.onclick = function(event) {
+    window.addEventListener('mousedown', function(event) {
       if (event.target.classList.contains('modal')) {
         event.target.classList.remove('active');
       }
-    }
+    });
   </script>
 </body>
 </html>

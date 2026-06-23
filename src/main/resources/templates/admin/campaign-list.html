@@ -199,11 +199,11 @@
       }
     }
 
-    window.onclick = function(event) {
+    window.addEventListener('mousedown', function(event) {
       if (event.target.classList.contains('modal')) {
         event.target.classList.remove('active');
       }
-    }
+    });
   </script>
 
   <!-- Modal Phân Bổ Cửa Hàng -->
