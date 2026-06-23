@@ -67,7 +67,10 @@
                      th:data-id="${campaign.campaignId}"
                      th:data-name="${campaign.tenChienDich}"
                      onclick="openStoreAllocationModal(this)" style="color: #f39c12;">Phân bổ CH</a> <span class="action-separator">|</span> 
-                  <a href="#" style="color: #00a65a;">Luật chơi</a> <span class="action-separator">|</span> 
+                  <a href="javascript:void(0)" 
+                     th:data-id="${campaign.campaignId}"
+                     th:data-name="${campaign.tenChienDich}"
+                     onclick="openCampaignRulesModal(this)" style="color: #00a65a;">Luật chơi</a> <span class="action-separator">|</span> 
                   <a href="javascript:void(0)" 
                      th:data-id="${campaign.campaignId}"
                      th:data-name="${campaign.tenChienDich}"
@@ -185,11 +188,6 @@
       document.getElementById(modalId).classList.remove('active');
     }
 
-    function saveRule() {
-      alert('Đã lưu cấu hình luật cộng lượt thành công!');
-      closeModal('ruleModal');
-    }
-
     function toggleAllStores(source) {
       const checkboxes = document.querySelectorAll('.store-checkbox');
       for(let i=0; i<checkboxes.length; i++) {
@@ -223,6 +221,69 @@
         document.getElementById('storeAssignModalContent').innerHTML = '<div style="color:red; padding: 20px;">Lỗi mạng! ' + e.message + '</div>';
       }
     }
+
+    // --- Javascript xử lý Modal Cấu hình Luật ---
+    async function openCampaignRulesModal(btn) {
+      const campaignId = btn.getAttribute('data-id');
+      const campaignName = btn.getAttribute('data-name');
+      
+      document.getElementById('ruleModalTitle').textContent = 'Cấu hình Luật: ' + campaignName;
+      document.getElementById('ruleModal').classList.add('active');
+      document.getElementById('ruleModalContent').innerHTML = '<div style="text-align: center; padding: 20px;">Đang tải cấu hình luật...</div>';
+      
+      try {
+        const response = await fetch('/admin/campaigns/' + campaignId + '/rules');
+        if (response.ok) {
+           const html = await response.text();
+           document.getElementById('ruleModalContent').innerHTML = html;
+        } else {
+           document.getElementById('ruleModalContent').innerHTML = '<div style="color:red; padding: 20px;">Lỗi khi tải dữ liệu!</div>';
+        }
+      } catch (e) {
+        document.getElementById('ruleModalContent').innerHTML = '<div style="color:red; padding: 20px;">Lỗi mạng! ' + e.message + '</div>';
+      }
+    }
+
+    function addPaymentRow() {
+      const container = document.getElementById('payment-rules-container');
+      const row = document.createElement('div');
+      row.className = 'payment-row';
+      row.style.cssText = 'display: flex; gap: 15px; margin-bottom: 10px; align-items: center;';
+      row.innerHTML = `
+        <div class="form-group" style="flex: 2; margin-bottom: 0;">
+          <select class="form-control" name="paymentMethods">
+            <option value="card">Thẻ tín dụng / Thẻ ghi nợ (Card)</option>
+            <option value="bank_transfer">Chuyển khoản / Mã QR</option>
+            <option value="cash">Tiền mặt</option>
+            <option value="momo">Ví MoMo</option>
+            <option value="vnpay">VNPay</option>
+            <option value="zalopay">ZaloPay</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+          <input type="number" class="form-control" name="paymentTurns" value="1" placeholder="Số lượt" required>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
+      `;
+      container.appendChild(row);
+    }
+
+    function addSkuRow() {
+      const container = document.getElementById('sku-rules-container');
+      const row = document.createElement('div');
+      row.className = 'sku-row';
+      row.style.cssText = 'display: flex; gap: 15px; margin-bottom: 10px; align-items: center;';
+      row.innerHTML = `
+        <div class="form-group" style="flex: 2; margin-bottom: 0;">
+          <input type="text" class="form-control" name="skuCodes" placeholder="Nhập mã SKU" required>
+        </div>
+        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+          <input type="number" class="form-control" name="skuTurns" value="1" placeholder="Số lượt" required>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
+      `;
+      container.appendChild(row);
+    }
   </script>
 
   <!-- Modal Phân Bổ Cửa Hàng -->
@@ -232,90 +293,19 @@
         <div class="modal-title" id="storeAssignModalTitle">Phân Bổ Chiến Dịch Cho Cửa Hàng</div>
         <button class="close-btn" onclick="closeModal('storeAssignModal')">&times;</button>
       </div>
-      <!-- Nơi chứa nội dung form được load từ server -->
       <div id="storeAssignModalContent">
       </div>
     </div>
   </div>
 
-
   <!-- Modal Cấu hình Luật -->
   <div id="ruleModal" class="modal">
     <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
-        <div class="modal-title">Cấu hình Luật Cộng Lượt</div>
+        <div class="modal-title" id="ruleModalTitle">Cấu hình Luật Cộng Lượt</div>
         <button class="close-btn" onclick="closeModal('ruleModal')">&times;</button>
       </div>
-      <div class="box-body" style="max-height: 70vh; overflow-y: auto;">
-        <h4 style="margin-bottom: 10px; color: #3c8dbc; border-bottom: 1px solid #f4f4f4; padding-bottom: 5px;">1. Luật Cơ Bản (Giá trị đơn hàng)</h4>
-        <div class="form-group">
-          <label>Giá trị đơn hàng tối thiểu để được 1 lượt quay (VNĐ)</label>
-          <input type="number" class="form-control" placeholder="VD: 500000">
-          <small style="color:#777;">Nếu để trống, hệ thống không cộng lượt dựa trên giá trị hóa đơn.</small>
-        </div>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-bottom: 1px solid #f4f4f4; padding-bottom: 5px; margin-bottom: 10px;">
-          <h4 style="color: #3c8dbc; margin: 0;">2. Thưởng Phương Thức Thanh Toán</h4>
-          <button class="btn-primary" style="padding: 2px 10px; font-size: 12px; background-color: #00a65a; border: none;" onclick="alert('Tính năng Thêm Dòng sẽ được xử lý bằng Javascript')">+ Thêm Phương Thức</button>
-        </div>
-        <!-- Dòng 1 -->
-        <div style="display: flex; gap: 15px; margin-bottom: 10px; align-items: center;">
-          <div class="form-group" style="flex: 2; margin-bottom: 0;">
-            <select class="form-control">
-              <option value="card" selected>Thẻ tín dụng / Thẻ ghi nợ (Card)</option>
-              <option value="bank_transfer">Chuyển khoản / Mã QR</option>
-              <option value="cash">Tiền mặt</option>
-            </select>
-          </div>
-          <div class="form-group" style="flex: 1; margin-bottom: 0;">
-            <input type="number" class="form-control" value="2" placeholder="Số lượt">
-          </div>
-          <button style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
-        </div>
-        <!-- Dòng 2 -->
-        <div style="display: flex; gap: 15px; margin-bottom: 10px; align-items: center;">
-          <div class="form-group" style="flex: 2; margin-bottom: 0;">
-            <select class="form-control">
-              <option value="card">Thẻ tín dụng / Thẻ ghi nợ (Card)</option>
-              <option value="bank_transfer" selected>Chuyển khoản / Mã QR</option>
-              <option value="cash">Tiền mặt</option>
-            </select>
-          </div>
-          <div class="form-group" style="flex: 1; margin-bottom: 0;">
-            <input type="number" class="form-control" value="1" placeholder="Số lượt">
-          </div>
-          <button style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
-        </div>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-bottom: 1px solid #f4f4f4; padding-bottom: 5px; margin-bottom: 10px;">
-          <h4 style="color: #3c8dbc; margin: 0;">3. Thưởng Sản Phẩm (SKU Ưu Tiên)</h4>
-          <button class="btn-primary" style="padding: 2px 10px; font-size: 12px; background-color: #00a65a; border: none;" onclick="alert('Tính năng Thêm Dòng sẽ được xử lý bằng Javascript')">+ Thêm SKU</button>
-        </div>
-        <small style="color:#777; display: block; margin-bottom: 10px;">Cấu hình mức thưởng riêng lẻ cho từng mã sản phẩm khi khách mua trúng.</small>
-        <!-- Dòng 1 -->
-        <div style="display: flex; gap: 15px; margin-bottom: 10px; align-items: center;">
-          <div class="form-group" style="flex: 2; margin-bottom: 0;">
-            <input type="text" class="form-control" value="IPHONE-16-PRO" placeholder="Nhập mã SKU">
-          </div>
-          <div class="form-group" style="flex: 1; margin-bottom: 0;">
-            <input type="number" class="form-control" value="5" placeholder="Số lượt thưởng">
-          </div>
-          <button style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
-        </div>
-        <!-- Dòng 2 -->
-        <div style="display: flex; gap: 15px; margin-bottom: 10px; align-items: center;">
-          <div class="form-group" style="flex: 2; margin-bottom: 0;">
-            <input type="text" class="form-control" value="AIRPOD-PRO-2" placeholder="Nhập mã SKU">
-          </div>
-          <div class="form-group" style="flex: 1; margin-bottom: 0;">
-            <input type="number" class="form-control" value="2" placeholder="Số lượt thưởng">
-          </div>
-          <button style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-default" onclick="closeModal('ruleModal')">Hủy</button>
-        <button class="btn-primary" onclick="saveRule()">Lưu Cấu Hình</button>
+      <div id="ruleModalContent">
       </div>
     </div>
   </div>

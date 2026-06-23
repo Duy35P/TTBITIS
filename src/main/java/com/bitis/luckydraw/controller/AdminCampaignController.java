@@ -8,8 +8,15 @@ import org.springframework.web.bind.annotation.*;
 
 import com.bitis.luckydraw.model.Store;
 import com.bitis.luckydraw.model.CampaignStore;
+import com.bitis.luckydraw.model.CampaignRule;
+import com.bitis.luckydraw.model.CampaignRulePayment;
+import com.bitis.luckydraw.model.CampaignRuleSku;
 import com.bitis.luckydraw.repository.StoreRepository;
 import com.bitis.luckydraw.repository.CampaignStoreRepository;
+import com.bitis.luckydraw.repository.CampaignRuleRepository;
+import com.bitis.luckydraw.repository.CampaignRulePaymentRepository;
+import com.bitis.luckydraw.repository.CampaignRuleSkuRepository;
+import com.bitis.luckydraw.dto.CampaignRuleForm;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,11 +27,18 @@ public class AdminCampaignController {
     private final CampaignRepository campaignRepository;
     private final StoreRepository storeRepository;
     private final CampaignStoreRepository campaignStoreRepository;
+    private final CampaignRuleRepository campaignRuleRepository;
+    private final CampaignRulePaymentRepository campaignRulePaymentRepository;
+    private final CampaignRuleSkuRepository campaignRuleSkuRepository;
 
-    public AdminCampaignController(CampaignRepository campaignRepository, StoreRepository storeRepository, CampaignStoreRepository campaignStoreRepository) {
+    public AdminCampaignController(CampaignRepository campaignRepository, StoreRepository storeRepository, CampaignStoreRepository campaignStoreRepository,
+                                   CampaignRuleRepository campaignRuleRepository, CampaignRulePaymentRepository campaignRulePaymentRepository, CampaignRuleSkuRepository campaignRuleSkuRepository) {
         this.campaignRepository = campaignRepository;
         this.storeRepository = storeRepository;
         this.campaignStoreRepository = campaignStoreRepository;
+        this.campaignRuleRepository = campaignRuleRepository;
+        this.campaignRulePaymentRepository = campaignRulePaymentRepository;
+        this.campaignRuleSkuRepository = campaignRuleSkuRepository;
     }
 
     @GetMapping
@@ -86,6 +100,68 @@ public class AdminCampaignController {
                 mapping.setIdChienDich(campaignId);
                 mapping.setIdCuaHang(storeId);
                 campaignStoreRepository.save(mapping);
+            }
+        }
+        
+        return "redirect:/admin/campaigns";
+    }
+
+    @GetMapping("/{campaignId}/rules")
+    public String getCampaignRulesModal(@PathVariable Long campaignId, Model model) {
+        CampaignRule rule = campaignRuleRepository.findByIdChienDich(campaignId).orElse(new CampaignRule());
+        List<CampaignRulePayment> payments = campaignRulePaymentRepository.findByIdChienDich(campaignId);
+        List<CampaignRuleSku> skus = campaignRuleSkuRepository.findByIdChienDich(campaignId);
+        
+        model.addAttribute("campaignId", campaignId);
+        model.addAttribute("basicRule", rule);
+        model.addAttribute("paymentRules", payments);
+        model.addAttribute("skuRules", skus);
+        
+        return "admin/fragments/campaign-rules-fragment :: content";
+    }
+
+    @PostMapping("/{campaignId}/rules/save")
+    public String saveCampaignRules(@PathVariable Long campaignId, @ModelAttribute CampaignRuleForm form) {
+        // 1. Delete old rules
+        campaignRuleRepository.deleteByIdChienDich(campaignId);
+        campaignRulePaymentRepository.deleteByIdChienDich(campaignId);
+        campaignRuleSkuRepository.deleteByIdChienDich(campaignId);
+        
+        // 2. Save Basic Rule
+        if (form.getGiaTriDonHangToiThieu() != null) {
+            CampaignRule rule = new CampaignRule();
+            rule.setIdChienDich(campaignId);
+            rule.setGiaTriDonHangToiThieu(form.getGiaTriDonHangToiThieu());
+            campaignRuleRepository.save(rule);
+        }
+        
+        // 3. Save Payment Rules
+        if (form.getPaymentMethods() != null && form.getPaymentTurns() != null) {
+            for (int i = 0; i < form.getPaymentMethods().size(); i++) {
+                String method = form.getPaymentMethods().get(i);
+                Integer turn = form.getPaymentTurns().get(i);
+                if (method != null && !method.trim().isEmpty() && turn != null && turn > 0) {
+                    CampaignRulePayment payment = new CampaignRulePayment();
+                    payment.setIdChienDich(campaignId);
+                    payment.setPhuongThucThanhToan(method);
+                    payment.setSoLuotThuong(turn);
+                    campaignRulePaymentRepository.save(payment);
+                }
+            }
+        }
+        
+        // 4. Save SKU Rules
+        if (form.getSkuCodes() != null && form.getSkuTurns() != null) {
+            for (int i = 0; i < form.getSkuCodes().size(); i++) {
+                String sku = form.getSkuCodes().get(i);
+                Integer turn = form.getSkuTurns().get(i);
+                if (sku != null && !sku.trim().isEmpty() && turn != null && turn > 0) {
+                    CampaignRuleSku ruleSku = new CampaignRuleSku();
+                    ruleSku.setIdChienDich(campaignId);
+                    ruleSku.setMaSku(sku);
+                    ruleSku.setSoLuotThuong(turn);
+                    campaignRuleSkuRepository.save(ruleSku);
+                }
             }
         }
         

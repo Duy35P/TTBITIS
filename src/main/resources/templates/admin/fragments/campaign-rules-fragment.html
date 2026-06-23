@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <div th:fragment="content">
+    <form th:action="@{/admin/campaigns/{id}/rules/save(id=${campaignId})}" method="post">
+      <div class="box-body" style="max-height: 70vh; overflow-y: auto; padding-right: 15px;">
+        <!-- 1. Basic Rule -->
+        <h4 style="margin-bottom: 10px; color: #3c8dbc; border-bottom: 1px solid #f4f4f4; padding-bottom: 5px;">1. Luật Cơ Bản (Giá trị đơn hàng)</h4>
+        <div class="form-group">
+          <label>Giá trị đơn hàng tối thiểu để được 1 lượt quay (VNĐ)</label>
+          <input type="number" class="form-control" name="giaTriDonHangToiThieu" th:value="${basicRule.giaTriDonHangToiThieu}" placeholder="VD: 500000">
+          <small style="color:#777;">Nếu để trống, hệ thống không cộng lượt dựa trên giá trị hóa đơn.</small>
+        </div>
+
+        <!-- 2. Payment Rule -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-bottom: 1px solid #f4f4f4; padding-bottom: 5px; margin-bottom: 10px;">
+          <h4 style="color: #3c8dbc; margin: 0;">2. Thưởng Phương Thức Thanh Toán</h4>
+          <button type="button" class="btn-primary" style="padding: 2px 10px; font-size: 12px; background-color: #00a65a; border: none;" onclick="addPaymentRow()">+ Thêm Phương Thức</button>
+        </div>
+        <div id="payment-rules-container">
+          <!-- Existing Payment Rules -->
+          <div th:each="payment : ${paymentRules}" class="payment-row" style="display: flex; gap: 15px; margin-bottom: 10px; align-items: center;">
+            <div class="form-group" style="flex: 2; margin-bottom: 0;">
+              <select class="form-control" name="paymentMethods">
+                <option value="card" th:selected="${payment.phuongThucThanhToan == 'card'}">Thẻ tín dụng / Thẻ ghi nợ (Card)</option>
+                <option value="bank_transfer" th:selected="${payment.phuongThucThanhToan == 'bank_transfer'}">Chuyển khoản / Mã QR</option>
+                <option value="cash" th:selected="${payment.phuongThucThanhToan == 'cash'}">Tiền mặt</option>
+                <option value="momo" th:selected="${payment.phuongThucThanhToan == 'momo'}">Ví MoMo</option>
+                <option value="vnpay" th:selected="${payment.phuongThucThanhToan == 'vnpay'}">VNPay</option>
+                <option value="zalopay" th:selected="${payment.phuongThucThanhToan == 'zalopay'}">ZaloPay</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+              <input type="number" class="form-control" name="paymentTurns" th:value="${payment.soLuotThuong}" placeholder="Số lượt" required>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
+          </div>
+        </div>
+
+        <!-- 3. SKU Rule -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-bottom: 1px solid #f4f4f4; padding-bottom: 5px; margin-bottom: 10px;">
+          <h4 style="color: #3c8dbc; margin: 0;">3. Thưởng Sản Phẩm (SKU Ưu Tiên)</h4>
+          <button type="button" class="btn-primary" style="padding: 2px 10px; font-size: 12px; background-color: #00a65a; border: none;" onclick="addSkuRow()">+ Thêm SKU</button>
+        </div>
+        <small style="color:#777; display: block; margin-bottom: 10px;">Cấu hình mức thưởng riêng lẻ cho từng mã sản phẩm khi khách mua trúng.</small>
+        
+        <div id="sku-rules-container">
+          <!-- Existing SKU Rules -->
+          <div th:each="sku : ${skuRules}" class="sku-row" style="display: flex; gap: 15px; margin-bottom: 10px; align-items: center;">
+            <div class="form-group" style="flex: 2; margin-bottom: 0;">
+              <input type="text" class="form-control" name="skuCodes" th:value="${sku.maSku}" placeholder="Nhập mã SKU" required>
+            </div>
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+              <input type="number" class="form-control" name="skuTurns" th:value="${sku.soLuotThuong}" placeholder="Số lượt" required>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer" style="margin-top: 20px;">
+        <button type="button" class="btn-default" onclick="closeModal('ruleModal')">Hủy bỏ</button>
+        <button type="submit" class="btn-warning">Lưu Cấu Hình</button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

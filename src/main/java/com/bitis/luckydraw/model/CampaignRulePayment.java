@@ -1,9 +1,9 @@
 package com.bitis.luckydraw.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -14,7 +14,7 @@ public class CampaignRulePayment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "rule_payment_id", nullable = false)
+    @Column(name = "rule_payment_id")
     private Long rulePaymentId;
 
     @Column(name = "id_chien_dich", nullable = false)
