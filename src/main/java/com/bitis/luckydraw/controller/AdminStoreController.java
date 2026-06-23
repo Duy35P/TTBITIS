@@ -5,51 +5,29 @@ import com.bitis.luckydraw.repository.StoreRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import com.bitis.luckydraw.model.Campaign;
-import com.bitis.luckydraw.model.CampaignStore;
-import com.bitis.luckydraw.repository.CampaignRepository;
-import com.bitis.luckydraw.repository.CampaignStoreRepository;
+import com.bitis.luckydraw.dto.StoreCampaignProjection;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin/stores")
 public class AdminStoreController {
 
     private final StoreRepository storeRepository;
-    private final CampaignRepository campaignRepository;
-    private final CampaignStoreRepository campaignStoreRepository;
 
-    public AdminStoreController(StoreRepository storeRepository, CampaignRepository campaignRepository, CampaignStoreRepository campaignStoreRepository) {
+    public AdminStoreController(StoreRepository storeRepository) {
         this.storeRepository = storeRepository;
-        this.campaignRepository = campaignRepository;
-        this.campaignStoreRepository = campaignStoreRepository;
     }
 
     @GetMapping
     public String listStores(Model model) {
         List<Store> stores = storeRepository.findAll();
         
-        // Lấy tất cả mapping campaign_store
-        List<CampaignStore> allMappings = campaignStoreRepository.findAll();
-        
-        // Lấy tất cả campaign active/draft (hoặc lấy hết)
-        List<Campaign> allCampaigns = campaignRepository.findAll();
-        Map<Long, Campaign> campaignMap = allCampaigns.stream()
-                .collect(Collectors.toMap(Campaign::getCampaignId, c -> c));
-
-        // Group campaigns by storeId
-        Map<Long, List<Campaign>> storeCampaignsMap = new HashMap<>();
-        for (Store s : stores) {
-            List<Campaign> campaignsForStore = allMappings.stream()
-                    .filter(m -> m.getIdCuaHang().equals(s.getStoreId()))
-                    .map(m -> campaignMap.get(m.getIdChienDich()))
-                    .filter(c -> c != null)
-                    .collect(Collectors.toList());
-            storeCampaignsMap.put(s.getStoreId(), campaignsForStore);
+        // Map from Native Query
+        Map<Long, String> storeCampaignsMap = new HashMap<>();
+        for (StoreCampaignProjection p : storeRepository.getStoreCampaigns()) {
+            storeCampaignsMap.put(p.getStoreId(), p.getCampaigns());
         }
 
         model.addAttribute("stores", stores);

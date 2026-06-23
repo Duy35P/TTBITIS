@@ -51,12 +51,12 @@
                 </td>
                 <td th:text="${store.diaChiStore}">Địa chỉ</td>
                 <td>
-                  <div th:if="${storeCampaignsMap != null and storeCampaignsMap.get(store.storeId) != null and !storeCampaignsMap.get(store.storeId).isEmpty()}">
-                    <span th:each="campaign : ${storeCampaignsMap.get(store.storeId)}" 
+                  <div th:if="${storeCampaignsMap != null and storeCampaignsMap.get(store.storeId) != null and storeCampaignsMap.get(store.storeId) != ''}">
+                    <span th:each="campaignName : ${#strings.arraySplit(storeCampaignsMap.get(store.storeId), ',')}" 
                           style="display:inline-block; background-color: #e8f4f8; color: #3c8dbc; padding: 2px 6px; border-radius: 3px; font-size: 12px; margin-right: 4px; margin-bottom: 2px;"
-                          th:text="${campaign.tenChienDich}"></span>
+                          th:text="${campaignName}"></span>
                   </div>
-                  <span th:if="${storeCampaignsMap == null or storeCampaignsMap.get(store.storeId) == null or storeCampaignsMap.get(store.storeId).isEmpty()}" style="color:#aaa; font-style:italic; font-size:12px;">Chưa có</span>
+                  <span th:if="${storeCampaignsMap == null or storeCampaignsMap.get(store.storeId) == null or storeCampaignsMap.get(store.storeId) == ''}" style="color:#aaa; font-style:italic; font-size:12px;">Chưa có</span>
                 </td>
                 <td>
                   <span class="badge bg-green" th:if="${store.trangThai == 1}">Hoạt động</span>
