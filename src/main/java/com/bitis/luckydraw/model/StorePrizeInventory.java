@@ -25,4 +25,10 @@ public class StorePrizeInventory {
 
     @Column(name = "ton_kho", nullable = false)
     private Integer tonKho;
+
+    @Column(name = "tong_luong_cap", nullable = false)
+    private Integer tongLuongCap = 0;
+
+    @Column(name = "da_phat", nullable = false)
+    private Integer daPhat = 0;
 }

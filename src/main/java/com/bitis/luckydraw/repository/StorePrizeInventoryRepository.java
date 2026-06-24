@@ -7,8 +7,34 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Modifying;
+import com.bitis.luckydraw.dto.StoreInventoryDto;
+
 @Repository
 public interface StorePrizeInventoryRepository extends JpaRepository<StorePrizeInventory, Long> {
     List<StorePrizeInventory> findByMaStore(String maStore);
     Optional<StorePrizeInventory> findByMaStoreAndMaGiaiThuong(String maStore, String maGiaiThuong);
+
+    @Query(value = "SELECT * FROM vw_store_prize_inventory " +
+                   "WHERE (:maStore IS NULL OR maStore = :maStore) " +
+                   "AND (:maChienDich IS NULL OR maChienDich = :maChienDich) " +
+                   "AND (:maGiaiThuong IS NULL OR maGiaiThuong = :maGiaiThuong)", 
+           nativeQuery = true)
+    List<StoreInventoryDto> getStoreInventory(@Param("maStore") String maStore, 
+                                              @Param("maChienDich") String maChienDich, 
+                                              @Param("maGiaiThuong") String maGiaiThuong);
+
+    @Modifying
+    @Query(value = "EXEC sp_AllocatePrizeToStore @maStore = :maStore, @maGiaiThuong = :maGiaiThuong, @quantity = :quantity", nativeQuery = true)
+    void allocatePrizeToStore(@Param("maStore") String maStore, 
+                              @Param("maGiaiThuong") String maGiaiThuong, 
+                              @Param("quantity") int quantity);
+
+    @Modifying
+    @Query(value = "EXEC sp_UpdateStorePrizeInventory @maStore = :maStore, @maGiaiThuong = :maGiaiThuong, @newTongLuongCap = :newTongLuongCap", nativeQuery = true)
+    void updateStorePrizeInventory(@Param("maStore") String maStore, 
+                                   @Param("maGiaiThuong") String maGiaiThuong, 
+                                   @Param("newTongLuongCap") int newTongLuongCap);
 }

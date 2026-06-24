@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments/layout :: head('Lucky Draw - Quản lý Kho Quà')}">
+</head>
+<body>
+  <!-- Header -->
+  <header th:replace="~{admin/fragments/layout :: header}"></header>
+
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>
+        Kho Quà Tặng
+        <small>Quản lý giải thưởng và Phân bổ</small>
+      </h1>
+      <ul class="breadcrumb">
+        <li><a href="#">🏠 LuckyDraw</a></li>
+        <li>Kho giải thưởng</li>
+      </ul>
+    </section>
+    
+    <div th:if="${successMessage}" style="padding: 15px; margin: 0 15px 15px 15px; background-color: #dff0d8; color: #3c763d; border: 1px solid #d6e9c6; border-radius: 4px;">
+        <strong>Thành công!</strong> <span th:text="${successMessage}"></span>
+    </div>
+    <div th:if="${errorMessage}" style="padding: 15px; margin: 0 15px 15px 15px; background-color: #f2dede; color: #a94442; border: 1px solid #ebccd1; border-radius: 4px;">
+        <strong>Lỗi!</strong> <span th:text="${errorMessage}"></span>
+    </div>
+
+    <section class="content">
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">Nghiệp vụ Quản lý Giải Thưởng</h3>
+        </div>
+        <div class="box-body">
+          
+          <div class="nav-tabs" style="display: flex; border-bottom: 1px solid #ddd; margin-bottom: 15px;">
+            <button th:class="${activeTab == 'prizes' ? 'active' : ''}" onclick="switchTab('prizes', this)" style="background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; color: #666; border-bottom: 3px solid transparent;">Danh Sách Giải Thưởng</button>
+            <button th:class="${activeTab == 'allocations' ? 'active' : ''}" onclick="switchTab('allocations', this)" style="background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; color: #666; border-bottom: 3px solid transparent;">Phân Bổ Cửa Hàng</button>
+          </div>
+
+          <!-- Tab 1: Danh Sách Giải Thưởng -->
+          <div id="prizes" class="tab-content" th:style="${activeTab == 'prizes' ? 'display:block;' : 'display:none;'}">
+            <div style="margin-bottom: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+              <form th:action="@{/admin/prizes/import}" method="post" enctype="multipart/form-data" style="margin: 0;">
+                <input type="file" name="file" accept=".xlsx, .xls" style="display:none;" id="excelPrizeInput" onchange="this.form.submit()">
+                <button type="button" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c;" onclick="document.getElementById('excelPrizeInput').click()">Import Excel (Giải Thưởng)</button>
+              </form>
+              <button class="btn-primary" onclick="openModal('prizeModal', 'Thêm Giải Thưởng Mới')">+ Thêm Giải Thưởng Mới</button>
+            </div>
+            <table class="table-striped" style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="border-bottom: 1px solid #f4f4f4;">
+                  <th style="padding: 12px 8px;">Giải Thưởng</th>
+                  <th style="padding: 12px 8px;">Thuộc Chiến Dịch</th>
+                  <th style="padding: 12px 8px;">Tỷ lệ trúng</th>
+                  <th style="padding: 12px 8px;">Tồn kho tổng</th>
+                  <th style="padding: 12px 8px;">Trạng thái</th>
+                  <th style="padding: 12px 8px;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="p : ${prizes}">
+                  <td style="padding: 12px 8px;">
+                    <div style="display: flex; flex-direction: column;">
+                      <span style="font-weight: 600; font-size: 15px; color: #333;" th:text="${p.tenGiai}"></span>
+                      <span style="font-size: 12px; color: #777;" th:text="${p.maGiaiThuong}"></span>
+                    </div>
+                  </td>
+                  <td style="padding: 12px 8px;">
+                    <span style="font-size: 12px; color: #777; background: #eee; padding: 2px 6px; border-radius: 4px;" th:text="${p.tenChienDich}"></span>
+                  </td>
+                  <td style="padding: 12px 8px;"><strong th:text="${p.xacSuat + '%'}"></strong></td>
+                  <td style="padding: 12px 8px;">
+                    <span style="font-weight: bold; font-size: 15px; color: #00a65a;" th:text="${p.tonKhoToanHeThong}"></span>
+                  </td>
+                  <td style="padding: 12px 8px;"><span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; background-color: #0073b7; color: #fff;">Đang chạy</span></td>
+                  <td style="padding: 12px 8px;" class="action-links">
+                    <a href="javascript:void(0)" 
+                       th:data-ma="${p.maGiaiThuong}"
+                       th:data-ten="${p.tenGiai}"
+                       th:data-loai="${p.loaiGiai}"
+                       th:data-chien="${p.maChienDich}"
+                       th:data-ton="${p.tonKhoToanHeThong}"
+                       th:data-limit="${p.gioiHanTrungMoiCustomer}"
+                       th:data-xac="${p.xacSuat}"
+                       onclick="openEditModal(this)" style="color: #3c8dbc; font-weight: 600;">Sửa</a> 
+                    <span style="color: #ccc; margin: 0 5px;">|</span> 
+                    <a href="javascript:void(0)" 
+                       th:data-ma="${p.maGiaiThuong}"
+                       onclick="confirmDeletePrize(this)" style="color: #dd4b39; font-weight: 600;">Xóa</a>
+                  </td>
+                </tr>
+                <tr th:if="${prizes == null or prizes.isEmpty()}">
+                    <td colspan="6" style="text-align: center; padding: 20px; color: #777;">Chưa có giải thưởng nào</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Tab 2: Phân Bổ Đại Lý -->
+          <div id="allocations" class="tab-content" th:style="${activeTab == 'allocations' ? 'display:block;' : 'display:none;'}">
+            <div style="margin-bottom: 15px; background: #f9f9f9; padding: 15px; border-radius: 4px; border: 1px solid #ddd;">
+              <h4 style="margin-bottom: 10px; font-weight: 600; font-size: 15px;">Phân bổ giải thưởng cho cửa hàng</h4>
+              
+              <form th:action="@{/admin/prizes/allocate}" method="post" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+                <div>
+                  <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Chọn Cửa Hàng</label>
+                  <select name="maStore" id="allocateStore" onchange="filterPrizesByStore()" required style="padding: 6px; width: 200px; border: 1px solid #ccc; border-radius: 3px;">
+                    <option value="">-- Chọn cửa hàng --</option>
+                    <option th:each="s : ${stores}" th:value="${s.maStore}" th:text="${s.tenCuaHang}"></option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Chọn Giải Thưởng</label>
+                  <select name="maGiaiThuong" id="allocatePrize" required style="padding: 6px; width: 250px; border: 1px solid #ccc; border-radius: 3px;">
+                    <option value="">-- Chọn giải thưởng --</option>
+                    <option th:each="p : ${prizes}" th:value="${p.maGiaiThuong}" th:data-campaign="${p.maChienDich}" th:text="${p.tenGiai + ' (Còn ' + p.tonKhoToanHeThong + ')'}"></option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Số lượng cấp</label>
+                  <input type="number" name="soLuongCap" required min="1" style="padding: 6px; width: 100px; border: 1px solid #ccc; border-radius: 3px;" value="1">
+                </div>
+                <div>
+                  <button type="submit" class="btn-warning" style="background-color: #f39c12; color: #fff; padding: 6px 12px; border-radius: 3px; font-weight: 600; border: none; cursor: pointer;">Ghi nhận Phân Bổ</button>
+                </div>
+              </form>
+            </div>
+            <!-- Bộ lọc Phân Bổ -->
+            <form method="get" th:action="@{/admin/prizes}">
+              <input type="hidden" name="tab" value="allocations">
+              <div class="filter-area" style="background-color: #f9fafb; padding: 15px; border-radius: 4px; border: 1px solid #eee; margin-bottom: 15px; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+                <div class="filter-group" style="display: flex; flex-direction: column; flex: 1; min-width: 200px;">
+                  <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Cửa hàng / Đại lý</label>
+                  <select name="store" class="form-control" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+                    <option value="all">-- Tất cả Cửa hàng --</option>
+                    <option th:each="s : ${stores}" th:value="${s.maStore}" th:text="${s.tenCuaHang}" th:selected="${s.maStore == selectedStore}"></option>
+                  </select>
+                </div>
+                <div class="filter-group" style="display: flex; flex-direction: column; flex: 1; min-width: 200px;">
+                  <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Chiến dịch</label>
+                  <select name="campaign" class="form-control" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+                    <option value="all">-- Tất cả Chiến dịch --</option>
+                    <option th:each="c : ${campaigns}" th:value="${c.maChienDich}" th:text="${c.tenChienDich}" th:selected="${c.maChienDich == selectedCampaign}"></option>
+                  </select>
+                </div>
+                <div class="filter-group" style="display: flex; flex-direction: column; flex: 1; min-width: 200px;">
+                  <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Giải thưởng</label>
+                  <select name="prize" class="form-control" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+                    <option value="all">-- Tất cả Giải thưởng --</option>
+                    <option th:each="p : ${prizes}" th:value="${p.maGiaiThuong}" th:text="${p.tenGiai}" th:selected="${p.maGiaiThuong == selectedPrize}"></option>
+                  </select>
+                </div>
+                <div class="filter-group" style="flex: 0; justify-content: flex-end;">
+                  <button type="submit" class="btn-primary" style="height: 38px; white-space: nowrap; background-color: #3c8dbc; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px;">Lọc dữ liệu</button>
+                </div>
+              </div>
+            </form>
+
+            <table class="table-striped" style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="border-bottom: 1px solid #f4f4f4;">
+                  <th style="padding: 12px 8px;">Cửa Hàng / Đại Lý</th>
+                  <th style="padding: 12px 8px;">Giải Thưởng</th>
+                  <th style="padding: 12px 8px;">Chiến Dịch</th>
+                  <th style="padding: 12px 8px;">SL Phân bổ (Tổng cấp)</th>
+                  <th style="padding: 12px 8px;">Đã trúng tại CH</th>
+                  <th style="padding: 12px 8px;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="a : ${allocations}">
+                  <td style="padding: 12px 8px;" th:text="${a.tenCuaHang}"></td>
+                  <td style="padding: 12px 8px;"><strong th:text="${a.tenGiai}"></strong></td>
+                  <td style="padding: 12px 8px;" th:text="${a.tenChienDich}"></td>
+                  <td style="padding: 12px 8px;" th:text="${a.tongLuongCap}"></td>
+                  <td style="padding: 12px 8px;" th:text="${a.daPhat}"></td>
+                  <td style="padding: 12px 8px;" class="action-links">
+                    <a href="javascript:void(0)" 
+                       th:data-store="${a.maStore}"
+                       th:data-prize="${a.maGiaiThuong}"
+                       th:data-total="${a.tongLuongCap}"
+                       th:data-da-phat="${a.daPhat}"
+                       onclick="openEditAllocationModal(this)" style="color:#3c8dbc; font-weight: 600;">Chỉnh sửa SL</a> 
+                    <span style="color:#ccc; margin: 0 5px;">|</span> 
+                    <a href="javascript:void(0)" 
+                       th:data-store="${a.maStore}"
+                       th:data-prize="${a.maGiaiThuong}"
+                       onclick="confirmRevokeAllocation(this)" style="color:#dd4b39; font-weight: 600;">Thu hồi</a>
+                  </td>
+                </tr>
+                <tr th:if="${allocations == null or allocations.isEmpty()}">
+                    <td colspan="6" style="text-align: center; padding: 20px; color: #777;">Chưa có dữ liệu phân bổ</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal Thêm/Sửa Giải Thưởng -->
+  <div id="prizeModal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div style="background-color: #fff; padding: 20px; border-radius: 4px; width: 100%; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+      <form th:action="@{/admin/prizes/save}" method="post">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f4f4f4; padding-bottom: 15px; margin-bottom: 15px;">
+            <div style="font-size: 18px; font-weight: 600;" id="prizeModalTitle">Thêm Giải Thưởng Mới</div>
+            <button type="button" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #888;" onclick="closeModal('prizeModal')">&times;</button>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Mã giải thưởng *</label>
+            <input type="text" name="maGiaiThuong" id="prizeMa" required style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px; outline: none;">
+          </div>
+
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Tên giải thưởng *</label>
+            <input type="text" name="tenGiai" id="prizeName" required style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px; outline: none;">
+          </div>
+          
+          <div style="display: flex; gap: 15px;">
+            <div style="margin-bottom: 15px; flex: 1;">
+              <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Loại giải *</label>
+              <select name="loaiGiai" id="prizeType" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;">
+                <option value="0">Hiện vật (SP / Quà tặng)</option>
+                <option value="1">Voucher / Mã điện tử</option>
+              </select>
+            </div>
+            <div style="margin-bottom: 15px; flex: 1;">
+              <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Giới hạn trúng/người</label>
+              <input type="number" name="gioiHanTrungMoiCustomer" id="prizeLimit" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;">
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Thuộc chiến dịch *</label>
+            <select name="maChienDich" id="prizeCampaign" required style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;">
+              <option th:each="c : ${campaigns}" th:value="${c.maChienDich}" th:text="${c.tenChienDich}"></option>
+            </select>
+          </div>
+          
+          <div style="display: flex; gap: 15px;">
+            <div style="margin-bottom: 15px; flex: 1;">
+              <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Tồn kho tổng *</label>
+              <input type="number" name="tonKhoToanHeThong" id="prizeTotal" required min="0" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;">
+            </div>
+            <div style="margin-bottom: 15px; flex: 1;">
+              <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Tỷ lệ trúng (%) *</label>
+              <input type="number" name="xacSuat" id="prizeProb" required step="0.01" min="0" max="100" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;">
+            </div>
+          </div>
+          
+          <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f4f4f4; padding-top: 15px; margin-top: 15px;">
+            <button type="button" style="background-color: #f4f4f4; color: #444; padding: 6px 12px; border-radius: 3px; border: 1px solid #ddd; cursor: pointer; font-weight: 600;" onclick="closeModal('prizeModal')">Hủy</button>
+            <button type="submit" id="savePrizeBtn" style="background-color: #3c8dbc; color: #fff; padding: 6px 12px; border-radius: 3px; border: none; font-weight: 600; cursor: pointer;">Lưu Giải Thưởng</button>
+          </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Sửa Phân Bổ -->
+  <div id="editAllocationModal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div style="background-color: #fff; padding: 20px; border-radius: 4px; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+      <form th:action="@{/admin/prizes/allocations/update}" method="post">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f4f4f4; padding-bottom: 15px; margin-bottom: 15px;">
+            <div style="font-size: 18px; font-weight: 600;">Chỉnh Sửa Số Lượng Cấp</div>
+            <button type="button" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #888;" onclick="closeModal('editAllocationModal')">&times;</button>
+          </div>
+          
+          <input type="hidden" name="maStore" id="editAllocStore">
+          <input type="hidden" name="maGiaiThuong" id="editAllocPrize">
+
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Đã phát tại CH</label>
+            <input type="number" id="editAllocDaPhat" readonly style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px; background-color: #eee;">
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Tổng số lượng cấp mới *</label>
+            <input type="number" name="newTongLuongCap" id="editAllocTotal" required min="0" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;">
+          </div>
+          
+          <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f4f4f4; padding-top: 15px; margin-top: 15px;">
+            <button type="button" style="background-color: #f4f4f4; color: #444; padding: 6px 12px; border-radius: 3px; border: 1px solid #ddd; cursor: pointer; font-weight: 600;" onclick="closeModal('editAllocationModal')">Hủy</button>
+            <button type="submit" style="background-color: #f39c12; color: #fff; padding: 6px 12px; border-radius: 3px; border: none; font-weight: 600; cursor: pointer;">Lưu Thay Đổi</button>
+          </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Form Revoke Allocation Ẩn -->
+  <form id="revokeAllocationForm" th:action="@{/admin/prizes/allocations/revoke}" method="post" style="display: none;">
+      <input type="hidden" name="maStore" id="revokeStoreMa">
+      <input type="hidden" name="maGiaiThuong" id="revokePrizeMa">
+  </form>
+
+  <!-- Form Delete Ẩn -->
+  <form id="deleteForm" th:action="@{/admin/prizes/delete}" method="post" style="display: none;">
+      <input type="hidden" name="maGiaiThuong" id="deleteMaGiaiThuong">
+  </form>
+
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    var campaignStores = /*[[${campaignStores}]]*/ [];
+    
+    function filterPrizesByStore() {
+        var storeSelect = document.getElementById('allocateStore');
+        var prizeSelect = document.getElementById('allocatePrize');
+        var selectedStore = storeSelect.value;
+        
+        // Find campaigns valid for this store
+        var validCampaigns = [];
+        if (campaignStores && campaignStores.length > 0) {
+            validCampaigns = campaignStores.filter(cs => cs.maStore === selectedStore).map(cs => cs.maChienDich);
+        }
+        
+        // Reset prize selection
+        prizeSelect.value = "";
+        
+        // Hide/Show options based on campaign
+        var options = prizeSelect.querySelectorAll('option');
+        options.forEach(opt => {
+            if (opt.value === "") return; // Skip placeholder
+            
+            var pCampaign = opt.getAttribute('data-campaign');
+            if (!selectedStore || validCampaigns.includes(pCampaign)) {
+                opt.style.display = '';
+            } else {
+                opt.style.display = 'none';
+            }
+        });
+    }
+    /*]]>*/
+
+    function switchTab(tabId, element) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+      document.querySelectorAll('.nav-tabs button').forEach(btn => btn.style.color = '#666');
+      document.querySelectorAll('.nav-tabs button').forEach(btn => btn.style.borderBottomColor = 'transparent');
+      
+      document.getElementById(tabId).style.display = 'block';
+      element.style.color = '#3c8dbc';
+      element.style.borderBottomColor = '#3c8dbc';
+    }
+
+    function openEditAllocationModal(btn) {
+      var store = btn.getAttribute('data-store');
+      var prize = btn.getAttribute('data-prize');
+      var total = btn.getAttribute('data-total');
+      var daPhat = btn.getAttribute('data-da-phat');
+      
+      document.getElementById('editAllocStore').value = store;
+      document.getElementById('editAllocPrize').value = prize;
+      document.getElementById('editAllocDaPhat').value = daPhat;
+      document.getElementById('editAllocTotal').value = total;
+      document.getElementById('editAllocTotal').min = daPhat; // Cannot reduce below what's already distributed
+      
+      document.getElementById('editAllocationModal').style.display = 'flex';
+    }
+
+    function confirmRevokeAllocation(btn) {
+      if (confirm('Bạn có chắc chắn muốn thu hồi toàn bộ số lượng chưa phát của cửa hàng này?')) {
+          var store = btn.getAttribute('data-store');
+          var prize = btn.getAttribute('data-prize');
+          document.getElementById('revokeStoreMa').value = store;
+          document.getElementById('revokePrizeMa').value = prize;
+          document.getElementById('revokeAllocationForm').submit();
+      }
+    }
+
+    function openEditModal(btn) {
+      var ma = btn.getAttribute('data-ma');
+      var ten = btn.getAttribute('data-ten');
+      var loai = btn.getAttribute('data-loai');
+      var chien = btn.getAttribute('data-chien');
+      var ton = btn.getAttribute('data-ton');
+      var limit = btn.getAttribute('data-limit');
+      var xac = btn.getAttribute('data-xac');
+      openModal('prizeModal', 'Sửa Giải Thưởng', ma, ten, loai, limit, chien, ton, xac);
+    }
+    
+    function confirmDeletePrize(btn) {
+      var ma = btn.getAttribute('data-ma');
+      deletePrize(ma);
+    }
+
+    function openModal(modalId, title, pMa, pTen, pLoai, pLimit, pChienDich, pTotal, pProb) {
+      var modal = document.getElementById(modalId);
+      modal.style.display = 'flex';
+      if(title && document.getElementById('prizeModalTitle')) {
+        document.getElementById('prizeModalTitle').textContent = title;
+        if(title === 'Sửa Giải Thưởng') {
+           document.getElementById('savePrizeBtn').style.backgroundColor = '#f39c12';
+           document.getElementById('savePrizeBtn').textContent = 'Lưu thay đổi';
+           
+           document.getElementById('prizeMa').value = pMa;
+           document.getElementById('prizeMa').readOnly = true;
+           document.getElementById('prizeName').value = pTen;
+           document.getElementById('prizeType').value = pLoai || 0;
+           document.getElementById('prizeLimit').value = pLimit || '';
+           document.getElementById('prizeCampaign').value = pChienDich;
+           document.getElementById('prizeTotal').value = pTotal || 0;
+           document.getElementById('prizeProb').value = pProb || 0;
+        } else {
+           document.getElementById('savePrizeBtn').style.backgroundColor = '#3c8dbc';
+           document.getElementById('savePrizeBtn').textContent = 'Lưu Giải Thưởng';
+           
+           document.getElementById('prizeMa').value = '';
+           document.getElementById('prizeMa').readOnly = false;
+           document.getElementById('prizeName').value = '';
+           document.getElementById('prizeLimit').value = '';
+           document.getElementById('prizeTotal').value = '';
+           document.getElementById('prizeProb').value = '';
+        }
+      }
+    }
+    
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    function deletePrize(maGiaiThuong) {
+        if (confirm('Xoá giải này? Chú ý: Không thể xoá nếu giải đã phân bổ.')) {
+            document.getElementById('deleteMaGiaiThuong').value = maGiaiThuong;
+            document.getElementById('deleteForm').submit();
+        }
+    }
+  </script>
+</body>
+</html>

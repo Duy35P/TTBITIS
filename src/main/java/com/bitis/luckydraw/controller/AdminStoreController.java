@@ -14,6 +14,9 @@ import com.bitis.luckydraw.model.Campaign;
 import com.bitis.luckydraw.model.CampaignStore;
 import com.bitis.luckydraw.repository.CampaignRepository;
 import com.bitis.luckydraw.repository.CampaignStoreRepository;
+import com.bitis.luckydraw.service.StoreExcelService;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/admin/stores")
@@ -22,11 +25,13 @@ public class AdminStoreController {
     private final StoreRepository storeRepository;
     private final CampaignRepository campaignRepository;
     private final CampaignStoreRepository campaignStoreRepository;
+    private final StoreExcelService storeExcelService;
 
-    public AdminStoreController(StoreRepository storeRepository, CampaignRepository campaignRepository, CampaignStoreRepository campaignStoreRepository) {
+    public AdminStoreController(StoreRepository storeRepository, CampaignRepository campaignRepository, CampaignStoreRepository campaignStoreRepository, StoreExcelService storeExcelService) {
         this.storeRepository = storeRepository;
         this.campaignRepository = campaignRepository;
         this.campaignStoreRepository = campaignStoreRepository;
+        this.storeExcelService = storeExcelService;
     }
 
     @GetMapping
@@ -79,6 +84,29 @@ public class AdminStoreController {
         
         storeRepository.save(store);
         
+        return "redirect:/admin/stores";
+    }
+
+    @PostMapping("/import-excel")
+    public String importExcel(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
+        if (file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn file Excel!");
+            return "redirect:/admin/stores";
+        }
+        try {
+            List<Store> stores = storeExcelService.parseExcelFile(file);
+            int count = 0;
+            for (Store store : stores) {
+                // Kiểm tra xem store đã tồn tại chưa
+                if (!storeRepository.findByMaStore(store.getMaStore()).isPresent()) {
+                    storeRepository.save(store);
+                    count++;
+                }
+            }
+            redirectAttributes.addFlashAttribute("successMessage", "Đã import thành công " + count + " cửa hàng mới!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi import: " + e.getMessage());
+        }
         return "redirect:/admin/stores";
     }
 }
