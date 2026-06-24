@@ -14,14 +14,14 @@ public class StorePrizeInventory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "inventory_id")
-    private Long inventoryId;
+    @Column(name = "id")
+    private Long id;
 
-    @Column(name = "id_cua_hang", nullable = false)
-    private Long idCuaHang;
+    @Column(name = "ma_store", nullable = false)
+    private String maStore;
 
-    @Column(name = "id_giai_thuong", nullable = false)
-    private Long idGiaiThuong;
+    @Column(name = "ma_giai_thuong", nullable = false)
+    private String maGiaiThuong;
 
     @Column(name = "ton_kho", nullable = false)
     private Integer tonKho;

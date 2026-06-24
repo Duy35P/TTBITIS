@@ -14,14 +14,14 @@ public class TurnTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "transaction_id")
-    private Long transactionId;
+    @Column(name = "id")
+    private Long id;
 
-    @Column(name = "id_khach_hang", nullable = false)
-    private Long idKhachHang;
+    @Column(name = "ma_khach_hang", nullable = false)
+    private String maKhachHang;
 
-    @Column(name = "id_chien_dich", nullable = false)
-    private Long idChienDich;
+    @Column(name = "ma_chien_dich", nullable = false)
+    private String maChienDich;
 
     @Column(name = "loai", nullable = false)
     private Integer loai;

@@ -15,7 +15,7 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
     /**
      * Tìm chiến dịch đang hoạt động (trang_thai = 1).
      */
-    @Query("SELECT c FROM Campaign c WHERE c.campaignId = :id AND c.trangThai = 1")
+    @Query("SELECT c FROM Campaign c WHERE c.id = :id AND c.trangThai = 1")
     Optional<Campaign> findActiveById(@Param("id") Long id);
 
     /**
@@ -27,4 +27,5 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
      * Tìm chiến dịch theo slug.
      */
     Optional<Campaign> findByDuongDanSlug(String duongDanSlug);
+    Optional<Campaign> findByMaChienDich(String maChienDich);
 }

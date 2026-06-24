@@ -16,11 +16,11 @@ public class StorePosKey {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "pos_key_id", nullable = false)
-    private Long posKeyId;
+    @Column(name = "id", nullable = false)
+    private Long id;
 
-    @Column(name = "id_cua_hang", nullable = false)
-    private Long idCuaHang;
+    @Column(name = "ma_store", nullable = false)
+    private String maStore;
 
     @Column(name = "api_key_hash", nullable = false, length = 255)
     private String apiKeyHash;

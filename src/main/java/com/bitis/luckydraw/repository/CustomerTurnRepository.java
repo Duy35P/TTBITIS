@@ -19,13 +19,13 @@ public interface CustomerTurnRepository extends JpaRepository<CustomerTurn, Long
      * Sử dụng Pessimistic Lock (SELECT ... WITH (UPDLOCK)) để chống Race Condition.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT c FROM CustomerTurn c WHERE c.idKhachHang = :idKhachHang AND c.idChienDich = :idChienDich")
-    Optional<CustomerTurn> findByIdKhachHangAndIdChienDich(@Param("idKhachHang") Long idKhachHang, @Param("idChienDich") Long idChienDich);
+    @Query("SELECT c FROM CustomerTurn c WHERE c.maKhachHang = :maKhachHang AND c.maChienDich = :maChienDich")
+    Optional<CustomerTurn> findByMaKhachHangAndMaChienDich(@Param("maKhachHang") String maKhachHang, @Param("maChienDich") String maChienDich);
 
     @Modifying
-    @Query(value = "EXEC sp_AddCustomerTurns_Safe :idKhachHang, :idChienDich, :soLuongCong, :nguonThamChieu", nativeQuery = true)
-    void addCustomerTurnsSafe(@Param("idKhachHang") Long idKhachHang, 
-                              @Param("idChienDich") Long idChienDich, 
+    @Query(value = "EXEC sp_AddCustomerTurns_Safe :maKhachHang, :maChienDich, :soLuongCong, :nguonThamChieu", nativeQuery = true)
+    void addCustomerTurnsSafe(@Param("maKhachHang") String maKhachHang, 
+                              @Param("maChienDich") String maChienDich, 
                               @Param("soLuongCong") Integer soLuongCong, 
                               @Param("nguonThamChieu") String nguonThamChieu);
 }

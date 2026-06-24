@@ -7,9 +7,9 @@ import java.util.List;
 
 @Repository
 public interface CampaignRulePaymentRepository extends JpaRepository<CampaignRulePayment, Long> {
-    List<CampaignRulePayment> findByIdChienDich(Long idChienDich);
+    List<CampaignRulePayment> findByMaChienDich(String maChienDich);
 
     @org.springframework.transaction.annotation.Transactional
     @org.springframework.data.jpa.repository.Modifying
-    void deleteByIdChienDich(Long idChienDich);
+    void deleteByMaChienDich(String maChienDich);
 }

@@ -14,8 +14,8 @@ public class Invoice {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "invoice_id")
-    private Long invoiceId;
+    @Column(name = "id")
+    private Long id;
 
     @Column(name = "ma_hoa_don", nullable = false, length = 255)
     private String maHoaDon;
@@ -23,11 +23,11 @@ public class Invoice {
     @Column(name = "ma_hoa_don_goc", length = 255)
     private String maHoaDonGoc;
 
-    @Column(name = "id_cua_hang", nullable = false)
-    private Long idCuaHang;
+    @Column(name = "ma_store", nullable = false)
+    private String maStore;
 
-    @Column(name = "id_khach_hang")
-    private Long idKhachHang;
+    @Column(name = "ma_khach_hang")
+    private String maKhachHang;
 
     @Column(name = "tong_tien", nullable = false)
     private Double tongTien;

@@ -106,7 +106,8 @@
       <span>Cửa hàng:</span>
       <select class="store-select" id="posStoreSelect" onchange="updateReceiptStoreName(this)">
         <option th:each="store : ${stores}" 
-                th:value="${store.storeId}" 
+                th:value="${store.maStore}" 
+                th:data-address="${store.diaChiStore}"
                 th:text="${store.tenCuaHang}">Biti's Nguyễn Trãi</option>
       </select>
     </div>
@@ -170,8 +171,8 @@
     <div class="receipt-modal">
       <div class="receipt-paper">
         <div class="r-header">
-          <div class="r-title">Biti's Quận 1</div>
-          <div class="r-info">123 abc quận 1 TPHCM<br>SĐT: 024.1234.5678</div>
+          <div class="r-title" id="rStoreTitle">Biti's Quận 1</div>
+          <div class="r-info" id="rStoreAddress">123 abc quận 1 TPHCM<br>SĐT: 024.1234.5678</div>
         </div>
         <div class="r-info" style="margin-bottom: 10px;">
           Ngày: <span id="rDate"></span><br>
@@ -327,6 +328,14 @@
       // Generate Invoice Code
       const invoiceCode = "POS-" + new Date().getFullYear() + "-" + Math.floor(Math.random() * 90000 + 10000);
       
+      // Update Store Info
+      const storeSelect = document.getElementById('posStoreSelect');
+      const selectedOption = storeSelect.options[storeSelect.selectedIndex];
+      if (selectedOption) {
+        document.getElementById('rStoreTitle').innerText = selectedOption.text;
+        document.getElementById('rStoreAddress').innerHTML = selectedOption.getAttribute('data-address') + '<br>SĐT: 1900 2122 (CSKH)';
+      }
+      
       // Populate Receipt
       const now = new Date();
       document.getElementById('rDate').innerText = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
@@ -384,7 +393,7 @@
       });
 
       const payload = {
-          storeId: storeId,
+          maStore: storeId,
           invoiceCode: invoiceCode,
           totalAmount: totalAmount,
           paymentMethod: currentPayment === 'Tiền mặt' ? 'CASH' : (currentPayment === 'Chuyển khoản' ? 'BANK_TRANSFER' : 'CARD'),

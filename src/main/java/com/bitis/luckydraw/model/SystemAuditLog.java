@@ -16,8 +16,8 @@ public class SystemAuditLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "log_id", nullable = false)
-    private Long logId;
+    @Column(name = "id", nullable = false)
+    private Long id;
 
     @Column(name = "staff_id", nullable = false)
     private Long staffId;

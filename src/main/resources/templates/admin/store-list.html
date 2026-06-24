@@ -36,7 +36,8 @@
               <tr>
                 <th>Thông tin Cửa hàng</th>
                 <th>Địa chỉ</th>
-                <th>Chiến dịch đang chạy</th>
+                <th>C.Dịch Đang chạy</th>
+                <th>C.Dịch Hàng chờ</th>
                 <th>Trạng thái</th>
                 <th>Thao tác</th>
               </tr>
@@ -46,17 +47,33 @@
                 <td>
                   <div class="store-info">
                     <span class="store-name" th:text="${store.tenCuaHang}">Tên cửa hàng</span>
-                    <span class="store-code" th:text="'Mã: ' + ${store.maStore}">Mã: ST-HD001</span>
+                    <span class="store-code" th:text="'Mã: ' + ${store.maStore}"></span>
                   </div>
                 </td>
                 <td th:text="${store.diaChiStore}">Địa chỉ</td>
                 <td>
-                  <div th:if="${storeCampaignsMap != null and storeCampaignsMap.get(store.storeId) != null and storeCampaignsMap.get(store.storeId) != ''}">
-                    <span th:each="campaignName : ${#strings.arraySplit(storeCampaignsMap.get(store.storeId), ',')}" 
-                          style="display:inline-block; background-color: #e8f4f8; color: #3c8dbc; padding: 2px 6px; border-radius: 3px; font-size: 12px; margin-right: 4px; margin-bottom: 2px;"
-                          th:text="${campaignName}"></span>
+                  <div th:if="${activeCampaignsMap != null and activeCampaignsMap.get(store.id) != null and !activeCampaignsMap.get(store.id).isEmpty()}">
+                    <span th:each="campaign : ${activeCampaignsMap.get(store.id)}" 
+                          style="display:inline-block; background-color: #e8f4f8; color: #3c8dbc; padding: 2px 6px; border-radius: 3px; font-size: 12px; margin-right: 4px; margin-bottom: 2px; cursor: pointer; text-decoration: underline;"
+                          th:text="${campaign.tenChienDich}"
+                          th:data-name="${campaign.tenChienDich}"
+                          th:data-start="${campaign.ngayBatDau != null ? #temporals.format(campaign.ngayBatDau, 'dd/MM/yyyy HH:mm') : 'Chưa thiết lập'}"
+                          th:data-end="${campaign.ngayKetThuc != null ? #temporals.format(campaign.ngayKetThuc, 'dd/MM/yyyy HH:mm') : 'Chưa thiết lập'}"
+                          onclick="viewCampaignInfo(this)"></span>
                   </div>
-                  <span th:if="${storeCampaignsMap == null or storeCampaignsMap.get(store.storeId) == null or storeCampaignsMap.get(store.storeId) == ''}" style="color:#aaa; font-style:italic; font-size:12px;">Chưa có</span>
+                  <span th:if="${activeCampaignsMap == null or activeCampaignsMap.get(store.id) == null or activeCampaignsMap.get(store.id).isEmpty()}" style="color:#aaa; font-style:italic; font-size:12px;">Chưa có</span>
+                </td>
+                <td>
+                  <div th:if="${pendingCampaignsMap != null and pendingCampaignsMap.get(store.id) != null and !pendingCampaignsMap.get(store.id).isEmpty()}">
+                    <span th:each="campaign : ${pendingCampaignsMap.get(store.id)}" 
+                          style="display:inline-block; background-color: #fcf8e3; color: #8a6d3b; padding: 2px 6px; border-radius: 3px; font-size: 12px; margin-right: 4px; margin-bottom: 2px; cursor: pointer; text-decoration: underline;"
+                          th:text="${campaign.tenChienDich}"
+                          th:data-name="${campaign.tenChienDich}"
+                          th:data-start="${campaign.ngayBatDau != null ? #temporals.format(campaign.ngayBatDau, 'dd/MM/yyyy HH:mm') : 'Chưa thiết lập'}"
+                          th:data-end="${campaign.ngayKetThuc != null ? #temporals.format(campaign.ngayKetThuc, 'dd/MM/yyyy HH:mm') : 'Chưa thiết lập'}"
+                          onclick="viewCampaignInfo(this)"></span>
+                  </div>
+                  <span th:if="${pendingCampaignsMap == null or pendingCampaignsMap.get(store.id) == null or pendingCampaignsMap.get(store.id).isEmpty()}" style="color:#aaa; font-style:italic; font-size:12px;">Trống</span>
                 </td>
                 <td>
                   <span class="badge bg-green" th:if="${store.trangThai == 1}">Hoạt động</span>
@@ -64,7 +81,7 @@
                 </td>
                 <td class="action-links">
                   <a href="javascript:void(0)" 
-                     th:data-id="${store.storeId}" 
+                     th:data-id="${store.id}" 
                      th:data-name="${store.tenCuaHang}" 
                      th:data-code="${store.maStore}" 
                      th:data-address="${store.diaChiStore}"
@@ -92,17 +109,17 @@
         </div>
         <div class="form-group">
           <label>Tên Cửa hàng / Đại lý *</label>
-          <input type="text" class="form-control" name="tenCuaHang" id="storeName" placeholder="Ví dụ: Đại lý Cấp 1 - Hà Nội" required>
+          <input type="text" class="form-control" name="tenCuaHang" id="storeName" required>
         </div>
         <div class="form-group">
-          <label>Mã Đại lý (Tự động tạo hoặc nhập tay)</label>
-          <input type="text" class="form-control" name="maStore" id="storeCode" placeholder="Ví dụ: DL-HN001" required>
+          <label>Mã Đại lý *</label>
+          <input type="text" class="form-control" name="maStore" id="storeCode"  required>
         </div>
         <div class="form-group">
           <label>Địa chỉ chi tiết *</label>
-          <input type="text" class="form-control" name="diaChiStore" id="storeAddress" placeholder="Nhập địa chỉ đầy đủ" required>
+          <input type="text" class="form-control" name="diaChiStore" id="storeAddress" required>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="storeStatusGroup">
           <label>Trạng thái</label>
           <select class="form-control" name="trangThai" id="storeStatus">
             <option value="1">Hoạt động</option>
@@ -129,7 +146,8 @@
           document.getElementById('storeName').value = '';
           document.getElementById('storeCode').value = '';
           document.getElementById('storeAddress').value = '';
-          document.getElementById('storeStatus').value = '1';
+          document.getElementById('storeStatus').value = '0';
+          document.getElementById('storeStatusGroup').style.display = 'none'; // Ẩn khi thêm mới
       }
     }
     
@@ -141,11 +159,19 @@
       document.getElementById('storeName').value = btn.getAttribute('data-name');
       document.getElementById('storeCode').value = btn.getAttribute('data-code');
       document.getElementById('storeAddress').value = btn.getAttribute('data-address');
+      document.getElementById('storeStatusGroup').style.display = 'block'; // Hiện khi sửa
       document.getElementById('storeStatus').value = btn.getAttribute('data-status');
     }
     
     function closeModal(modalId) {
       document.getElementById(modalId).classList.remove('active');
+    }
+
+    function viewCampaignInfo(btn) {
+      document.getElementById('campaignInfoModalTitle').textContent = 'Chiến dịch: ' + btn.getAttribute('data-name');
+      document.getElementById('ci-start').textContent = btn.getAttribute('data-start');
+      document.getElementById('ci-end').textContent = btn.getAttribute('data-end');
+      document.getElementById('campaignInfoModal').classList.add('active');
     }
 
     // Đóng modal khi click ra ngoài
@@ -155,6 +181,23 @@
       }
     });
   </script>
+
+  <!-- Modal Campaign Info -->
+  <div id="campaignInfoModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <div class="modal-title" id="campaignInfoModalTitle">Thông tin Chiến dịch</div>
+        <button class="close-btn" onclick="closeModal('campaignInfoModal')">&times;</button>
+      </div>
+      <div style="padding: 10px 0;">
+        <p><strong>Ngày bắt đầu:</strong> <span id="ci-start"></span></p>
+        <p><strong>Ngày kết thúc:</strong> <span id="ci-end"></span></p>
+      </div>
+      <div class="modal-footer" style="margin-top: 15px;">
+        <button type="button" class="btn-primary" onclick="closeModal('campaignInfoModal')">Đóng</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
 

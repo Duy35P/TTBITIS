@@ -10,4 +10,5 @@ import java.util.List;
 public interface SystemAuditLogRepository extends JpaRepository<SystemAuditLog, Long> {
     List<SystemAuditLog> findByStaffIdOrderByCreatedAtDesc(Long staffId);
     List<SystemAuditLog> findByTargetTableOrderByCreatedAtDesc(String targetTable);
+    List<SystemAuditLog> findByTargetTableAndTargetRecordIdOrderByIdDesc(String targetTable, String targetRecordId);
 }

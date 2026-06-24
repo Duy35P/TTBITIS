@@ -9,10 +9,10 @@ import java.util.List;
 @Repository
 public interface CampaignStoreRepository extends JpaRepository<CampaignStore, Long> {
 
-    List<CampaignStore> findByIdChienDich(Long idChienDich);
-    List<CampaignStore> findByIdCuaHang(Long idCuaHang);
+    List<CampaignStore> findByMaChienDich(String maChienDich);
+    List<CampaignStore> findByMaStore(String maStore);
 
     @org.springframework.transaction.annotation.Transactional
     @org.springframework.data.jpa.repository.Modifying
-    void deleteByIdChienDich(Long idChienDich);
+    void deleteByMaChienDich(String maChienDich);
 }

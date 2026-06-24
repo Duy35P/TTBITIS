@@ -7,9 +7,9 @@ import java.util.Optional;
 
 @Repository
 public interface CampaignRuleRepository extends JpaRepository<CampaignRule, Long> {
-    Optional<CampaignRule> findByIdChienDich(Long idChienDich);
+    Optional<CampaignRule> findByMaChienDich(String maChienDich);
 
     @org.springframework.transaction.annotation.Transactional
     @org.springframework.data.jpa.repository.Modifying
-    void deleteByIdChienDich(Long idChienDich);
+    void deleteByMaChienDich(String maChienDich);
 }

@@ -18,14 +18,16 @@ GO
 
 -- 1. CUSTOMER (Khách hàng)
 CREATE TABLE [dbo].[customer] (
-    [customer_id]   BIGINT          NOT NULL IDENTITY(1,1),
+    [id]            BIGINT          NOT NULL IDENTITY(1,1),
+    [ma_khach_hang] VARCHAR(255)    NULL,
     [phone]         VARCHAR(15)     NOT NULL, -- Bắt buộc có SĐT
     [zalo_id]       VARCHAR(255)    NULL,     -- Dự phòng đăng nhập Zalo
     [ten_khach]     NVARCHAR(255)   NULL,
     [trang_thai]    INT             NOT NULL DEFAULT 1,
     [created_at]    DATETIME2       NOT NULL DEFAULT SYSDATETIME(),
-    CONSTRAINT [PK_CUSTOMER] PRIMARY KEY CLUSTERED ([customer_id] ASC),
-    CONSTRAINT [UQ_CUSTOMER_PHONE] UNIQUE ([phone])
+    CONSTRAINT [PK_CUSTOMER] PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [UQ_CUSTOMER_PHONE] UNIQUE ([phone]),
+    CONSTRAINT [UQ_CUSTOMER_MA] UNIQUE ([ma_khach_hang])
 )
 GO
 
@@ -41,17 +43,18 @@ GO
 
 --. Bảng nhân viên 
 CREATE TABLE [dbo].[staff] (
-    [staff_id]      BIGINT          NOT NULL IDENTITY(1,1),
+    [id]            BIGINT          NOT NULL IDENTITY(1,1),
+    [ma_nhan_vien]  VARCHAR(255)    NULL,
     [username]      NVARCHAR(255)   NOT NULL,
     [password]      NVARCHAR(255)   NOT NULL,
     [ten_nhan_vien] NVARCHAR(255)   NOT NULL,
     [role_id]       VARCHAR(20)     NOT NULL, -- Trỏ về bảng vai_tro
-    [id_cua_hang]   BIGINT          NULL,
+    [ma_store] VARCHAR(255)          NULL,
     [trang_thai]    INT             NOT NULL DEFAULT 1,
     [created_at]    DATETIME2       NOT NULL DEFAULT SYSDATETIME(),
-    CONSTRAINT [PK_STAFF] PRIMARY KEY CLUSTERED ([staff_id] ASC),
+    CONSTRAINT [PK_STAFF] PRIMARY KEY CLUSTERED ([id] ASC),
     CONSTRAINT [UQ_STAFF_USERNAME] UNIQUE ([username]),
-    CONSTRAINT [FK_STAFF_VAITRO] FOREIGN KEY ([role_id]) REFERENCES [dbo].[vai_tro]([role_id])
+    CONSTRAINT [UQ_STAFF_MA] UNIQUE ([ma_nhan_vien])
 )
 GO
 
@@ -68,92 +71,94 @@ GO
 CREATE TABLE [dbo].[phanquyen] (
     [role_id]      VARCHAR(20) NOT NULL,
     [ma_chuc_nang] VARCHAR(50) NOT NULL,
-    CONSTRAINT [PK_PHANQUYEN] PRIMARY KEY CLUSTERED ([role_id] ASC, [ma_chuc_nang] ASC),
-    CONSTRAINT [FK_PQ_VAITRO] FOREIGN KEY ([role_id]) REFERENCES [dbo].[vai_tro]([role_id]),
-    CONSTRAINT [FK_PQ_CHUCNANG] FOREIGN KEY ([ma_chuc_nang]) REFERENCES [dbo].[chuc_nang]([ma_chuc_nang])
+    CONSTRAINT [PK_PHANQUYEN] PRIMARY KEY CLUSTERED ([role_id] ASC, [ma_chuc_nang] ASC)
 )
 GO
 
 -- 3. STORE
 CREATE TABLE [dbo].[store] (
-    [store_id]      BIGINT          NOT NULL IDENTITY(1,1),
-    [ten_cua_hang]           NVARCHAR(255)   NOT NULL,
+    [id]            BIGINT          NOT NULL IDENTITY(1,1),
+    [ten_cua_hang]  NVARCHAR(255)   NOT NULL,
     [trang_thai]    INT             NOT NULL DEFAULT 1,
     [dia_chi_store] NVARCHAR(255)   NOT NULL,
     [ma_store]      VARCHAR(255)    NOT NULL,
-    CONSTRAINT [PK_STORE]               PRIMARY KEY CLUSTERED ([store_id] ASC),
+    CONSTRAINT [PK_STORE]               PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [UQ_STORE_MA]            UNIQUE ([ma_store]),
     CONSTRAINT [CK_STORE_TRANG_THAI]    CHECK ([trang_thai] IN (0, 1))
 )
 GO
 
 -- 4. CAMPAIGN
 CREATE TABLE [dbo].[campaign] (
-    [campaign_id]   BIGINT          NOT NULL IDENTITY(1,1),
-    [ten_chien_dich]           NVARCHAR(255)   NOT NULL,
+    [id]            BIGINT          NOT NULL IDENTITY(1,1),
+    [ma_chien_dich] VARCHAR(255)    NULL,
+    [ten_chien_dich]NVARCHAR(255)   NOT NULL,
     [ngay_bat_dau]  DATETIME2       NULL,
     [ngay_ket_thuc] DATETIME2       NULL,
-    [tong_luot_du_kien] INT         NULL,
     [mo_ta]         NVARCHAR(MAX)   NULL,
     [duong_dan_slug] VARCHAR(255)   NULL UNIQUE, -- Ví dụ: vui-he-2026
     [hinh_anh_url]  VARCHAR(500)    NULL, -- Hình ảnh Banner của chiến dịch
     [cauhinh_theme_json] NVARCHAR(MAX) NULL, -- Lưu cấu hình màu sắc Minigame Builder
     [trang_thai]    INT             NOT NULL DEFAULT 2,
-    CONSTRAINT [PK_CAMPAIGN]            PRIMARY KEY CLUSTERED ([campaign_id] ASC),
+    CONSTRAINT [PK_CAMPAIGN]            PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [UQ_CAMPAIGN_MA]         UNIQUE ([ma_chien_dich]),
     CONSTRAINT [CK_CAMPAIGN_TRANG_THAI] CHECK ([trang_thai] IN (0, 1, 2))
 )
 GO
 
 -- 5. CAMPAIGN_STORE
 CREATE TABLE [dbo].[campaign_store] (
-    [campaign_store_id] BIGINT  NOT NULL IDENTITY(1,1),
-    [id_chien_dich]     BIGINT  NOT NULL,
-    [id_cua_hang]       BIGINT  NOT NULL,
-    CONSTRAINT [PK_CAMPAIGN_STORE]  PRIMARY KEY CLUSTERED ([campaign_store_id] ASC),
-    CONSTRAINT [UQ_CAMPAIGN_STORE]  UNIQUE ([id_chien_dich], [id_cua_hang])
+    [id]                BIGINT  NOT NULL IDENTITY(1,1),
+    [ma_chien_dich] VARCHAR(255)  NOT NULL,
+    [ma_store] VARCHAR(255)  NOT NULL,
+    CONSTRAINT [PK_CAMPAIGN_STORE]  PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [UQ_CAMPAIGN_STORE]  UNIQUE ([ma_chien_dich], [ma_store])
 )
 GO
 
 -- 6. CAMPAIGN_RULE (Luật Cơ Bản)
 CREATE TABLE [dbo].[campaign_rule] (
-    [rule_id]                       BIGINT          NOT NULL IDENTITY(1,1),
-    [id_chien_dich]                 BIGINT          NOT NULL,
+    [id]                            BIGINT          NOT NULL IDENTITY(1,1),
+    [ma_chien_dich] VARCHAR(255)          NOT NULL,
     [gia_tri_don_hang_toi_thieu]    FLOAT           NULL,
-    CONSTRAINT [PK_CAMPAIGN_RULE]   PRIMARY KEY CLUSTERED ([rule_id] ASC)
+    CONSTRAINT [PK_CAMPAIGN_RULE]   PRIMARY KEY CLUSTERED ([id] ASC)
 )
 GO
 
 -- 6.1 CAMPAIGN_RULE_PAYMENT (Thưởng theo phương thức thanh toán)
 CREATE TABLE [dbo].[campaign_rule_payment] (
-    [rule_payment_id]           BIGINT          NOT NULL IDENTITY(1,1),
-    [id_chien_dich]             BIGINT          NOT NULL,
+    [id]                        BIGINT          NOT NULL IDENTITY(1,1),
+    [ma_chien_dich] VARCHAR(255)          NOT NULL,
     [phuong_thuc_thanh_toan]    VARCHAR(100)    NOT NULL,
     [so_luot_thuong]            INT             NOT NULL DEFAULT 1,
-    CONSTRAINT [PK_CAMPAIGN_RULE_PAYMENT] PRIMARY KEY CLUSTERED ([rule_payment_id] ASC)
+    CONSTRAINT [PK_CAMPAIGN_RULE_PAYMENT] PRIMARY KEY CLUSTERED ([id] ASC)
 )
 GO
 
 -- 6.2 CAMPAIGN_RULE_SKU (Thưởng theo SKU sản phẩm)
 CREATE TABLE [dbo].[campaign_rule_sku] (
-    [rule_sku_id]               BIGINT          NOT NULL IDENTITY(1,1),
-    [id_chien_dich]             BIGINT          NOT NULL,
+    [id]                        BIGINT          NOT NULL IDENTITY(1,1),
+    [ma_chien_dich] VARCHAR(255)          NOT NULL,
     [ma_sku]                    VARCHAR(100)    NOT NULL,
     [so_luot_thuong]            INT             NOT NULL DEFAULT 1,
-    CONSTRAINT [PK_CAMPAIGN_RULE_SKU] PRIMARY KEY CLUSTERED ([rule_sku_id] ASC)
+    CONSTRAINT [PK_CAMPAIGN_RULE_SKU] PRIMARY KEY CLUSTERED ([id] ASC)
 )
 GO
 
 -- 7. PRIZE
 CREATE TABLE [dbo].[prize] (
-    [prize_id]                  BIGINT          NOT NULL IDENTITY(1,1),
-    [id_chien_dich]             BIGINT          NOT NULL,
-    [ten_giai]                       NVARCHAR(255)   NOT NULL,
+    [id]                        BIGINT          NOT NULL IDENTITY(1,1),
+    [ma_giai_thuong]            VARCHAR(255)    NULL,
+    [ma_chien_dich] VARCHAR(255)          NOT NULL,
+    [ten_giai]                  NVARCHAR(255)   NOT NULL,
     [hinh_anh_url]              VARCHAR(500)    NULL, -- Hình ảnh hộp quà hoặc phần thưởng
     [loai_giai]                 INT             NOT NULL,
     [la_giai_thuong]            BIT             NOT NULL DEFAULT 1,
     [xac_suat]                  FLOAT           NOT NULL,
     [ton_kho_toan_he_thong]     INT             NOT NULL DEFAULT 0,
-    [gioi_han_trung_moi_customer]   INT             NULL,
-    CONSTRAINT [PK_PRIZE]       PRIMARY KEY CLUSTERED ([prize_id] ASC),
+    [gioi_han_trung_moi_customer]   INT         NULL,
+    CONSTRAINT [PK_PRIZE]       PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [UQ_PRIZE_MA]    UNIQUE ([ma_giai_thuong]),
     CONSTRAINT [CK_PRIZE_LOAI]  CHECK ([loai_giai] IN (0, 1)),
     --CHỐNG ÂM KHO:
     CONSTRAINT [CK_PRIZE_INVENTORY] CHECK ([ton_kho_toan_he_thong] >= 0) 
@@ -162,96 +167,96 @@ GO
 
 -- 8. STORE_PRIZE_INVENTORY
 CREATE TABLE [dbo].[store_prize_inventory] (
-    [inventory_id]      BIGINT  NOT NULL IDENTITY(1,1),
-    [id_cua_hang]       BIGINT  NOT NULL,
-    [id_giai_thuong]    BIGINT  NOT NULL,
+    [id]                BIGINT  NOT NULL IDENTITY(1,1),
+    [ma_store] VARCHAR(255)  NOT NULL,
+    [ma_giai_thuong] VARCHAR(255)  NOT NULL,
     [ton_kho]           INT     NOT NULL DEFAULT 0,
-    CONSTRAINT [PK_STORE_PRIZE_INVENTORY]   PRIMARY KEY CLUSTERED ([inventory_id] ASC),
-    CONSTRAINT [UQ_STORE_PRIZE]             UNIQUE ([id_cua_hang], [id_giai_thuong]),
+    CONSTRAINT [PK_STORE_PRIZE_INVENTORY]   PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [UQ_STORE_PRIZE]             UNIQUE ([ma_store], [ma_giai_thuong]),
     CONSTRAINT [CK_STORE_INVENTORY]         CHECK ([ton_kho] >= 0)
 )
 GO
 
 -- 9. STORE_POS_KEY
 CREATE TABLE [dbo].[store_pos_key] (
-    [pos_key_id]        BIGINT          NOT NULL IDENTITY(1,1),
-    [id_cua_hang]       BIGINT          NOT NULL,
+    [id]                BIGINT          NOT NULL IDENTITY(1,1),
+    [ma_store] VARCHAR(255)          NOT NULL,
     [api_key_hash]      VARCHAR(255)    NOT NULL,
     [trang_thai]        INT             NOT NULL DEFAULT 1,
     [thoi_gian_tao]     DATETIME2       NOT NULL DEFAULT SYSDATETIME(),
     [thoi_gian_het_han] DATETIME2       NULL,
-    CONSTRAINT [PK_STORE_POS_KEY]   PRIMARY KEY CLUSTERED ([pos_key_id] ASC),
+    CONSTRAINT [PK_STORE_POS_KEY]   PRIMARY KEY CLUSTERED ([id] ASC),
     CONSTRAINT [CK_POS_KEY_TT]      CHECK ([trang_thai] IN (0, 1))
 )
 GO
 
 -- 10. INVOICE
 CREATE TABLE [dbo].[invoice] (
-    [invoice_id]        BIGINT          NOT NULL IDENTITY(1,1),
+    [id]                BIGINT          NOT NULL IDENTITY(1,1),
     [ma_hoa_don]        VARCHAR(255)    NOT NULL,
     [ma_hoa_don_goc]    VARCHAR(255)    NULL, 
-    [id_cua_hang]       BIGINT          NOT NULL,
-    [id_khach_hang]     BIGINT          NULL, -- NULL để hỗ trợ khách chưa quét mã
+    [ma_store] VARCHAR(255)          NOT NULL,
+    [ma_khach_hang] VARCHAR(255)          NULL, -- NULL để hỗ trợ khách chưa quét mã
     [tong_tien]         FLOAT           NOT NULL DEFAULT 0,
     [phuong_thuc_tt]    VARCHAR(50)     NULL,
     [san_pham_json]     NVARCHAR(MAX)   NULL,
     [da_xu_ly]          BIT             NOT NULL DEFAULT 0,
-    CONSTRAINT [PK_INVOICE]         PRIMARY KEY CLUSTERED ([invoice_id] ASC),
+    CONSTRAINT [PK_INVOICE]         PRIMARY KEY CLUSTERED ([id] ASC),
     CONSTRAINT [UQ_INVOICE_MA_HD]   UNIQUE ([ma_hoa_don])
 )
 GO
 
 -- 11. GAME_ACCESS_TOKEN
 CREATE TABLE [dbo].[game_access_token] (
-    [token_id]                  BIGINT          NOT NULL IDENTITY(1,1),
+    [id]                        BIGINT          NOT NULL IDENTITY(1,1),
     [token]                     VARCHAR(500)    NOT NULL,
-    [id_hoa_don]                BIGINT          NOT NULL,
+    [ma_hoa_don] VARCHAR(255)          NOT NULL,
     [so_luong_luot_thuong]      INT             NOT NULL DEFAULT 0,
     [da_su_dung]                BIT             NOT NULL DEFAULT 0,
-    [id_khach_hang_kich_hoat]   BIGINT          NULL, -- Lưu ai là người đã quét mã
+    [ma_khach_hang_kich_hoat] VARCHAR(255)          NULL, -- Lưu ai là người đã quét mã
     [het_han_luc]               DATETIME2       NOT NULL,
-    CONSTRAINT [PK_GAME_ACCESS_TOKEN]   PRIMARY KEY CLUSTERED ([token_id] ASC),
+    CONSTRAINT [PK_GAME_ACCESS_TOKEN]   PRIMARY KEY CLUSTERED ([id] ASC),
     CONSTRAINT [UQ_GAME_ACCESS_TOKEN]   UNIQUE ([token])
 )
 GO
 
 -- 12. CUSTOMER_TURN 
 CREATE TABLE [dbo].[customer_turn] (
-    [turn_id]       BIGINT  NOT NULL IDENTITY(1,1),
-    [id_khach_hang] BIGINT  NOT NULL,
-    [id_chien_dich] BIGINT  NOT NULL,
+    [id]            BIGINT  NOT NULL IDENTITY(1,1),
+    [ma_khach_hang] VARCHAR(255)  NOT NULL,
+    [ma_chien_dich] VARCHAR(255)  NOT NULL,
     [luot_con_lai]  INT     NOT NULL DEFAULT 0,
-    CONSTRAINT [PK_CUSTOMER_TURN]       PRIMARY KEY CLUSTERED ([turn_id] ASC),
-    CONSTRAINT [UQ_CUSTOMER_TURN_KH_CD] UNIQUE ([id_khach_hang], [id_chien_dich]),
+    CONSTRAINT [PK_CUSTOMER_TURN]       PRIMARY KEY CLUSTERED ([id] ASC),
+    CONSTRAINT [UQ_CUSTOMER_TURN_KH_CD] UNIQUE ([ma_khach_hang], [ma_chien_dich]),
     CONSTRAINT [CK_CUSTOMER_TURN_POSITIVE] CHECK ([luot_con_lai] >= 0)
 )
 GO
 
 -- 13. TURN_TRANSACTION
 CREATE TABLE [dbo].[turn_transaction] (
-    [transaction_id]    BIGINT          NOT NULL IDENTITY(1,1),
-    [id_khach_hang]     BIGINT          NOT NULL,
-    [id_chien_dich]     BIGINT          NOT NULL,
+    [id]                BIGINT          NOT NULL IDENTITY(1,1),
+    [ma_khach_hang] VARCHAR(255)          NOT NULL,
+    [ma_chien_dich] VARCHAR(255)          NOT NULL,
     [loai]              INT             NOT NULL,  --Loại giao dịch cộng lượt (loai=1) hoặc trừ lượt (loai=0)
     [so_luong]          INT             NOT NULL,
     [nguon_tham_chieu]  VARCHAR(255)    NULL,
-    CONSTRAINT [PK_TURN_TRANSACTION]    PRIMARY KEY CLUSTERED ([transaction_id] ASC),
+    CONSTRAINT [PK_TURN_TRANSACTION]    PRIMARY KEY CLUSTERED ([id] ASC),
     CONSTRAINT [CK_TURN_LOAI]           CHECK ([loai] IN (0, 1))
 )
 GO
 
 -- 14. REWARD_VOUCHER
 CREATE TABLE [dbo].[reward_voucher] (
-    [voucher_id]                BIGINT          NOT NULL IDENTITY(1,1),
-    [id_giai_thuong]            BIGINT          NOT NULL,
-    [id_khach_hang]             BIGINT          NOT NULL,
+    [id]                        BIGINT          NOT NULL IDENTITY(1,1),
+    [ma_giai_thuong] VARCHAR(255)          NOT NULL,
+    [ma_khach_hang] VARCHAR(255)          NOT NULL,
     [ma_voucher]                VARCHAR(255)    NOT NULL,
     [trang_thai]                INT             NOT NULL DEFAULT 0,
-    [id_cua_hang_phat_hanh]     BIGINT          NOT NULL, -- Nơi trúng giải (Nơi mua hàng)
-    [id_cua_hang_doi_thuong]    BIGINT          NULL,     -- Nơi đổi quà
+    [ma_store_phat_hanh] VARCHAR(255)          NOT NULL, -- Nơi trúng giải (Nơi mua hàng)
+    [ma_store_doi_thuong] VARCHAR(255)          NULL,     -- Nơi đổi quà
     [thoi_gian_tao]             DATETIME2       NOT NULL DEFAULT SYSDATETIME(),
     [thoi_gian_doi]             DATETIME2       NULL,
-    CONSTRAINT [PK_REWARD_VOUCHER]      PRIMARY KEY CLUSTERED ([voucher_id] ASC),
+    CONSTRAINT [PK_REWARD_VOUCHER]      PRIMARY KEY CLUSTERED ([id] ASC),
     CONSTRAINT [UQ_REWARD_VOUCHER_MA]   UNIQUE ([ma_voucher]),
     CONSTRAINT [CK_REWARD_VOUCHER_TT]   CHECK ([trang_thai] IN (0, 1, 2))
 )
@@ -268,7 +273,7 @@ GO
 
 -- 16.Audit Logs
 CREATE TABLE [dbo].[system_audit_log] (
-    [log_id]            BIGINT          NOT NULL IDENTITY(1,1),
+    [id]                BIGINT          NOT NULL IDENTITY(1,1),
     [staff_id]          BIGINT          NOT NULL,       -- Người thực hiện thao tác
     [action_type]       VARCHAR(50)     NOT NULL,       -- Loại thao tác: CREATE, UPDATE, DELETE
     [target_table]      VARCHAR(100)    NOT NULL,       -- Tên bảng bị tác động (vd: 'prize')
@@ -278,8 +283,7 @@ CREATE TABLE [dbo].[system_audit_log] (
     [description]       NVARCHAR(500)   NULL,           -- Mô tả tóm tắt để người quản lý dễ đọc
     [ip_address]        VARCHAR(50)     NULL,           -- IP thiết bị của Staff/Admin
     [created_at]        DATETIME2       NOT NULL DEFAULT SYSDATETIME(),
-    CONSTRAINT [PK_SYSTEM_AUDIT_LOG] PRIMARY KEY CLUSTERED ([log_id] ASC),
-    CONSTRAINT [FK_AUDIT_STAFF] FOREIGN KEY ([staff_id]) REFERENCES [dbo].[staff]([staff_id])
+    CONSTRAINT [PK_SYSTEM_AUDIT_LOG] PRIMARY KEY CLUSTERED ([id] ASC)
 )
 GO
 
@@ -294,9 +298,9 @@ SELECT
     spi.[ton_kho]                   AS LocalInventory,
     p.[ton_kho_toan_he_thong]       AS GlobalInventory
 FROM       [dbo].[store_prize_inventory] spi
-JOIN [dbo].[store]      s ON s.[store_id]    = spi.[id_cua_hang]
-JOIN [dbo].[prize]      p ON p.[prize_id]    = spi.[id_giai_thuong]
-JOIN [dbo].[campaign]   c ON c.[campaign_id] = p.[id_chien_dich]
+JOIN [dbo].[store]      s ON s.[ma_store] = spi.[ma_store]
+JOIN [dbo].[prize]      p ON p.[ma_giai_thuong] = spi.[ma_giai_thuong]
+JOIN [dbo].[campaign]   c ON c.[ma_chien_dich] = p.[ma_chien_dich]
 WHERE c.[trang_thai] = 1
 GO
 
@@ -304,3 +308,17 @@ GO
 select * from vai_tro
 select * from staff
 select * from store
+select * from invoice
+select * from customer
+select * from campaign
+select * from campaign_store
+select * from campaign_rule
+select * from customer_turn
+delete invoice
+delete store
+truncate table campaign
+SELECT s.ma_store AS storeId, STRING_AGG(c.ten_chien_dich, ',') AS campaigns
+FROM store s 
+LEFT JOIN campaign_store cs ON s.ma_store = cs.id_cua_hang 
+LEFT JOIN campaign c ON cs.id_chien_dich = c.id 
+GROUP BY s.ma_store

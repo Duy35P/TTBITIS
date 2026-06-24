@@ -14,12 +14,12 @@ public class CampaignStore {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "campaign_store_id")
-    private Long campaignStoreId;
+    @Column(name = "id")
+    private Long id;
 
-    @Column(name = "id_chien_dich", nullable = false)
-    private Long idChienDich;
+    @Column(name = "ma_chien_dich", nullable = false)
+    private String maChienDich;
 
-    @Column(name = "id_cua_hang", nullable = false)
-    private Long idCuaHang;
+    @Column(name = "ma_store", nullable = false)
+    private String maStore;
 }

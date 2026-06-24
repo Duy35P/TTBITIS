@@ -12,13 +12,16 @@ import lombok.AllArgsConstructor;
 @Table(name = "prize")
 public class Prize {
 
+    @Column(name = "ma_giai_thuong", unique = true)
+    private String maGiaiThuong;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "prize_id")
-    private Long prizeId;
+    @Column(name = "id")
+    private Long id;
 
-    @Column(name = "id_chien_dich", nullable = false)
-    private Long idChienDich;
+    @Column(name = "ma_chien_dich", nullable = false)
+    private String maChienDich;
 
     @Column(name = "ten_giai", nullable = false, length = 255)
     private String tenGiai;

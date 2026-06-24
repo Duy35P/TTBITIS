@@ -10,6 +10,6 @@ import java.util.Optional;
 @Repository
 public interface RewardVoucherRepository extends JpaRepository<RewardVoucher, Long> {
     Optional<RewardVoucher> findByMaVoucher(String maVoucher);
-    List<RewardVoucher> findByIdKhachHang(Long idKhachHang);
-    long countByIdGiaiThuongAndIdKhachHang(Long idGiaiThuong, Long idKhachHang);
+    List<RewardVoucher> findByMaKhachHang(String maKhachHang);
+    long countByMaGiaiThuongAndMaKhachHang(String maGiaiThuong, String maKhachHang);
 }

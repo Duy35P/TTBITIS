@@ -14,10 +14,12 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
     Optional<Store> findByMaStore(String maStore);
     java.util.List<Store> findByTrangThai(Integer trangThai);
     
-    @Query(value = "SELECT s.store_id AS storeId, STRING_AGG(c.ten_chien_dich, ', ') AS campaigns " +
+    @Query(value = "SELECT s.id AS storeId, " +
+                   "STRING_AGG(CASE WHEN c.trang_thai = 1 THEN c.ten_chien_dich ELSE NULL END, ', ') AS activeCampaigns, " +
+                   "STRING_AGG(CASE WHEN c.trang_thai = 0 THEN c.ten_chien_dich ELSE NULL END, ', ') AS pendingCampaigns " +
                    "FROM store s " +
-                   "LEFT JOIN campaign_store cs ON s.store_id = cs.id_cua_hang " +
-                   "LEFT JOIN campaign c ON cs.id_chien_dich = c.campaign_id " +
-                   "GROUP BY s.store_id", nativeQuery = true)
+                   "LEFT JOIN campaign_store cs ON s.ma_store = cs.ma_store " +
+                   "LEFT JOIN campaign c ON cs.ma_chien_dich = c.ma_chien_dich " +
+                   "GROUP BY s.id", nativeQuery = true)
     java.util.List<StoreCampaignProjection> getStoreCampaigns();
 }

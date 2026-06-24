@@ -40,6 +40,7 @@ public class TurnManagementService {
         Customer customer = customerRepo.findByPhone(request.getCustomerPhone())
                 .orElseGet(() -> {
                     Customer newCustomer = new Customer();
+                    newCustomer.setMaKhachHang("CUS-" + request.getCustomerPhone());
                     newCustomer.setPhone(request.getCustomerPhone());
                     newCustomer.setTrangThai(1);
                     return customerRepo.save(newCustomer);
@@ -56,27 +57,27 @@ public class TurnManagementService {
 
         // Nếu Delta <= 0, không cấp lượt nhưng vẫn ghi nhận hóa đơn
         if (deltaAmount <= 0) {
-            saveInvoice(request, customer.getCustomerId());
+            saveInvoice(request, customer.getMaKhachHang());
             return null; // Không trả về token
         }
 
         // 3. Lưu Invoice mới
-        Invoice invoice = saveInvoice(request, customer.getCustomerId());
+        Invoice invoice = saveInvoice(request, customer.getMaKhachHang());
 
         // 4. Lấy danh sách Campaign đang chạy tại Store này
-        List<CampaignStore> campaigns = campaignStoreRepo.findByIdCuaHang(request.getStoreId());
+        List<CampaignStore> campaigns = campaignStoreRepo.findByMaStore(request.getMaStore());
         
         int totalTurnsGrantedAcrossCampaigns = 0;
 
         for (CampaignStore cs : campaigns) {
-            Long campaignId = cs.getIdChienDich();
-            int turns = ruleEngine.calculateTurns(campaignId, deltaAmount, request.getPaymentMethod(), request.getSkuList());
+            String maChienDich = cs.getMaChienDich();
+            int turns = ruleEngine.calculateTurns(maChienDich, deltaAmount, request.getPaymentMethod(), request.getSkuList());
 
             if (turns > 0) {
                 // Gọi Stored Procedure (SP tự quản lý Upsert Lock và Ghi Transaction)
                 customerTurnRepo.addCustomerTurnsSafe(
-                        customer.getCustomerId(),
-                        campaignId,
+                        customer.getMaKhachHang(),
+                        maChienDich,
                         turns,
                         "INVOICE:" + invoice.getMaHoaDon()
                 );
@@ -89,10 +90,10 @@ public class TurnManagementService {
         if (totalTurnsGrantedAcrossCampaigns > 0) {
             GameAccessToken token = new GameAccessToken();
             token.setToken(UUID.randomUUID().toString());
-            token.setIdHoaDon(invoice.getInvoiceId());
+            token.setMaHoaDon(invoice.getMaHoaDon());
             token.setSoLuongLuotThuong(totalTurnsGrantedAcrossCampaigns);
             token.setDaSuDung(false);
-            token.setIdKhachHangKichHoat(customer.getCustomerId());
+            token.setMaKhachHangKichHoat(customer.getMaKhachHang());
             token.setHetHanLuc(LocalDateTime.now().plusDays(30)); // 30 ngày hết hạn
             return tokenRepo.save(token);
         }
@@ -100,12 +101,12 @@ public class TurnManagementService {
         return null;
     }
 
-    private Invoice saveInvoice(InvoiceRequestDTO request, Long customerId) throws Exception {
+    private Invoice saveInvoice(InvoiceRequestDTO request, String maKhachHang) throws Exception {
         Invoice invoice = new Invoice();
         invoice.setMaHoaDon(request.getInvoiceNumber());
         invoice.setMaHoaDonGoc(request.getOriginalInvoiceNumber());
-        invoice.setIdCuaHang(request.getStoreId());
-        invoice.setIdKhachHang(customerId);
+        invoice.setMaStore(request.getMaStore());
+        invoice.setMaKhachHang(maKhachHang);
         invoice.setTongTien(request.getTotalAmount());
         invoice.setPhuongThucTt(request.getPaymentMethod());
         invoice.setSanPhamJson(objectMapper.writeValueAsString(request.getSkuList()));

@@ -48,6 +48,7 @@ public class PosService {
         
         Customer customer = customerRepository.findByPhone(phone).orElseGet(() -> {
             Customer newCustomer = new Customer();
+            newCustomer.setMaKhachHang("CUS-" + phone);
             newCustomer.setPhone(phone);
             newCustomer.setTenKhach("Khách hàng " + phone);
             newCustomer.setTrangThai(1);
@@ -61,8 +62,8 @@ public class PosService {
                 return PosSyncResponse.builder().status("ERROR").message("Hóa đơn đã được đồng bộ trước đó!").build();
             }
             Invoice invoice = new Invoice();
-            invoice.setIdCuaHang(request.getStoreId());
-            invoice.setIdKhachHang(customer.getCustomerId());
+            invoice.setMaStore(request.getMaStore());
+            invoice.setMaKhachHang(customer.getMaKhachHang());
             invoice.setMaHoaDon(request.getInvoiceCode());
             invoice.setTongTien(request.getTotalAmount());
             invoice.setPhuongThucTt(request.getPaymentMethod());
@@ -80,25 +81,25 @@ public class PosService {
         }
 
         // 3. Process Campaigns
-        List<CampaignStore> storeCampaigns = campaignStoreRepository.findByIdCuaHang(request.getStoreId());
+        List<CampaignStore> storeCampaigns = campaignStoreRepository.findByMaStore(request.getMaStore());
         LocalDateTime now = LocalDateTime.now();
         List<String> appliedCampaigns = new ArrayList<>();
         int totalTurnsEarned = 0;
 
         for (CampaignStore cs : storeCampaigns) {
-            Optional<Campaign> optCampaign = campaignRepository.findById(cs.getIdChienDich());
+            Optional<Campaign> optCampaign = campaignRepository.findByMaChienDich(cs.getMaChienDich());
             if (optCampaign.isPresent()) {
                 Campaign campaign = optCampaign.get();
                 if (campaign.getTrangThai() == 1 &&
                     campaign.getNgayBatDau().isBefore(now) &&
                     campaign.getNgayKetThuc().isAfter(now)) {
                     
-                    int turnsForThisCampaign = calculateTurns(campaign.getCampaignId(), request);
+                    int turnsForThisCampaign = calculateTurns(campaign.getMaChienDich(), request);
                     if (turnsForThisCampaign > 0) {
                         // Call Stored Procedure
                         customerTurnRepository.addCustomerTurnsSafe(
-                            customer.getCustomerId(),
-                            campaign.getCampaignId(),
+                            customer.getMaKhachHang(),
+                            campaign.getMaChienDich(),
                             turnsForThisCampaign,
                             request.getInvoiceCode() != null ? request.getInvoiceCode() : "POS-SYNC"
                         );
@@ -126,11 +127,11 @@ public class PosService {
         }
     }
 
-    private int calculateTurns(Long campaignId, PosSyncRequest request) {
+    private int calculateTurns(String maChienDich, PosSyncRequest request) {
         int turns = 0;
 
         // 1. Basic Rule
-        Optional<CampaignRule> optRule = campaignRuleRepository.findByIdChienDich(campaignId);
+        Optional<CampaignRule> optRule = campaignRuleRepository.findByMaChienDich(maChienDich);
         if (optRule.isPresent() && optRule.get().getGiaTriDonHangToiThieu() != null && optRule.get().getGiaTriDonHangToiThieu() > 0) {
             Double minOrderValue = optRule.get().getGiaTriDonHangToiThieu();
             if (request.getTotalAmount() != null && request.getTotalAmount() >= minOrderValue) {
@@ -140,7 +141,7 @@ public class PosService {
 
         // 2. Payment Rule
         if (request.getPaymentMethod() != null) {
-            List<CampaignRulePayment> payments = campaignRulePaymentRepository.findByIdChienDich(campaignId);
+            List<CampaignRulePayment> payments = campaignRulePaymentRepository.findByMaChienDich(maChienDich);
             for (CampaignRulePayment p : payments) {
                 if (p.getPhuongThucThanhToan().equalsIgnoreCase(request.getPaymentMethod())) {
                     turns += p.getSoLuotThuong();
@@ -150,7 +151,7 @@ public class PosService {
 
         // 3. SKU Rule
         if (request.getSkus() != null && !request.getSkus().isEmpty()) {
-            List<CampaignRuleSku> skuRules = campaignRuleSkuRepository.findByIdChienDich(campaignId);
+            List<CampaignRuleSku> skuRules = campaignRuleSkuRepository.findByMaChienDich(maChienDich);
             for (String purchasedSku : request.getSkus()) {
                 for (CampaignRuleSku rule : skuRules) {
                     if (rule.getMaSku().equalsIgnoreCase(purchasedSku)) {

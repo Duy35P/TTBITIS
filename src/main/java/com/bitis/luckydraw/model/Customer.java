@@ -14,10 +14,13 @@ import java.time.LocalDateTime;
 @Table(name = "customer")
 public class Customer {
 
+    @Column(name = "ma_khach_hang", unique = true)
+    private String maKhachHang;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "customer_id", nullable = false)
-    private Long customerId;
+    @Column(name = "id", nullable = false)
+    private Long id;
 
     @Column(name = "phone", nullable = false, length = 15, unique = true)
     private String phone;

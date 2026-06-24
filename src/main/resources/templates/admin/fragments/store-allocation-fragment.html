@@ -18,10 +18,10 @@
 
         <div style="display: flex; flex-direction: column; gap: 12px; padding-left: 10px;">
           <label th:each="store : ${activeStores}" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-            <input type="checkbox" name="storeIds" th:value="${store.storeId}" 
-                   th:checked="${assignedStoreIds != null and assignedStoreIds.contains(store.storeId)}" 
+            <input type="checkbox" name="storeMas" th:value="${store.maStore}" 
+                   th:checked="${assignedStoreMas != null and assignedStoreMas.contains(store.maStore)}" 
                    class="store-checkbox" style="width: 16px; height: 16px;"> 
-            <span th:text="${store.tenCuaHang} + ' (ID: ' + ${store.storeId} + ')'">TLC Showroom</span>
+            <span th:text="${store.tenCuaHang} + ' (Mã: ' + ${store.maStore} + ')'"></span>
           </label>
           <div th:if="${activeStores.isEmpty()}" style="color: #888;">
             Không có cửa hàng nào đang hoạt động.

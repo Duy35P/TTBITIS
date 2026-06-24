@@ -14,11 +14,11 @@ public class CampaignRuleSku {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "rule_sku_id")
-    private Long ruleSkuId;
+    @Column(name = "id")
+    private Long id;
 
-    @Column(name = "id_chien_dich", nullable = false)
-    private Long idChienDich;
+    @Column(name = "ma_chien_dich", nullable = false)
+    private String maChienDich;
 
     @Column(name = "ma_sku", nullable = false, length = 100)
     private String maSku;

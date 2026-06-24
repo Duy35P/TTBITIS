@@ -14,14 +14,14 @@ public class CustomerTurn {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "turn_id", nullable = false)
-    private Long turnId;
+    @Column(name = "id", nullable = false)
+    private Long id;
 
-    @Column(name = "id_khach_hang", nullable = false)
-    private Long idKhachHang;
+    @Column(name = "ma_khach_hang", nullable = false)
+    private String maKhachHang;
 
-    @Column(name = "id_chien_dich", nullable = false)
-    private Long idChienDich;
+    @Column(name = "ma_chien_dich", nullable = false)
+    private String maChienDich;
 
     @Column(name = "luot_con_lai", nullable = false)
     private Integer luotConLai;

@@ -14,10 +14,13 @@ import java.time.LocalDateTime;
 @Table(name = "staff")
 public class Staff {
 
+    @Column(name = "ma_nhan_vien", unique = true)
+    private String maNhanVien;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "staff_id", nullable = false)
-    private Long staffId;
+    @Column(name = "id", nullable = false)
+    private Long id;
 
     @Column(name = "username", nullable = false, length = 255, unique = true)
     private String username;
@@ -31,8 +34,8 @@ public class Staff {
     @Column(name = "role_id", nullable = false, length = 20)
     private String roleId;
 
-    @Column(name = "id_cua_hang")
-    private Long idCuaHang;
+    @Column(name = "ma_store")
+    private String maStore;
 
     @Column(name = "trang_thai", nullable = false)
     private Integer trangThai;

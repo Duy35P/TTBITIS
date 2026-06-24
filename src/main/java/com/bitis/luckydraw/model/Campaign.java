@@ -14,24 +14,24 @@ import java.time.LocalDateTime;
 @Table(name = "campaign")
 public class Campaign {
 
+    @Column(name = "ma_chien_dich", unique = true)
+    private String maChienDich;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "campaign_id")
-    private Long campaignId;
+    @Column(name = "id")
+    private Long id;
 
     @Column(name = "ten_chien_dich", nullable = false, length = 255)
     private String tenChienDich;
 
-    @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
+    @org.springframework.format.annotation.DateTimeFormat(pattern = "dd/MM/yyyy HH:mm")
     @Column(name = "ngay_bat_dau")
     private LocalDateTime ngayBatDau;
 
-    @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
+    @org.springframework.format.annotation.DateTimeFormat(pattern = "dd/MM/yyyy HH:mm")
     @Column(name = "ngay_ket_thuc")
     private LocalDateTime ngayKetThuc;
-
-    @Column(name = "tong_luot_du_kien")
-    private Integer tongLuotDuKien;
 
     @Column(name = "mo_ta", columnDefinition = "NVARCHAR(MAX)")
     private String moTa;

@@ -10,7 +10,7 @@ public class InvoiceRequestDTO {
     private Double totalAmount;
     private String paymentMethod;
     private String customerPhone;
-    private Long storeId;
+    private String maStore;
     private List<SkuItem> skuList;
 
     public static class SkuItem {
@@ -64,12 +64,12 @@ public class InvoiceRequestDTO {
         this.customerPhone = customerPhone;
     }
 
-    public Long getStoreId() {
-        return storeId;
+    public String getMaStore() {
+        return maStore;
     }
 
-    public void setStoreId(Long storeId) {
-        this.storeId = storeId;
+    public void setMaStore(String maStore) {
+        this.maStore = maStore;
     }
 
     public List<SkuItem> getSkuList() {

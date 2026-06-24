@@ -67,20 +67,13 @@ public class DataSeeder {
                 System.out.println("=== Seeding store ===");
 
                 Store store1 = new Store();
-                store1.setTenCuaHang("Biti's Quận 1");
-                store1.setDiaChiStore("123 Nguyễn Huệ, Q.1, TP.HCM");
-                store1.setMaStore("BITIS-Q1");
+                store1.setTenCuaHang("CH Chợ Lớn - Quận 6 - HCM");
+                store1.setDiaChiStore("56 - 58 - 60 - 62 Tháp Mười, Phường 2, Quận 6, Thành phố Hồ Chí Minh, Việt Nam\n");
+                store1.setMaStore("1101");
                 store1.setTrangThai(1);
                 storeRepo.save(store1);
 
-                Store store2 = new Store();
-                store2.setTenCuaHang("Biti's Quận 7");
-                store2.setDiaChiStore("456 Nguyễn Thị Thập, Q.7, TP.HCM");
-                store2.setMaStore("BITIS-Q7");
-                store2.setTrangThai(1);
-                storeRepo.save(store2);
-
-                System.out.println("Đã seed 2 cửa hàng mẫu");
+                System.out.println("Đã seed 1 cửa hàng mẫu");
             }
 
             System.out.println("=== DataSeeder hoàn tất ===");

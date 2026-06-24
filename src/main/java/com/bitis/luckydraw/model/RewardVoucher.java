@@ -16,14 +16,14 @@ public class RewardVoucher {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "voucher_id")
-    private Long voucherId;
+    @Column(name = "id")
+    private Long id;
 
-    @Column(name = "id_giai_thuong", nullable = false)
-    private Long idGiaiThuong;
+    @Column(name = "ma_giai_thuong", nullable = false)
+    private String maGiaiThuong;
 
-    @Column(name = "id_khach_hang", nullable = false)
-    private Long idKhachHang;
+    @Column(name = "ma_khach_hang", nullable = false)
+    private String maKhachHang;
 
     @Column(name = "ma_voucher", nullable = false, length = 255)
     private String maVoucher;
@@ -31,11 +31,11 @@ public class RewardVoucher {
     @Column(name = "trang_thai", nullable = false)
     private Integer trangThai;
 
-    @Column(name = "id_cua_hang_phat_hanh", nullable = false)
-    private Long idCuaHangPhatHanh;
+    @Column(name = "ma_store_phat_hanh", nullable = false)
+    private String maStorePhatHanh;
 
-    @Column(name = "id_cua_hang_doi_thuong")
-    private Long idCuaHangDoiThuong;
+    @Column(name = "ma_store_doi_thuong")
+    private String maStoreDoiThuong;
 
     @Column(name = "thoi_gian_tao", nullable = false, updatable = false, insertable = false)
     private LocalDateTime thoiGianTao;

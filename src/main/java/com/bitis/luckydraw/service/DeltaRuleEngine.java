@@ -27,7 +27,7 @@ public class DeltaRuleEngine {
         this.ruleSkuRepo = ruleSkuRepo;
     }
 
-    public int calculateTurns(Long campaignId, Double deltaAmount, String paymentMethod, List<InvoiceRequestDTO.SkuItem> skuList) {
+    public int calculateTurns(String maChienDich, Double deltaAmount, String paymentMethod, List<InvoiceRequestDTO.SkuItem> skuList) {
         if (deltaAmount <= 0) {
             return 0; // Khi Delta < 0 hoặc = 0 thì không làm gì cả
         }
@@ -35,7 +35,7 @@ public class DeltaRuleEngine {
         int totalTurns = 0;
 
         // 1. Tính lượt theo tổng tiền (min order value)
-        Optional<CampaignRule> ruleOpt = ruleRepo.findByIdChienDich(campaignId);
+        Optional<CampaignRule> ruleOpt = ruleRepo.findByMaChienDich(maChienDich);
         if (ruleOpt.isPresent()) {
             CampaignRule rule = ruleOpt.get();
             if (rule.getGiaTriDonHangToiThieu() != null && rule.getGiaTriDonHangToiThieu() > 0) {
@@ -45,7 +45,7 @@ public class DeltaRuleEngine {
 
         // 2. Tính lượt ưu đãi theo Payment Method
         if (paymentMethod != null && !paymentMethod.isEmpty()) {
-            List<CampaignRulePayment> paymentRules = rulePaymentRepo.findByIdChienDich(campaignId);
+            List<CampaignRulePayment> paymentRules = rulePaymentRepo.findByMaChienDich(maChienDich);
             for (CampaignRulePayment pr : paymentRules) {
                 if (paymentMethod.equalsIgnoreCase(pr.getPhuongThucThanhToan())) {
                     totalTurns += pr.getSoLuotThuong();
@@ -55,7 +55,7 @@ public class DeltaRuleEngine {
 
         // 3. Tính lượt ưu đãi theo SKU
         if (skuList != null && !skuList.isEmpty()) {
-            List<CampaignRuleSku> skuRules = ruleSkuRepo.findByIdChienDich(campaignId);
+            List<CampaignRuleSku> skuRules = ruleSkuRepo.findByMaChienDich(maChienDich);
             for (InvoiceRequestDTO.SkuItem item : skuList) {
                 for (CampaignRuleSku sr : skuRules) {
                     if (item.getSku().equalsIgnoreCase(sr.getMaSku())) {

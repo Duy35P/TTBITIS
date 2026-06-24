@@ -14,11 +14,11 @@ public class CampaignRule {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "rule_id")
-    private Long ruleId;
+    @Column(name = "id")
+    private Long id;
 
-    @Column(name = "id_chien_dich", nullable = false)
-    private Long idChienDich;
+    @Column(name = "ma_chien_dich", nullable = false)
+    private String maChienDich;
 
     @Column(name = "gia_tri_don_hang_toi_thieu")
     private Double giaTriDonHangToiThieu;

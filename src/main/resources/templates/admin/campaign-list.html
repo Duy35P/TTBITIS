@@ -43,7 +43,6 @@
                 <th>Tên Chiến Dịch</th>
                 <th>Ngày Bắt Đầu</th>
                 <th>Ngày Kết Thúc</th>
-                <th>Tổng Lượt Quay</th>
                 <th>Trạng Thái</th>
                 <th>Đường link truy cập</th>
                 <th>Thao tác</th>
@@ -51,38 +50,44 @@
             </thead>
             <tbody>
               <tr th:each="campaign : ${campaigns}">
-                <td><strong th:text="${campaign.tenChienDich}">Tên Chiến Dịch</strong></td>
+                <td>
+                  <strong th:text="${campaign.tenChienDich}">Tên Chiến Dịch</strong>
+                  <br>
+                  <small style="color: #666;" th:text="'Mã: ' + ${campaign.maChienDich}"></small>
+                </td>
                 <td th:text="${#temporals.format(campaign.ngayBatDau, 'dd/MM/yyyy HH:mm')}">01/06/2026</td>
                 <td th:text="${#temporals.format(campaign.ngayKetThuc, 'dd/MM/yyyy HH:mm')}">30/06/2026</td>
-                <td th:text="${campaign.tongLuotDuKien != null ? campaign.tongLuotDuKien : 0}">0</td>
                 <td>
                   <span class="badge bg-green" th:if="${campaign.trangThai == 1}">Hoạt động</span>
                   <span class="badge bg-red" th:if="${campaign.trangThai == 0}">Tạm ngưng</span>
-                  <span class="badge" style="background-color: #f39c12; color: #fff;" th:if="${campaign.trangThai == 2}">Bản nháp</span>
                 </td>
                 <td><a th:href="@{/play/{slug}(slug=${campaign.duongDanSlug})}" target="_blank">Link</a></td>
                 <td class="action-links">
                   <!-- Actions -->
                   <a href="javascript:void(0)" 
-                     th:data-id="${campaign.campaignId}"
+                     th:data-id="${campaign.id}"
                      th:data-name="${campaign.tenChienDich}"
                      onclick="openStoreAllocationModal(this)" style="color: #f39c12;">Phân bổ CH</a> <span class="action-separator">|</span> 
                   <a href="javascript:void(0)" 
-                     th:data-id="${campaign.campaignId}"
+                     th:data-id="${campaign.id}"
                      th:data-name="${campaign.tenChienDich}"
                      onclick="openCampaignRulesModal(this)" style="color: #00a65a;">Luật chơi</a> <span class="action-separator">|</span> 
                   <a href="javascript:void(0)" 
-                     th:data-id="${campaign.campaignId}"
+                     th:data-id="${campaign.id}"
                      th:data-name="${campaign.tenChienDich}"
-                     th:data-start="${campaign.ngayBatDau}"
-                     th:data-end="${campaign.ngayKetThuc}"
-                     th:data-turns="${campaign.tongLuotDuKien}"
+                     th:data-code="${campaign.maChienDich}"
+                     th:data-start="${campaign.ngayBatDau != null ? #temporals.format(campaign.ngayBatDau, 'dd/MM/yyyy HH:mm') : ''}"
+                     th:data-end="${campaign.ngayKetThuc != null ? #temporals.format(campaign.ngayKetThuc, 'dd/MM/yyyy HH:mm') : ''}"
                      th:data-slug="${campaign.duongDanSlug}"
                      th:data-status="${campaign.trangThai}"
                      onclick="openEditCampaignModal(this)">Sửa</a> <span class="action-separator">|</span>
+                  <a href="javascript:void(0)" 
+                     th:data-id="${campaign.id}"
+                     th:data-name="${campaign.tenChienDich}"
+                     onclick="openCampaignHistoryModal(this)" style="color: #605ca8;">Lịch sử</a> <span class="action-separator">|</span>
                      
                   <form th:action="@{/admin/campaigns/toggle-status}" method="post" style="display:inline;">
-                    <input type="hidden" name="campaignId" th:value="${campaign.campaignId}" />
+                    <input type="hidden" name="campaignId" th:value="${campaign.id}" />
                     <input type="hidden" name="status" th:value="${campaign.trangThai == 1 ? 0 : 1}" />
                     <button type="submit" 
                             style="background:none; border:none; cursor:pointer; font-weight:600; padding:0; font-family:inherit; font-size:inherit; color: #dd4b39;" 
@@ -99,15 +104,24 @@
     </section>
   </div>
 
+  <!-- Flatpickr for Date/Time standard Vietnam -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://npmcdn.com/flatpickr/dist/l10n/vn.js"></script>
+
   <!-- Modal Thêm/Sửa Chiến Dịch -->
   <div id="campaignModal" class="modal">
     <div class="modal-content">
       <form th:action="@{/admin/campaigns/save}" method="post">
-        <input type="hidden" name="campaignId" id="campaignId">
+        <input type="hidden" name="id" id="campaignId">
         
         <div class="modal-header">
           <div class="modal-title" id="campaignModalTitle">Thêm Chiến Dịch Mới</div>
           <button type="button" class="close-btn" onclick="closeModal('campaignModal')">&times;</button>
+        </div>
+        <div class="form-group">
+          <label>Mã chiến dịch * (Dùng để định danh và liên kết)</label>
+          <input type="text" class="form-control" name="maChienDich" id="campaignCode" placeholder="VD: MUAHE2026" required>
         </div>
         <div class="form-group">
           <label>Tên chiến dịch *</label>
@@ -116,28 +130,22 @@
         <div style="display: flex; gap: 20px;">
           <div class="form-group" style="flex: 1;">
             <label>Ngày bắt đầu *</label>
-            <!-- DateTimeLocal in Spring needs 'T' formatting handled by @DateTimeFormat -->
-            <input type="datetime-local" class="form-control" name="ngayBatDau" id="campaignStart" required>
+            <input type="text" class="form-control datetime-picker" name="ngayBatDau" id="campaignStart" placeholder="dd/mm/yyyy hh:mm" required>
           </div>
           <div class="form-group" style="flex: 1;">
             <label>Ngày kết thúc *</label>
-            <input type="datetime-local" class="form-control" name="ngayKetThuc" id="campaignEnd" required>
+            <input type="text" class="form-control datetime-picker" name="ngayKetThuc" id="campaignEnd" placeholder="dd/mm/yyyy hh:mm" required>
           </div>
         </div>
         <div class="form-group">
           <label>Đường dẫn Slug (Tùy chọn)</label>
           <input type="text" class="form-control" name="duongDanSlug" id="campaignSlug" placeholder="VD: vui-he-2026">
         </div>
-        <div class="form-group">
-          <label>Tổng lượt quay dự kiến</label>
-          <input type="number" class="form-control" name="tongLuotDuKien" id="campaignSpins" placeholder="VD: 5000">
-        </div>
-        <div class="form-group">
+        <div class="form-group" id="campaignStatusGroup">
           <label>Trạng thái</label>
           <select class="form-control" name="trangThai" id="campaignStatus">
             <option value="1">Hoạt động</option>
             <option value="0">Tạm ngưng</option>
-            <option value="2">Bản nháp</option>
           </select>
         </div>
         <div class="form-group">
@@ -153,6 +161,17 @@
   </div>
 
   <script>
+    let startPicker, endPicker;
+    document.addEventListener("DOMContentLoaded", function() {
+      const config = {
+          enableTime: true,
+          dateFormat: "d/m/Y H:i",
+          time_24hr: true,
+          locale: "vn"
+      };
+      startPicker = flatpickr("#campaignStart", config);
+      endPicker = flatpickr("#campaignEnd", config);
+    });
     function openAddCampaignModal() {
       document.getElementById('campaignModal').classList.add('active');
       document.getElementById('campaignModalTitle').textContent = 'Thêm Chiến Dịch Mới';
@@ -160,12 +179,13 @@
       document.getElementById('saveCampaignBtn').textContent = 'Lưu chiến dịch';
       
       document.getElementById('campaignId').value = '';
+      document.getElementById('campaignCode').value = '';
       document.getElementById('campaignName').value = '';
-      document.getElementById('campaignStart').value = '';
-      document.getElementById('campaignEnd').value = '';
-      document.getElementById('campaignSpins').value = '';
+      if(startPicker) startPicker.clear();
+      if(endPicker) endPicker.clear();
       document.getElementById('campaignSlug').value = '';
-      document.getElementById('campaignStatus').value = '1';
+      document.getElementById('campaignStatus').value = '0';
+      document.getElementById('campaignStatusGroup').style.display = 'none'; // Ẩn khi thêm mới
       document.getElementById('campaignDesc').value = '';
     }
 
@@ -176,11 +196,12 @@
       document.getElementById('saveCampaignBtn').textContent = 'Lưu thay đổi';
       
       document.getElementById('campaignId').value = btn.getAttribute('data-id');
+      document.getElementById('campaignCode').value = btn.getAttribute('data-code');
       document.getElementById('campaignName').value = btn.getAttribute('data-name');
-      document.getElementById('campaignStart').value = btn.getAttribute('data-start');
-      document.getElementById('campaignEnd').value = btn.getAttribute('data-end');
-      document.getElementById('campaignSpins').value = btn.getAttribute('data-turns');
+      if(startPicker) startPicker.setDate(btn.getAttribute('data-start'));
+      if(endPicker) endPicker.setDate(btn.getAttribute('data-end'));
       document.getElementById('campaignSlug').value = btn.getAttribute('data-slug');
+      document.getElementById('campaignStatusGroup').style.display = 'block'; // Hiện khi sửa
       document.getElementById('campaignStatus').value = btn.getAttribute('data-status');
     }
     
@@ -241,6 +262,27 @@
         }
       } catch (e) {
         document.getElementById('ruleModalContent').innerHTML = '<div style="color:red; padding: 20px;">Lỗi mạng! ' + e.message + '</div>';
+      }
+    }
+
+    async function openCampaignHistoryModal(btn) {
+      const campaignId = btn.getAttribute('data-id');
+      const campaignName = btn.getAttribute('data-name');
+      
+      document.getElementById('historyModalTitle').textContent = 'Lịch sử chỉnh sửa: ' + campaignName;
+      document.getElementById('historyModal').classList.add('active');
+      document.getElementById('historyModalContent').innerHTML = '<div style="text-align: center; padding: 20px;">Đang tải dữ liệu...</div>';
+      
+      try {
+        const response = await fetch('/admin/campaigns/' + campaignId + '/history');
+        if (response.ok) {
+           const html = await response.text();
+           document.getElementById('historyModalContent').innerHTML = html;
+        } else {
+           document.getElementById('historyModalContent').innerHTML = '<div style="color:red; padding: 20px;">Lỗi khi tải dữ liệu!</div>';
+        }
+      } catch (e) {
+        document.getElementById('historyModalContent').innerHTML = '<div style="color:red; padding: 20px;">Lỗi mạng! ' + e.message + '</div>';
       }
     }
 
@@ -306,6 +348,18 @@
         <button class="close-btn" onclick="closeModal('ruleModal')">&times;</button>
       </div>
       <div id="ruleModalContent">
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Lịch sử -->
+  <div id="historyModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <div class="modal-title" id="historyModalTitle">Lịch sử chỉnh sửa</div>
+        <button class="close-btn" onclick="closeModal('historyModal')">&times;</button>
+      </div>
+      <div id="historyModalContent">
       </div>
     </div>
   </div>
