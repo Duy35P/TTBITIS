@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface PhanQuyenRepository extends JpaRepository<PhanQuyen, PhanQuyenId> {
     List<PhanQuyen> findByIdRoleId(String roleId);
+    void deleteByIdRoleId(String roleId);
 }

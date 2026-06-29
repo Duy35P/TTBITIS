@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <th:block th:replace="~{admin/fragments/layout :: head('Lucky Draw - Tổng quan (Dashboard)')}"></th:block>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ===== Dashboard Specific Styles ===== */
+    .row { display: flex; flex-wrap: wrap; margin: -10px; margin-bottom: 10px; }
+    .col-3 { width: 25%; padding: 10px; }
+    .col-8 { width: 66.66%; padding: 10px; }
+    .col-4 { width: 33.33%; padding: 10px; }
+    .col-12 { width: 100%; padding: 10px; }
+  
+    /* Stat Cards */
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      border: 1px solid #f0f0f0;
+    }
+    .stat-header { display: flex; align-items: center; gap: 8px; color: #555; font-size: 14px; font-weight: 600; margin-bottom: 15px; }
+    .stat-icon { font-size: 16px; color: #3c8dbc; }
+    .stat-value { font-size: 32px; font-weight: 700; color: #111; margin-bottom: 10px; }
+    .stat-badge {
+      display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; width: max-content;
+    }
+    .badge-green { background-color: #dcfce7; color: #166534; }
+    .badge-red { background-color: #fee2e2; color: #991b1b; }
+    .badge-yellow { background-color: #fef3c7; color: #92400e; }
+  
+    /* Chart Cards */
+    .chart-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      height: 100%;
+      border: 1px solid #f0f0f0;
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .chart-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; color: #333; }
+    .chart-title .icon { color: #3c8dbc; font-size: 18px; }
+    
+    .donut-container { position: relative; width: 100%; height: 250px; display: flex; align-items: center; justify-content: center; }
+    
+    /* Table Card */
+    .table-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; }
+    .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .table-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .filter-btn { background: #f4f4f4; border: none; padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #555; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+    
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #f4f4f4; font-size: 14px; }
+    th { background-color: #f9fafb; font-weight: 600; color: #555; border-radius: 4px; }
+    th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+    th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+    .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background-color: #dcfce7; color: #166534; display: inline-block; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header th:replace="~{admin/fragments/layout :: header}"></header>
+
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>Tổng quan <small>Báo cáo & Thống kê</small></h1>
+      <ul class="breadcrumb">
+        <li><a th:href="@{/admin}">🏠 LuckyDraw</a></li>
+        <li>Tổng quan</li>
+      </ul>
+    </section>
+    
+    <section class="content">
+      
+      <!-- Top Stats Row -->
+      <div class="row">
+        <div class="col-3">
+          <div class="stat-card">
+            <div class="stat-header"><span class="stat-icon">👥</span> Tổng Khách Hàng</div>
+            <div class="stat-value" th:text="${#numbers.formatInteger(totalCustomers, 0, 'COMMA')}">0</div>
+            <div class="stat-badge badge-green">Hoạt động</div>
+          </div>
+        </div>
+        <div class="col-3">
+          <div class="stat-card">
+            <div class="stat-header"><span class="stat-icon">🏪</span> Cửa Hàng / Đại Lý</div>
+            <div class="stat-value" th:text="${#numbers.formatInteger(totalStores, 0, 'COMMA')}">0</div>
+            <div class="stat-badge badge-green">Kết nối POS</div>
+          </div>
+        </div>
+        <div class="col-3">
+          <div class="stat-card">
+            <div class="stat-header"><span class="stat-icon">✔️</span> Tổng Lượt Quay (Toàn hệ thống)</div>
+            <div class="stat-value" th:text="${#numbers.formatInteger(totalSpins, 0, 'COMMA')}">0</div>
+            <div class="stat-badge badge-green">Lượt đã dùng</div>
+          </div>
+        </div>
+        <div class="col-3">
+          <div class="stat-card">
+            <div class="stat-header"><span class="stat-icon">⏳</span> Chiến Dịch Đang Chạy</div>
+            <div class="stat-value" th:text="${#numbers.formatInteger(runningCampaigns, 0, 'COMMA')}">0</div>
+            <div class="stat-badge badge-yellow">Hoạt động</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row (Tạm thời là dữ liệu tĩnh theo thiết kế) -->
+      <div class="row">
+        <div class="col-8">
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title"><span class="icon">📈</span> Tổng quan lượt quay (Tháng này)</div>
+              <div style="font-size: 24px; font-weight: 700;">3,210 <span class="stat-badge badge-green" style="font-size: 11px;">+12%</span></div>
+            </div>
+            <div style="flex: 1; width: 100%; position: relative;">
+              <canvas id="spinsChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="chart-card">
+            <div class="chart-header">
+              <div class="chart-title"><span class="icon">🎁</span> Tỷ lệ phát thưởng</div>
+              <div class="stat-badge badge-yellow">Sắp cạn kho</div>
+            </div>
+            <div style="text-align: center; margin-bottom: 10px;">
+              <span style="font-size: 13px; color: #666; background: #f4f4f4; padding: 4px 10px; border-radius: 20px; margin: 0 5px;">iPhone 16</span>
+              <span style="font-size: 13px; color: #666; background: #f4f4f4; padding: 4px 10px; border-radius: 20px; margin: 0 5px;">Voucher</span>
+            </div>
+            <div class="donut-container">
+              <canvas id="prizeDonut"></canvas>
+              <div style="position: absolute; font-size: 32px; font-weight: 700;">65%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Row (Tạm thời là dữ liệu tĩnh theo thiết kế) -->
+      <div class="row">
+        <div class="col-12">
+          <div class="table-card">
+            <div class="table-header">
+              <div class="table-title"><span class="icon">🔄</span> Lịch sử trúng thưởng gần đây (Dữ liệu mẫu)</div>
+              <button class="filter-btn">Lọc kết quả ▼</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Khách hàng</th>
+                  <th>Giải thưởng</th>
+                  <th>Cửa hàng / Đại lý</th>
+                  <th>Thời gian</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Nguyễn Văn A</strong><br><span style="font-size:12px; color:#777;">0909xxx123</span></td>
+                  <td>Voucher Giảm 500K</td>
+                  <td>TLC Showroom Hà Đông</td>
+                  <td>17/06/2026 08:30:15</td>
+                  <td><span class="status-badge">Đã trao</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Trần Thị B</strong><br><span style="font-size:12px; color:#777;">0988xxx456</span></td>
+                  <td>iPhone 16 Pro Max 256GB</td>
+                  <td>Đại lý Cấp 1 - Hưng Yên</td>
+                  <td>16/06/2026 14:20:00</td>
+                  <td><span class="status-badge" style="background-color:#fef3c7; color:#92400e;">Chờ liên hệ</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Lê Văn C</strong><br><span style="font-size:12px; color:#777;">0912xxx789</span></td>
+                  <td>Tai nghe AirPods Pro</td>
+                  <td>Cửa hàng Vật Tư Điện Hùng Yến</td>
+                  <td>15/06/2026 09:15:22</td>
+                  <td><span class="status-badge">Đã trao</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <script>
+    // Initialize Area Chart (Lượt quay)
+    const ctxArea = document.getElementById('spinsChart');
+    if (ctxArea) {
+      const ctx = ctxArea.getContext('2d');
+      let gradientArea = ctx.createLinearGradient(0, 0, 0, 400);
+      gradientArea.addColorStop(0, 'rgba(60, 141, 188, 0.4)');   
+      gradientArea.addColorStop(1, 'rgba(60, 141, 188, 0.0)');
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['1/8', '3/8', '5/8', '7/8', '9/8', '11/8', '13/8', '15/8', '17/8', '19/8', '21/8', '23/8', '25/8'],
+          datasets: [{
+            label: 'Lượt quay',
+            data: [50, 150, 120, 90, 180, 70, 100, 190, 80, 180, 90, 120, 250],
+            borderColor: '#3c8dbc',
+            backgroundColor: gradientArea,
+            borderWidth: 2,
+            pointBackgroundColor: '#fff',
+            pointBorderColor: '#3c8dbc',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { grid: { display: false } },
+            y: { grid: { borderDash: [5, 5], color: '#f0f0f0' }, border: { display: false }, beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    // Initialize Donut Chart (Tỷ lệ phát thưởng)
+    const ctxDonut = document.getElementById('prizeDonut');
+    if (ctxDonut) {
+      new Chart(ctxDonut.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Đã phát', 'Còn lại'],
+          datasets: [{
+            data: [65, 35],
+            backgroundColor: ['#6b94ff', '#f3f4f6'],
+            borderWidth: 0,
+            borderRadius: 20,
+            cutout: '80%'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

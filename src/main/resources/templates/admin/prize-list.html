@@ -57,7 +57,6 @@
                   <th style="padding: 12px 8px;">Thuộc Chiến Dịch</th>
                   <th style="padding: 12px 8px;">Tỷ lệ trúng</th>
                   <th style="padding: 12px 8px;">Tồn kho tổng</th>
-                  <th style="padding: 12px 8px;">Trạng thái</th>
                   <th style="padding: 12px 8px;">Thao tác</th>
                 </tr>
               </thead>
@@ -76,7 +75,6 @@
                   <td style="padding: 12px 8px;">
                     <span style="font-weight: bold; font-size: 15px; color: #00a65a;" th:text="${p.tonKhoToanHeThong}"></span>
                   </td>
-                  <td style="padding: 12px 8px;"><span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; background-color: #0073b7; color: #fff;">Đang chạy</span></td>
                   <td style="padding: 12px 8px;" class="action-links">
                     <a href="javascript:void(0)" 
                        th:data-ma="${p.maGiaiThuong}"
@@ -86,6 +84,7 @@
                        th:data-ton="${p.tonKhoToanHeThong}"
                        th:data-limit="${p.gioiHanTrungMoiCustomer}"
                        th:data-xac="${p.xacSuat}"
+                       th:data-is-real="${p.laGiaiThuong}"
                        onclick="openEditModal(this)" style="color: #3c8dbc; font-weight: 600;">Sửa</a> 
                     <span style="color: #ccc; margin: 0 5px;">|</span> 
                     <a href="javascript:void(0)" 
@@ -94,7 +93,7 @@
                   </td>
                 </tr>
                 <tr th:if="${prizes == null or prizes.isEmpty()}">
-                    <td colspan="6" style="text-align: center; padding: 20px; color: #777;">Chưa có giải thưởng nào</td>
+                    <td colspan="5" style="text-align: center; padding: 20px; color: #777;">Chưa có giải thưởng nào</td>
                 </tr>
               </tbody>
             </table>
@@ -235,6 +234,13 @@
               <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Giới hạn trúng/người</label>
               <input type="number" name="gioiHanTrungMoiCustomer" id="prizeLimit" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;">
             </div>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                 <input type="checkbox" name="laGiaiThuong" id="prizeIsReal" value="true" checked>
+                 <span style="font-weight: 600; font-size: 14px; color: #555;">Đây là giải thưởng thật (Bỏ chọn nếu là ô "Chúc bạn may mắn lần sau")</span>
+             </label>
           </div>
           
           <div style="margin-bottom: 15px;">
@@ -380,7 +386,8 @@
       var ton = btn.getAttribute('data-ton');
       var limit = btn.getAttribute('data-limit');
       var xac = btn.getAttribute('data-xac');
-      openModal('prizeModal', 'Sửa Giải Thưởng', ma, ten, loai, limit, chien, ton, xac);
+      var isReal = btn.getAttribute('data-is-real');
+      openModal('prizeModal', 'Sửa Giải Thưởng', ma, ten, loai, limit, chien, ton, xac, isReal);
     }
     
     function confirmDeletePrize(btn) {
@@ -388,7 +395,7 @@
       deletePrize(ma);
     }
 
-    function openModal(modalId, title, pMa, pTen, pLoai, pLimit, pChienDich, pTotal, pProb) {
+    function openModal(modalId, title, pMa, pTen, pLoai, pLimit, pChienDich, pTotal, pProb, pIsReal) {
       var modal = document.getElementById(modalId);
       modal.style.display = 'flex';
       if(title && document.getElementById('prizeModalTitle')) {
@@ -405,6 +412,11 @@
            document.getElementById('prizeCampaign').value = pChienDich;
            document.getElementById('prizeTotal').value = pTotal || 0;
            document.getElementById('prizeProb').value = pProb || 0;
+           if (pIsReal !== undefined && pIsReal !== null) {
+               document.getElementById('prizeIsReal').checked = (pIsReal === 'true' || pIsReal === true);
+           } else {
+               document.getElementById('prizeIsReal').checked = true;
+           }
         } else {
            document.getElementById('savePrizeBtn').style.backgroundColor = '#3c8dbc';
            document.getElementById('savePrizeBtn').textContent = 'Lưu Giải Thưởng';
@@ -415,6 +427,7 @@
            document.getElementById('prizeLimit').value = '';
            document.getElementById('prizeTotal').value = '';
            document.getElementById('prizeProb').value = '';
+           document.getElementById('prizeIsReal').checked = true;
         }
       }
     }

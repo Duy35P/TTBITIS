@@ -24,6 +24,11 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
     List<Campaign> findByTrangThai(Integer trangThai);
 
     /**
+     * Đếm số chiến dịch theo trạng thái
+     */
+    long countByTrangThai(Integer trangThai);
+
+    /**
      * Tìm chiến dịch theo slug.
      */
     Optional<Campaign> findByDuongDanSlug(String duongDanSlug);

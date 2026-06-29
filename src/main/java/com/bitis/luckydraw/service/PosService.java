@@ -152,10 +152,11 @@ public class PosService {
         // 3. SKU Rule
         if (request.getSkus() != null && !request.getSkus().isEmpty()) {
             List<CampaignRuleSku> skuRules = campaignRuleSkuRepository.findByMaChienDich(maChienDich);
-            for (String purchasedSku : request.getSkus()) {
+            for (PosSyncRequest.PosSyncSku purchasedSku : request.getSkus()) {
                 for (CampaignRuleSku rule : skuRules) {
-                    if (rule.getMaSku().equalsIgnoreCase(purchasedSku)) {
-                        turns += rule.getSoLuotThuong();
+                    if (rule.getMaSku().equalsIgnoreCase(purchasedSku.getSkuCode())) {
+                        int qty = purchasedSku.getQuantity() != null ? purchasedSku.getQuantity() : 1;
+                        turns += rule.getSoLuotThuong() * qty;
                     }
                 }
             }

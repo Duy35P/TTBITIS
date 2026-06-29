@@ -212,9 +212,11 @@
   <script>
     // --- Mock Data ---
     const products = [
-      { id: 1, name: 'Giày loại 1', price: 34990000, sku: 'GIAY-1' },
-      { id: 2, name: 'Giày loại 2', price: 6200000, sku: 'GIAY-2'},
-      { id: 3, name: 'Giày loại 3', price: 150000, sku: 'GIAY-3' },
+      { id: 1, name: 'Biti\'s Hunter X DSUH08600', price: 1199000, sku: 'DSUH08600', icon: '👟' },
+      { id: 2, name: 'Biti\'s Hunter Street DSMH07400', price: 899000, sku: 'DSMH07400', icon: '👟' },
+      { id: 3, name: 'Giày Thể Thao Nữ Biti\'s Hunter', price: 950000, sku: 'DSWH06500', icon: '👟' },
+      { id: 4, name: 'Sandal Nam Biti\'s', price: 350000, sku: 'SAD-001', icon: '👡' },
+      { id: 5, name: 'Vớ Biti\'s Kháng Khuẩn', price: 50000, sku: 'ACC-VO-01', icon: '🧦' }
     ];
 
     let cart = [];
@@ -387,9 +389,12 @@
       const skus = [];
       cart.forEach(item => {
           totalAmount += item.price * item.qty;
-          for(let i = 0; i < item.qty; i++) {
-              skus.push(item.sku);
-          }
+          skus.push({
+              skuCode: item.sku,
+              name: item.name,
+              quantity: item.qty,
+              amount: item.price * item.qty
+          });
       });
 
       const payload = {

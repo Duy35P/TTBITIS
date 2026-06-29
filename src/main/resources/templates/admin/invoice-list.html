@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments/layout :: head('Lucky Draw - Tra Cứu Hóa Đơn')}">
+</head>
+<body>
+  <!-- Header -->
+  <header th:replace="~{admin/fragments/layout :: header}"></header>
+
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>Tra Cứu Hóa Đơn <small>Quản lý dữ liệu mua hàng đồng bộ từ máy POS</small></h1>
+      <ul class="breadcrumb">
+        <li><a th:href="@{/admin}">🏠 LuckyDraw</a></li>
+        <li>Tra cứu Hóa đơn</li>
+      </ul>
+    </section>
+    
+    <section class="content">
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">Danh sách Hóa Đơn</h3>
+        </div>
+        <div class="box-body">
+          
+          <form method="get" th:action="@{/admin/invoices}">
+          <div class="filter-area" style="background-color: #f9fafb; padding: 15px; border-radius: 4px; border: 1px solid #eee; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="filter-group" style="display: flex; flex-direction: column; flex: 1; min-width: 200px;">
+              <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Mã Hóa Đơn hoặc SĐT</label>
+              <input type="text" name="keyword" class="form-control" placeholder="VD: POS-2026-0001..." th:value="${selectedKeyword}" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+            </div>
+            <div class="filter-group" style="display: flex; flex-direction: column; flex: 1; min-width: 200px;">
+              <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Trạng thái Cấp Lượt</label>
+              <select name="status" class="form-control" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+                <option value="all" th:selected="${selectedStatus == 'all'}">-- Tất cả --</option>
+                <option value="1" th:selected="${selectedStatus == '1'}">Đã cấp lượt (Processed)</option>
+                <option value="0" th:selected="${selectedStatus == '0'}">Chưa cấp lượt</option>
+              </select>
+            </div>
+            <div class="filter-group" style="flex: 0; justify-content: flex-end;">
+              <button type="submit" class="btn-primary" style="background-color: #3c8dbc; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; height: 38px; white-space: nowrap;">🔍 Lọc Data</button>
+            </div>
+          </div>
+          </form>
+
+          <table class="table-striped" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <thead>
+              <tr>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Mã Hóa Đơn</th>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Cửa hàng phát sinh</th>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Khách Hàng (SĐT)</th>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Tổng Tiền</th>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Thanh Toán</th>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Trạng thái Cấp Lượt</th>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Chi tiết</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="inv, iterStat : ${invoices}" th:style="${iterStat.odd ? 'background-color: #fcfcfc;' : ''}">
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;">
+                    <strong th:text="${inv.maHoaDon}">POS-xxx</strong><br>
+                    <small style="color:#777;" th:text="${#temporals.format(inv.ngayTao, 'dd/MM/yyyy HH:mm')}">17/06/2026 10:15</small>
+                </td>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;" th:text="${inv.tenCuaHang}">TLC Showroom</td>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;">
+                    <th:block th:if="${inv.khachHangSdt != 'N/A'}" th:text="${inv.khachHangSdt}"></th:block>
+                    <i th:if="${inv.khachHangSdt == 'N/A'}" style="color:#999;">Khách vãng lai (Null)</i>
+                </td>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4; color:#e74c3c; font-weight:bold;" th:text="${#numbers.formatDecimal(inv.tongTien, 0, 'COMMA', 0, 'POINT')} + ' đ'">34,990,000 đ</td>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;" th:text="${inv.phuongThucTt}">Tiền mặt</td>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;">
+                  <th:block th:if="${inv.chiTietCapLuot.size() > 0}">
+                     <span th:each="cl : ${inv.chiTietCapLuot}" class="badge" style="background-color: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-bottom:2px; display:inline-block;" th:text="${cl}"></span><br>
+                  </th:block>
+                  <th:block th:if="${inv.chiTietCapLuot.size() == 0 && inv.daXuLy == true}">
+                     <span class="badge" style="background-color: #fef08a; color: #854d0e; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">Đã xử lý (0 lượt)</span>
+                  </th:block>
+                  <th:block th:if="${inv.daXuLy == false}">
+                     <span class="badge" style="background-color: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">Chưa cấp</span>
+                  </th:block>
+                </td>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;">
+                    <button class="btn-info" style="background-color: #00c0ef; color: #fff; padding: 4px 10px; border-radius: 4px; border: none; cursor: pointer; font-size: 12px;" 
+                            th:data-code="${inv.maHoaDon}"
+                            th:data-store="${inv.tenCuaHang}"
+                            th:data-total="${#numbers.formatDecimal(inv.tongTien, 0, 'COMMA', 0, 'POINT')} + ' đ'"
+                            th:data-payment="${inv.phuongThucTt}"
+                            th:data-phone="${inv.khachHangSdt}"
+                            th:data-items="${inv.sanPhamJson}"
+                            onclick="viewDetailBtn(this)">Xem Bill</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal Chi Tiết Hóa Đơn -->
+  <div class="modal" id="invoiceModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: #fff; width: 90%; max-width: 600px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); animation: slideDown 0.3s ease;">
+      <div class="modal-header" style="padding: 15px 20px; border-bottom: 1px solid #f4f4f4; display: flex; justify-content: space-between; align-items: center;">
+        <h3 class="modal-title" style="font-size: 18px; font-weight: 600; margin: 0;">Chi Tiết Hóa Đơn</h3>
+        <button class="close-btn" onclick="closeModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #999;">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px; max-height: 70vh; overflow-y: auto;">
+        <div class="receipt-view" style="border: 1px dashed #ccc; padding: 20px; background: #fafafa; font-family: monospace;">
+          <div class="receipt-header" style="text-align: center; border-bottom: 1px dashed #ccc; padding-bottom: 10px; margin-bottom: 15px;">
+            <strong style="font-size: 18px;" id="mStore">TLC Showroom</strong><br>
+            <span style="font-size: 13px; color: #555;">Hóa đơn bán lẻ</span><br>
+            <span style="font-size: 13px; font-weight: bold; margin-top: 5px; display: inline-block;" id="mCode">POS-xxx</span>
+          </div>
+          
+          <div style="margin-bottom: 15px; font-size: 14px;">
+            SĐT Khách hàng: <strong id="mPhone">09xxxx</strong><br>
+            Thanh toán: <span id="mPayment">Tiền mặt</span>
+          </div>
+
+          <div style="border-bottom: 1px dashed #ccc; padding-bottom: 5px; margin-bottom: 10px; font-weight: bold; display: flex; justify-content: space-between;">
+            <span style="flex: 2;">Sản phẩm</span>
+            <span style="flex: 1; text-align: center;">SL</span>
+            <span style="flex: 1; text-align: right;">Thành tiền</span>
+          </div>
+          
+          <div id="mItems">
+            <!-- Inject items -->
+          </div>
+          
+          <div class="receipt-total" style="border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 10px; font-weight: bold; font-size: 16px; display: flex; justify-content: space-between;">
+            <span>TỔNG CỘNG:</span>
+            <span id="mTotal">0 đ</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal.active { display: flex !important; }
+  </style>
+
+  <script>
+    function viewDetailBtn(btn) {
+      var code = btn.getAttribute('data-code');
+      var store = btn.getAttribute('data-store');
+      var total = btn.getAttribute('data-total');
+      var payment = btn.getAttribute('data-payment');
+      var phone = btn.getAttribute('data-phone');
+      var itemsStr = btn.getAttribute('data-items');
+      viewDetail(code, store, total, payment, phone, itemsStr);
+    }
+    
+    function viewDetail(code, store, total, payment, phone, itemsStr) {
+      document.getElementById('mCode').innerText = code;
+      document.getElementById('mStore').innerText = store;
+      document.getElementById('mTotal').innerText = total;
+      document.getElementById('mPayment').innerText = payment;
+      document.getElementById('mPhone').innerText = phone;
+      
+      let items = [];
+      try {
+          items = JSON.parse(itemsStr);
+      } catch (e) {
+          console.error(e);
+      }
+      
+      let itemsHtml = '';
+      if(items && Array.isArray(items)) {
+          // Xử lý gom nhóm nếu là mảng chuỗi (array of strings)
+          if(items.length > 0 && typeof items[0] === 'string') {
+              let counts = {};
+              items.forEach(sku => { counts[sku] = (counts[sku] || 0) + 1; });
+              for (const [sku, qty] of Object.entries(counts)) {
+                  itemsHtml += `
+                    <div class="receipt-item" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                      <span style="flex: 2;">${sku}</span>
+                      <span style="flex: 1; text-align: center;">x${qty}</span>
+                      <span style="flex: 1; text-align: right;">--</span>
+                    </div>
+                  `;
+              }
+          } else {
+              items.forEach(item => {
+                let itemName = typeof item === 'string' ? item : (item.skuName || item.name || item.sku || item.skuCode || 'Sản phẩm');
+                let itemQty = typeof item === 'string' ? 1 : (item.quantity || item.qty || 1);
+                let itemPrice = typeof item === 'string' ? 0 : (item.amount ? Number(item.amount).toLocaleString('en-US') : (item.price || 0));
+                itemsHtml += `
+                  <div class="receipt-item" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                    <span style="flex: 2;">${itemName}</span>
+                    <span style="flex: 1; text-align: center;">x${itemQty}</span>
+                    <span style="flex: 1; text-align: right;">${itemPrice}</span>
+                  </div>
+                `;
+              });
+          }
+      }
+      document.getElementById('mItems').innerHTML = itemsHtml;
+      
+      document.getElementById('invoiceModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('invoiceModal').classList.remove('active');
+    }
+  </script>
+</body>
+</html>

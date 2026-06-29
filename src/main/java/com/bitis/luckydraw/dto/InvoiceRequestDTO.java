@@ -15,12 +15,18 @@ public class InvoiceRequestDTO {
 
     public static class SkuItem {
         private String sku;
+        private String name;
         private Integer quantity;
+        private Double amount;
 
         public String getSku() { return sku; }
         public void setSku(String sku) { this.sku = sku; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
         public Integer getQuantity() { return quantity; }
         public void setQuantity(Integer quantity) { this.quantity = quantity; }
+        public Double getAmount() { return amount; }
+        public void setAmount(Double amount) { this.amount = amount; }
     }
 
     // Getters and Setters

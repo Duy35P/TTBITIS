@@ -23,6 +23,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
+
 @Controller
 @RequestMapping("/admin/campaigns")
 public class AdminCampaignController {
@@ -34,10 +37,11 @@ public class AdminCampaignController {
     private final CampaignRulePaymentRepository campaignRulePaymentRepository;
     private final CampaignRuleSkuRepository campaignRuleSkuRepository;
     private final SystemAuditLogRepository systemAuditLogRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     public AdminCampaignController(CampaignRepository campaignRepository, StoreRepository storeRepository, CampaignStoreRepository campaignStoreRepository,
                                    CampaignRuleRepository campaignRuleRepository, CampaignRulePaymentRepository campaignRulePaymentRepository, CampaignRuleSkuRepository campaignRuleSkuRepository,
-                                   SystemAuditLogRepository systemAuditLogRepository) {
+                                   SystemAuditLogRepository systemAuditLogRepository, JdbcTemplate jdbcTemplate) {
         this.campaignRepository = campaignRepository;
         this.storeRepository = storeRepository;
         this.campaignStoreRepository = campaignStoreRepository;
@@ -45,6 +49,7 @@ public class AdminCampaignController {
         this.campaignRulePaymentRepository = campaignRulePaymentRepository;
         this.campaignRuleSkuRepository = campaignRuleSkuRepository;
         this.systemAuditLogRepository = systemAuditLogRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @GetMapping
@@ -54,11 +59,53 @@ public class AdminCampaignController {
     }
 
     @PostMapping("/save")
-    public String saveCampaign(@ModelAttribute Campaign formCampaign, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+    @Transactional
+    public String saveCampaign(@ModelAttribute Campaign formCampaign, org.springframework.validation.BindingResult bindingResult, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Dữ liệu nhập vào không hợp lệ. Vui lòng kiểm tra lại định dạng ngày giờ (chuẩn: dd/MM/yyyy HH:mm) hoặc các trường bắt buộc!");
+            return "redirect:/admin/campaigns";
+        }
+        
+        // Kiểm tra logic Ngày bắt đầu và Ngày kết thúc
+        if (formCampaign.getNgayBatDau() != null && formCampaign.getNgayKetThuc() != null) {
+            if (formCampaign.getNgayBatDau().isAfter(formCampaign.getNgayKetThuc())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Ngày bắt đầu không thể diễn ra sau ngày kết thúc!");
+                return "redirect:/admin/campaigns";
+            }
+        }
+        // Kiểm tra trùng lặp Mã Chiến Dịch
+        if (formCampaign.getId() == null) {
+            if (formCampaign.getMaChienDich() != null && !formCampaign.getMaChienDich().trim().isEmpty()) {
+                if (campaignRepository.findByMaChienDich(formCampaign.getMaChienDich()).isPresent()) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Mã chiến dịch '" + formCampaign.getMaChienDich() + "' đã tồn tại!");
+                    return "redirect:/admin/campaigns";
+                }
+            }
+        } else {
+            Campaign existingById = campaignRepository.findById(formCampaign.getId()).orElse(null);
+            if (existingById != null && formCampaign.getMaChienDich() != null && !existingById.getMaChienDich().equals(formCampaign.getMaChienDich())) {
+                if (campaignRepository.findByMaChienDich(formCampaign.getMaChienDich()).isPresent()) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Mã chiến dịch '" + formCampaign.getMaChienDich() + "' đã tồn tại!");
+                    return "redirect:/admin/campaigns";
+                }
+            }
+        }
+
+        // Kiểm tra trùng lặp Đường dẫn Slug
+        if (formCampaign.getDuongDanSlug() != null && !formCampaign.getDuongDanSlug().trim().isEmpty()) {
+            java.util.Optional<Campaign> existingSlug = campaignRepository.findByDuongDanSlug(formCampaign.getDuongDanSlug());
+            if (existingSlug.isPresent() && (formCampaign.getId() == null || !existingSlug.get().getId().equals(formCampaign.getId()))) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Đường dẫn Slug '" + formCampaign.getDuongDanSlug() + "' đã được sử dụng!");
+                return "redirect:/admin/campaigns";
+            }
+        }
+        
         try {
             Campaign campaign;
+            String oldMaChienDich = null;
             if (formCampaign.getId() != null) {
                 campaign = campaignRepository.findById(formCampaign.getId()).orElse(new Campaign());
+                oldMaChienDich = campaign.getMaChienDich();
                 campaign.setMaChienDich(formCampaign.getMaChienDich());
                 campaign.setTenChienDich(formCampaign.getTenChienDich());
                 campaign.setNgayBatDau(formCampaign.getNgayBatDau());
@@ -73,6 +120,18 @@ public class AdminCampaignController {
                 campaign.setTrangThai(0); // Luôn luôn tạm ngưng khi mới tạo
             }
             campaignRepository.save(campaign);
+            
+            // Cascade update ma_chien_dich for all related tables
+            if (oldMaChienDich != null && !oldMaChienDich.equals(campaign.getMaChienDich())) {
+                String newMaChienDich = campaign.getMaChienDich();
+                String[] relatedTables = {
+                    "campaign_store", "campaign_rule", "campaign_rule_payment", 
+                    "campaign_rule_sku", "customer_turn", "prize", "turn_transaction"
+                };
+                for (String table : relatedTables) {
+                    jdbcTemplate.update("UPDATE " + table + " SET ma_chien_dich = ? WHERE ma_chien_dich = ?", newMaChienDich, oldMaChienDich);
+                }
+            }
             
             SystemAuditLog log = new SystemAuditLog();
             log.setStaffId(1L); // TODO: Get from auth
@@ -89,6 +148,110 @@ public class AdminCampaignController {
             redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
         }
         return "redirect:/admin/campaigns";
+    }
+
+    @PostMapping("/save-ajax")
+    @ResponseBody
+    @Transactional
+    public java.util.Map<String, Object> saveCampaignAjax(@ModelAttribute Campaign formCampaign, org.springframework.validation.BindingResult bindingResult) {
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        
+        if (bindingResult.hasErrors()) {
+            response.put("success", false);
+            response.put("message", "Dữ liệu nhập vào không hợp lệ. Vui lòng kiểm tra lại định dạng ngày giờ (chuẩn: dd/MM/yyyy HH:mm) hoặc các trường bắt buộc!");
+            return response;
+        }
+        
+        // Kiểm tra logic Ngày bắt đầu và Ngày kết thúc
+        if (formCampaign.getNgayBatDau() != null && formCampaign.getNgayKetThuc() != null) {
+            if (formCampaign.getNgayBatDau().isAfter(formCampaign.getNgayKetThuc())) {
+                response.put("success", false);
+                response.put("message", "Lỗi: Ngày bắt đầu không thể diễn ra sau ngày kết thúc!");
+                return response;
+            }
+        }
+        
+        // Kiểm tra trùng lặp Mã Chiến Dịch
+        if (formCampaign.getId() == null) {
+            if (formCampaign.getMaChienDich() != null && !formCampaign.getMaChienDich().trim().isEmpty()) {
+                if (campaignRepository.findByMaChienDich(formCampaign.getMaChienDich()).isPresent()) {
+                    response.put("success", false);
+                    response.put("message", "Lỗi: Mã chiến dịch '" + formCampaign.getMaChienDich() + "' đã tồn tại!");
+                    return response;
+                }
+            }
+        } else {
+            Campaign existingById = campaignRepository.findById(formCampaign.getId()).orElse(null);
+            if (existingById != null && formCampaign.getMaChienDich() != null && !existingById.getMaChienDich().equals(formCampaign.getMaChienDich())) {
+                if (campaignRepository.findByMaChienDich(formCampaign.getMaChienDich()).isPresent()) {
+                    response.put("success", false);
+                    response.put("message", "Lỗi: Mã chiến dịch '" + formCampaign.getMaChienDich() + "' đã tồn tại!");
+                    return response;
+                }
+            }
+        }
+
+        // Kiểm tra trùng lặp Đường dẫn Slug
+        if (formCampaign.getDuongDanSlug() != null && !formCampaign.getDuongDanSlug().trim().isEmpty()) {
+            java.util.Optional<Campaign> existingSlug = campaignRepository.findByDuongDanSlug(formCampaign.getDuongDanSlug());
+            if (existingSlug.isPresent() && (formCampaign.getId() == null || !existingSlug.get().getId().equals(formCampaign.getId()))) {
+                response.put("success", false);
+                response.put("message", "Lỗi: Đường dẫn Slug '" + formCampaign.getDuongDanSlug() + "' đã được sử dụng!");
+                return response;
+            }
+        }
+        
+        try {
+            Campaign campaign;
+            String oldMaChienDich = null;
+            if (formCampaign.getId() != null) {
+                campaign = campaignRepository.findById(formCampaign.getId()).orElse(new Campaign());
+                oldMaChienDich = campaign.getMaChienDich();
+                campaign.setMaChienDich(formCampaign.getMaChienDich());
+                campaign.setTenChienDich(formCampaign.getTenChienDich());
+                campaign.setNgayBatDau(formCampaign.getNgayBatDau());
+                campaign.setNgayKetThuc(formCampaign.getNgayKetThuc());
+                campaign.setDuongDanSlug(formCampaign.getDuongDanSlug());
+                if (formCampaign.getTrangThai() != null) {
+                    campaign.setTrangThai(formCampaign.getTrangThai());
+                }
+                campaign.setMoTa(formCampaign.getMoTa());
+            } else {
+                campaign = formCampaign;
+                campaign.setTrangThai(0); // Luôn luôn tạm ngưng khi mới tạo
+            }
+            campaignRepository.save(campaign);
+            
+            // Cascade update ma_chien_dich for all related tables
+            if (oldMaChienDich != null && !oldMaChienDich.equals(campaign.getMaChienDich())) {
+                String newMaChienDich = campaign.getMaChienDich();
+                String[] relatedTables = {
+                    "campaign_store", "campaign_rule", "campaign_rule_payment", 
+                    "campaign_rule_sku", "customer_turn", "prize", "turn_transaction"
+                };
+                for (String table : relatedTables) {
+                    jdbcTemplate.update("UPDATE " + table + " SET ma_chien_dich = ? WHERE ma_chien_dich = ?", newMaChienDich, oldMaChienDich);
+                }
+            }
+            
+            SystemAuditLog log = new SystemAuditLog();
+            log.setStaffId(1L); // TODO: Get from auth
+            log.setActionType(formCampaign.getId() != null ? "UPDATE" : "CREATE");
+            log.setTargetTable("campaign");
+            log.setTargetRecordId(campaign.getMaChienDich());
+            log.setDescription(formCampaign.getId() != null ? "Chỉnh sửa thông tin chiến dịch" : "Tạo mới chiến dịch");
+            log.setIpAddress("127.0.0.1"); // TODO: Get actual IP if needed
+            systemAuditLogRepository.save(log);
+            
+            response.put("success", true);
+        } catch (Exception e) {
+            String errorMsg = e.getCause() != null && e.getCause().getCause() != null 
+                ? e.getCause().getCause().getMessage() 
+                : e.getMessage();
+            response.put("success", false);
+            response.put("message", "Lỗi máy chủ: " + errorMsg);
+        }
+        return response;
     }
 
     @PostMapping("/toggle-status")
@@ -239,6 +402,16 @@ public class AdminCampaignController {
                     }
                 }
             }
+            
+            SystemAuditLog log = new SystemAuditLog();
+            log.setStaffId(1L); // TODO: Get from auth
+            log.setActionType("UPDATE");
+            log.setTargetTable("campaign");
+            log.setTargetRecordId(maChienDich);
+            log.setDescription("Cập nhật luật ưu đãi (SKU, Payment, Tối thiểu)");
+            log.setIpAddress("127.0.0.1");
+            systemAuditLogRepository.save(log);
+            
         } catch (Exception e) {
             String errorMsg = "Đã xảy ra lỗi khi lưu cấu hình luật.";
             if (e.getCause() != null && e.getCause().getCause() != null) {

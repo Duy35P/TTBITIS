@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -40,4 +41,7 @@ public class Invoice {
 
     @Column(name = "da_xu_ly", nullable = false)
     private Boolean daXuLy;
+
+    @Column(name = "ngay_tao", updatable = false)
+    private LocalDateTime ngayTao = LocalDateTime.now();
 }

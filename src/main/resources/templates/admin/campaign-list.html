@@ -112,12 +112,15 @@
   <!-- Modal Thêm/Sửa Chiến Dịch -->
   <div id="campaignModal" class="modal">
     <div class="modal-content">
-      <form th:action="@{/admin/campaigns/save}" method="post">
+      <form id="campaignForm">
         <input type="hidden" name="id" id="campaignId">
         
         <div class="modal-header">
-          <div class="modal-title" id="campaignModalTitle">Thêm Chiến Dịch Mới</div>
-          <button type="button" class="close-btn" onclick="closeModal('campaignModal')">&times;</button>
+            <div class="modal-title" id="campaignModalTitle">Thêm Chiến Dịch Mới</div>
+            <button type="button" class="close-btn" onclick="closeModal('campaignModal')">&times;</button>
+        </div>
+        
+        <div id="campaignFormError" style="display:none; padding: 10px; background-color: #f2dede; color: #a94442; border: 1px solid #ebccd1; border-radius: 4px; margin-bottom: 15px;">
         </div>
         <div class="form-group">
           <label>Mã chiến dịch * (Dùng để định danh và liên kết)</label>
@@ -187,6 +190,9 @@
       document.getElementById('campaignStatus').value = '0';
       document.getElementById('campaignStatusGroup').style.display = 'none'; // Ẩn khi thêm mới
       document.getElementById('campaignDesc').value = '';
+      
+      document.getElementById('campaignFormError').style.display = 'none';
+      document.getElementById('campaignFormError').innerText = '';
     }
 
     function openEditCampaignModal(btn) {
@@ -203,11 +209,48 @@
       document.getElementById('campaignSlug').value = btn.getAttribute('data-slug');
       document.getElementById('campaignStatusGroup').style.display = 'block'; // Hiện khi sửa
       document.getElementById('campaignStatus').value = btn.getAttribute('data-status');
+      
+      document.getElementById('campaignFormError').style.display = 'none';
+      document.getElementById('campaignFormError').innerText = '';
     }
     
     function closeModal(modalId) {
       document.getElementById(modalId).classList.remove('active');
     }
+
+    // Xử lý submit form bằng AJAX
+    document.getElementById('campaignForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('saveCampaignBtn');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Đang xử lý...';
+      submitBtn.disabled = true;
+      document.getElementById('campaignFormError').style.display = 'none';
+      
+      const formData = new FormData(this);
+      
+      try {
+          const response = await fetch('/admin/campaigns/save-ajax', {
+              method: 'POST',
+              body: formData
+          });
+          const data = await response.json();
+          if (data.success) {
+              window.location.reload();
+          } else {
+              document.getElementById('campaignFormError').innerText = data.message;
+              document.getElementById('campaignFormError').style.display = 'block';
+              submitBtn.textContent = originalText;
+              submitBtn.disabled = false;
+          }
+      } catch (err) {
+          document.getElementById('campaignFormError').innerText = 'Lỗi kết nối tới máy chủ!';
+          document.getElementById('campaignFormError').style.display = 'block';
+          submitBtn.textContent = originalText;
+          submitBtn.disabled = false;
+      }
+    });
 
     function toggleAllStores(source) {
       const checkboxes = document.querySelectorAll('.store-checkbox');

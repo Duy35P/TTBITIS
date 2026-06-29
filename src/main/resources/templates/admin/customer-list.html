@@ -57,8 +57,7 @@
                 </td>
                 <td th:text="${customer.phone}">090 123 4567</td>
                 <td>
-                  <!-- Chưa kết nối thống kê lượt theo chiến dịch, hiển thị tĩnh tạm thời -->
-                  <span style="color:#777; font-style:italic; font-size:12px;">Đang tải...</span>
+                  <span th:text="${turnsMap[customer.maKhachHang] != null ? turnsMap[customer.maKhachHang] : '0 lượt'}">0 lượt</span>
                 </td>
                 <td>
                   <!-- Chưa kết nối thống kê quà, hiển thị tĩnh tạm thời -->
@@ -71,7 +70,7 @@
                 <td class="action-links">
                   <a href="#">Lịch sử</a> <span class="action-separator">|</span>
                   <form th:action="@{/admin/customers/toggle-status}" method="post" style="display:inline;">
-                    <input type="hidden" name="customerId" th:value="${customer.customerId}" />
+                    <input type="hidden" name="customerId" th:value="${customer.id}" />
                     <input type="hidden" name="status" th:value="${customer.trangThai == 1 ? 0 : 1}" />
                     <button type="submit" 
                             th:class="${customer.trangThai == 1 ? 'text-danger' : ''}" 

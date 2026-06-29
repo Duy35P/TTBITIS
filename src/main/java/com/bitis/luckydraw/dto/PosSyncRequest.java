@@ -10,5 +10,13 @@ public class PosSyncRequest {
     private String customerPhone;
     private Double totalAmount;
     private String paymentMethod;
-    private List<String> skus;
+    private List<PosSyncSku> skus;
+
+    @Data
+    public static class PosSyncSku {
+        private String skuCode;
+        private String name;
+        private Integer quantity;
+        private Double amount;
+    }
 }

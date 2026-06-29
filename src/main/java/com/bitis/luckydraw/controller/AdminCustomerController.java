@@ -1,24 +1,45 @@
 package com.bitis.luckydraw.controller;
 
 import com.bitis.luckydraw.model.Customer;
+import com.bitis.luckydraw.model.CustomerTurn;
 import com.bitis.luckydraw.repository.CustomerRepository;
+import com.bitis.luckydraw.repository.CustomerTurnRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin/customers")
 public class AdminCustomerController {
 
     private final CustomerRepository customerRepository;
+    private final CustomerTurnRepository customerTurnRepository;
 
-    public AdminCustomerController(CustomerRepository customerRepository) {
+    public AdminCustomerController(CustomerRepository customerRepository, CustomerTurnRepository customerTurnRepository) {
         this.customerRepository = customerRepository;
+        this.customerTurnRepository = customerTurnRepository;
     }
 
     @GetMapping
     public String listCustomers(Model model) {
-        model.addAttribute("customers", customerRepository.findAll());
+        List<Customer> customers = customerRepository.findAll();
+        List<CustomerTurn> turns = customerTurnRepository.findAll();
+        
+        Map<String, String> turnsMap = turns.stream()
+            .collect(Collectors.groupingBy(
+                CustomerTurn::getMaKhachHang,
+                Collectors.mapping(
+                    t -> t.getMaChienDich() + ": " + t.getLuotConLai(),
+                    Collectors.joining(", ")
+                )
+            ));
+
+        model.addAttribute("customers", customers);
+        model.addAttribute("turnsMap", turnsMap);
         return "admin/customer-list";
     }
 

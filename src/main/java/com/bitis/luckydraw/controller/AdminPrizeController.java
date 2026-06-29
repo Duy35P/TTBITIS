@@ -134,9 +134,20 @@ public class AdminPrizeController {
         }
         try {
             List<com.bitis.luckydraw.model.Prize> prizesToImport = prizeExcelService.parseExcelFile(file);
+            
+            // Lấy tất cả mã chiến dịch đang có trong database để kiểm tra
+            java.util.List<String> validCampaignCodes = campaignRepository.findAll().stream()
+                .map(Campaign::getMaChienDich)
+                .collect(java.util.stream.Collectors.toList());
+
             int countNew = 0;
             int countUpdate = 0;
             for (com.bitis.luckydraw.model.Prize p : prizesToImport) {
+                // Kiểm tra ràng buộc: chiến dịch phải được tạo trước
+                if (!validCampaignCodes.contains(p.getMaChienDich())) {
+                    throw new RuntimeException("Mã chiến dịch '" + p.getMaChienDich() + "' (tại giải thưởng '" + p.getMaGiaiThuong() + "') chưa tồn tại. Vui lòng tạo chiến dịch trước khi import!");
+                }
+                
                 java.util.Optional<com.bitis.luckydraw.model.Prize> existingOpt = prizeRepository.findByMaGiaiThuong(p.getMaGiaiThuong());
                 if (existingOpt.isPresent()) {
                     com.bitis.luckydraw.model.Prize existing = existingOpt.get();
@@ -163,6 +174,11 @@ public class AdminPrizeController {
     @PostMapping("/save")
     public String savePrize(Prize prize, RedirectAttributes redirectAttributes) {
         try {
+            Boolean laGiaiThuong = prize.getLaGiaiThuong();
+            if (laGiaiThuong == null) {
+                laGiaiThuong = false;
+            }
+
             // Check if exists
             java.util.Optional<Prize> existingOpt = prizeRepository.findByMaGiaiThuong(prize.getMaGiaiThuong());
             if (existingOpt.isPresent()) {
@@ -174,11 +190,12 @@ public class AdminPrizeController {
                 existing.setMaChienDich(prize.getMaChienDich());
                 existing.setTonKhoToanHeThong(prize.getTonKhoToanHeThong());
                 existing.setXacSuat(prize.getXacSuat());
+                existing.setLaGiaiThuong(laGiaiThuong);
                 prizeRepository.save(existing);
                 redirectAttributes.addFlashAttribute("successMessage", "Cập nhật giải thưởng thành công.");
             } else {
                 // Create
-                prize.setLaGiaiThuong(true);
+                prize.setLaGiaiThuong(laGiaiThuong);
                 prizeRepository.save(prize);
                 redirectAttributes.addFlashAttribute("successMessage", "Thêm giải thưởng mới thành công.");
             }

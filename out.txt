@@ -1,0 +1,6 @@
+,Mã Cửa Hàng (MaStore),Tên Cửa Hàng (Chỉ để tham khảo),Mã Giải Thưởng (MaGiaiThuong),Tên Quà Tặng (Chỉ để tham khảo),Tổng Lượng Cấp,Đã Phát,Tồn Kho Thực Tế
+0,1101,CH Chợ Lớn,GIAI_AOMUA,Áo mưa thời trang,100,20,80
+1,1103,CH Điện Biên Phủ,GIAI_AOMUA,Áo mưa thời trang,150,150,0
+2,1104,CH Quang Trung,GIAI_MUBAOHIEM,Mũ bảo hiểm TLC,200,195,5
+3,1101,CH Chợ Lớn,GIAI_BALO,Balo Biti's Hunter,30,5,25
+4,1103,CH Điện Biên Phủ,GIAI_BALO,Balo Biti's Hunter,40,40,0

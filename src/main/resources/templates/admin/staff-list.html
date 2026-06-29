@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments/layout :: head('Lucky Draw - Quản lý Nhân Viên')}">
+</head>
+<body>
+  <!-- Header -->
+  <header th:replace="~{admin/fragments/layout :: header}"></header>
+
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>Quản lý Nhân viên <small>Quản lý tài khoản truy cập hệ thống</small></h1>
+      <ul class="breadcrumb">
+        <li><a th:href="@{/admin}">🏠 LuckyDraw</a></li>
+        <li>Quản lý Nhân viên</li>
+      </ul>
+    </section>
+    
+    <section class="content">
+      <!-- Flash message -->
+      <div th:if="${success}" style="padding: 15px; margin-bottom: 20px; border: 1px solid transparent; border-radius: 4px; color: #3c763d; background-color: #dff0d8; border-color: #d6e9c6;">
+        <strong th:text="${success}"></strong>
+      </div>
+      
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">Danh sách tài khoản</h3>
+          <div class="box-tools">
+            <button class="btn-primary" style="background-color: #3c8dbc; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px;" onclick="openModal('staffModal', 'Thêm Tài Khoản Mới')">+ Thêm Nhân Viên</button>
+          </div>
+        </div>
+        <div class="box-body">
+          
+          <div class="nav-tabs" style="display: flex; border-bottom: 1px solid #ddd; margin-bottom: 15px;">
+            <button th:class="${activeTab == 'staffs' ? 'active' : ''}" onclick="switchTab('staffs', this)" style="background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; color: #666; border-bottom: 3px solid transparent;">Danh Sách Nhân Viên</button>
+            <button th:class="${activeTab == 'roles' ? 'active' : ''}" onclick="switchTab('roles', this)" style="background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; color: #666; border-bottom: 3px solid transparent;">Quản Lý Vai Trò</button>
+          </div>
+
+          <!-- Tab 1: Danh Sách Nhân Viên -->
+          <div id="staffs" class="tab-content" th:style="${activeTab == 'staffs' ? 'display:block;' : 'display:none;'}">
+          <form method="get" th:action="@{/admin/staffs}">
+          <div class="filter-area" style="background-color: #f9fafb; padding: 15px; border-radius: 4px; border: 1px solid #eee; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+            <div class="filter-group" style="display: flex; flex-direction: column; flex: 1; min-width: 200px;">
+              <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Tìm theo tên / Username</label>
+              <input type="text" name="keyword" class="form-control" placeholder="Nhập tên đăng nhập hoặc tên..." th:value="${selectedKeyword}" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+            </div>
+            <div class="filter-group" style="display: flex; flex-direction: column; flex: 1; min-width: 200px;">
+              <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Vai trò (Role)</label>
+              <select name="role" class="form-control" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+                <option value="all" th:selected="${selectedRole == 'all'}">-- Tất cả --</option>
+                <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.roleName + ' (' + r.roleId + ')'}" th:selected="${selectedRole == r.roleId}"></option>
+              </select>
+            </div>
+            <div class="filter-group" style="display: flex; flex-direction: column; flex: 1; min-width: 200px;">
+              <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Cửa hàng trực thuộc</label>
+              <select name="store" class="form-control" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+                <option value="all" th:selected="${selectedStore == 'all'}">-- Tất cả --</option>
+                <option th:each="s : ${stores}" th:value="${s.maStore}" th:text="${s.tenCuaHang}" th:selected="${selectedStore == s.maStore}"></option>
+              </select>
+            </div>
+            <div class="filter-group" style="flex: 0; justify-content: flex-end;">
+              <button type="submit" class="btn-primary" style="background-color: #3c8dbc; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; height: 38px; white-space: nowrap;">Tìm kiếm</button>
+            </div>
+          </div>
+          </form>
+
+          <table class="table-striped" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <thead>
+              <tr>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">STT</th>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Tên Đăng Nhập</th>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Tên Nhân Viên</th>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Vai trò (Role)</th>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Cửa hàng trực thuộc</th>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Trạng thái</th>
+                <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="st, iterStat : ${staffs}" th:style="${iterStat.odd ? 'background-color: #fcfcfc;' : ''}">
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;" th:text="${iterStat.count}">1</td>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;"><strong th:text="${st.username}"></strong></td>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;" th:text="${st.tenNhanVien}"></td>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;">
+                  <span th:if="${st.roleId == 'ADMIN'}" class="badge" style="background-color: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">ADMIN</span>
+                  <span th:if="${st.roleId == 'MANAGER'}" class="badge" style="background-color: #fef08a; color: #854d0e; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">MANAGER</span>
+                  <span th:if="${st.roleId == 'STORE_STAFF'}" class="badge" style="background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">STORE_STAFF</span>
+                </td>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;">
+                  <th:block th:if="${st.maStore != null}">
+                    <span th:text="${st.tenCuaHang}"></span>
+                  </th:block>
+                  <th:block th:if="${st.maStore == null}">
+                    <i style="color: #999;">Không có (Tổng Công Ty)</i>
+                  </th:block>
+                </td>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;">
+                  <span th:if="${st.trangThai == 1}" class="badge" style="background-color: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">Hoạt động</span>
+                  <span th:if="${st.trangThai == 0}" class="badge" style="background-color: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">Đã khóa</span>
+                </td>
+                <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;" class="action-links">
+                  <a style="color: #3c8dbc; cursor: pointer; font-weight: 600;" 
+                     th:data-user="${st.username}" 
+                     th:data-name="${st.tenNhanVien}" 
+                     th:data-role="${st.roleId}" 
+                     th:data-store="${st.maStore}" 
+                     th:data-status="${st.trangThai}"
+                     onclick="openEditModal(this)">Sửa</a> 
+                  <span style="color: #ccc; margin: 0 8px;">|</span> 
+                  <form th:action="@{/admin/staffs/toggle-status}" method="post" style="display:inline;">
+                    <input type="hidden" name="username" th:value="${st.username}">
+                    <button type="submit" onclick="return confirm('Bạn có chắc chắn muốn thay đổi trạng thái tài khoản này?')" style="background: none; border: none; padding: 0; font: inherit; color: #dd4b39; cursor: pointer; font-weight: 600;" th:text="${st.trangThai == 1 ? 'Khóa' : 'Mở khóa'}">Khóa</button>
+                  </form>
+                </td>
+              </tr>
+              <tr th:if="${staffs == null or staffs.isEmpty()}">
+                <td colspan="7" style="text-align: center; padding: 20px; color: #777;">Chưa có tài khoản nào</td>
+              </tr>
+            </tbody>
+          </table>
+          </div> <!-- End Tab 1 -->
+
+          <!-- Tab 2: Quản Lý Vai Trò -->
+          <div id="roles" class="tab-content" th:style="${activeTab == 'roles' ? 'display:block;' : 'display:none;'}">
+            <div style="margin-bottom: 15px; display: flex; justify-content: flex-end;">
+              <button class="btn-primary" onclick="openRoleModal('Thêm Vai Trò Mới')" style="background-color: #3c8dbc; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px;">+ Thêm Vai Trò</button>
+            </div>
+            
+            <table class="table-striped" style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr>
+                  <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Mã Vai Trò</th>
+                  <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Tên Vai Trò</th>
+                  <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Mô tả</th>
+                  <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="r, iterStat : ${roles}" th:style="${iterStat.odd ? 'background-color: #fcfcfc;' : ''}">
+                  <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;"><strong th:text="${r.roleId}"></strong></td>
+                  <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;" th:text="${r.roleName}"></td>
+                  <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;" th:text="${r.moTa}"></td>
+                  <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;" class="action-links">
+                    <a style="color: #3c8dbc; cursor: pointer; font-weight: 600;" 
+                       th:data-id="${r.roleId}" 
+                       th:data-name="${r.roleName}"
+                       th:data-desc="${r.moTa}"
+                       onclick="openEditRoleModal(this)">Sửa / Phân Quyền</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div> <!-- End Tab 2 -->
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal Thêm/Sửa Tài Khoản -->
+  <div id="staffModal" class="modal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div class="modal-content" style="background-color: #fff; padding: 25px; border-radius: 6px; width: 100%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f4f4f4; padding-bottom: 15px; margin-bottom: 20px;">
+        <div class="modal-title" id="modalTitle" style="font-size: 18px; font-weight: 700; color: #333; margin: 0;">Thêm Tài Khoản Mới</div>
+        <button class="close-btn" onclick="closeModal('staffModal')" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #888; line-height: 1;">&times;</button>
+      </div>
+      
+      <form th:action="@{/admin/staffs/save}" method="post">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555;">Tên đăng nhập (Username) *</label>
+          <input type="text" class="form-control" name="username" id="staffUsername" placeholder="VD: nv_cuahang_01" required style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555;">Mật khẩu (Password) *</label>
+          <input type="password" class="form-control" name="password" id="staffPassword" placeholder="Nhập mật khẩu..." style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+          <small style="color: #777; font-size: 12px; margin-top: 4px; display: block;">Nếu sửa tài khoản, để trống nếu không đổi mật khẩu.</small>
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555;">Họ và Tên nhân viên *</label>
+          <input type="text" class="form-control" name="tenNhanVien" id="staffName" placeholder="VD: Nguyễn Văn A" required style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+        </div>
+        
+        <div style="display: flex; gap: 15px;">
+          <div class="form-group" style="flex: 1; margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555;">Vai trò (Role) *</label>
+            <select class="form-control" name="roleId" id="staffRole" onchange="toggleStoreSelect()" required style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+              <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.roleName + ' (' + r.roleId + ')'}"></option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 1; margin-bottom: 15px;" id="storeSelectGroup">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555;">Thuộc cửa hàng *</label>
+            <select class="form-control" name="maStore" id="staffStore" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+              <option value="">-- Chọn Cửa hàng --</option>
+              <option th:each="s : ${stores}" th:value="${s.maStore}" th:text="${s.tenCuaHang}"></option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555;">Trạng thái</label>
+          <select class="form-control" name="trangThai" id="staffStatus" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+            <option value="1">Đang hoạt động</option>
+            <option value="0">Khóa tài khoản</option>
+          </select>
+        </div>
+        
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f4f4f4; padding-top: 20px; margin-top: 10px;">
+          <button type="button" class="btn-default" onclick="closeModal('staffModal')" style="background-color: #f4f4f4; color: #444; padding: 8px 16px; border-radius: 4px; border: 1px solid #ddd; cursor: pointer; font-weight: 600; font-size: 14px;">Hủy bỏ</button>
+          <button type="submit" class="btn-primary" style="background-color: #3c8dbc; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px;">Lưu Tài Khoản</button>
+        </div>
+      </form>
+    </div>
+    </div>
+  </div>
+
+  <!-- Modal Thêm/Sửa Vai Trò -->
+  <div id="roleModal" class="modal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div class="modal-content" style="background-color: #fff; padding: 25px; border-radius: 6px; width: 100%; max-width: 600px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f4f4f4; padding-bottom: 15px; margin-bottom: 20px;">
+        <div class="modal-title" id="roleModalTitle" style="font-size: 18px; font-weight: 700; color: #333; margin: 0;">Thêm Vai Trò Mới</div>
+        <button class="close-btn" onclick="closeModal('roleModal')" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #888; line-height: 1;">&times;</button>
+      </div>
+      
+      <form th:action="@{/admin/staffs/role/save}" method="post">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555;">Mã Vai Trò (Role ID) *</label>
+          <input type="text" class="form-control" name="roleId" id="modalRoleId" placeholder="VD: MARKETING" required style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none; text-transform: uppercase;">
+          <small style="color: #777; font-size: 12px; margin-top: 4px; display: block;">Viết liền, không dấu, in hoa. Sẽ không thể sửa sau khi tạo.</small>
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555;">Tên Vai Trò *</label>
+          <input type="text" class="form-control" name="roleName" id="modalRoleName" placeholder="VD: Nhân viên Marketing" required style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555;">Mô tả</label>
+          <textarea class="form-control" name="moTa" id="modalRoleDesc" rows="2" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;"></textarea>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 10px; font-weight: 600; font-size: 13px; color: #555; border-bottom: 1px solid #eee; padding-bottom: 5px;">Phân Quyền Chức Năng</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-height: 250px; overflow-y: auto; padding-right: 10px;">
+            <label th:each="cn : ${chucNangs}" style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: normal; cursor: pointer; padding: 5px; border-radius: 4px; hover:background-color: #f9f9f9;">
+              <input type="checkbox" name="chucNangIds" th:value="${cn.maChucNang}" class="permission-checkbox" style="width: 16px; height: 16px;">
+              <span th:text="${cn.tenChucNang}"></span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f4f4f4; padding-top: 20px; margin-top: 10px;">
+          <button type="button" class="btn-default" onclick="closeModal('roleModal')" style="background-color: #f4f4f4; color: #444; padding: 8px 16px; border-radius: 4px; border: 1px solid #ddd; cursor: pointer; font-weight: 600; font-size: 14px;">Hủy bỏ</button>
+          <button type="submit" class="btn-primary" style="background-color: #3c8dbc; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px;">Lưu Thay Đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    var phanQuyens = /*[[${phanQuyens}]]*/ [];
+    /*]]>*/
+    
+    function switchTab(tabId, element) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+      document.querySelectorAll('.nav-tabs button').forEach(btn => btn.style.color = '#666');
+      document.querySelectorAll('.nav-tabs button').forEach(btn => btn.style.borderBottomColor = 'transparent');
+      
+      document.getElementById(tabId).style.display = 'block';
+      element.style.color = '#3c8dbc';
+      element.style.borderBottomColor = '#3c8dbc';
+    }
+    function toggleStoreSelect() {
+      const role = document.getElementById('staffRole').value;
+      const storeGroup = document.getElementById('storeSelectGroup');
+      const storeSelect = document.getElementById('staffStore');
+      if(role === 'ADMIN') {
+        storeGroup.style.display = 'none';
+        storeSelect.removeAttribute('required');
+      } else {
+        storeGroup.style.display = 'block';
+        storeSelect.setAttribute('required', 'required');
+      }
+    }
+
+    function openModal(modalId, title) {
+      const modal = document.getElementById(modalId);
+      modal.style.display = 'flex';
+      // Reset animation
+      modal.classList.remove('active');
+      void modal.offsetWidth; // trigger reflow
+      modal.classList.add('active');
+      
+      if(title) {
+        document.getElementById('modalTitle').textContent = title;
+      }
+      
+      // Create mode
+      document.getElementById('staffUsername').value = '';
+      document.getElementById('staffUsername').readOnly = false;
+      document.getElementById('staffName').value = '';
+      document.getElementById('staffPassword').value = '';
+      document.getElementById('staffRole').value = 'STORE_STAFF';
+      document.getElementById('staffStore').value = '';
+      document.getElementById('staffStatus').value = '1';
+      
+      toggleStoreSelect();
+    }
+    
+    function openEditModal(btn) {
+      var username = btn.getAttribute('data-user');
+      var name = btn.getAttribute('data-name');
+      var role = btn.getAttribute('data-role');
+      var store = btn.getAttribute('data-store');
+      var status = btn.getAttribute('data-status');
+      
+      const modalId = 'staffModal';
+      const modal = document.getElementById(modalId);
+      modal.style.display = 'flex';
+      modal.classList.remove('active');
+      void modal.offsetWidth;
+      modal.classList.add('active');
+      
+      document.getElementById('modalTitle').textContent = 'Sửa Tài Khoản';
+      
+      document.getElementById('staffUsername').value = username;
+      document.getElementById('staffUsername').readOnly = true; // Không cho sửa username
+      document.getElementById('staffName').value = name;
+      document.getElementById('staffPassword').value = '';
+      document.getElementById('staffRole').value = role;
+      document.getElementById('staffStore').value = store || '';
+      document.getElementById('staffStatus').value = status;
+      
+      toggleStoreSelect();
+    }
+    
+    function openRoleModal(title) {
+      const modal = document.getElementById('roleModal');
+      modal.style.display = 'flex';
+      modal.classList.remove('active');
+      void modal.offsetWidth; // trigger reflow
+      modal.classList.add('active');
+      
+      if(title) {
+        document.getElementById('roleModalTitle').textContent = title;
+      }
+      
+      document.getElementById('modalRoleId').value = '';
+      document.getElementById('modalRoleId').readOnly = false;
+      document.getElementById('modalRoleName').value = '';
+      document.getElementById('modalRoleDesc').value = '';
+      
+      document.querySelectorAll('.permission-checkbox').forEach(cb => cb.checked = false);
+    }
+    
+    function openEditRoleModal(btn) {
+      var id = btn.getAttribute('data-id');
+      var name = btn.getAttribute('data-name');
+      var desc = btn.getAttribute('data-desc');
+      
+      const modal = document.getElementById('roleModal');
+      modal.style.display = 'flex';
+      modal.classList.remove('active');
+      void modal.offsetWidth; // trigger reflow
+      modal.classList.add('active');
+      
+      document.getElementById('roleModalTitle').textContent = 'Sửa Vai Trò & Phân Quyền';
+      
+      document.getElementById('modalRoleId').value = id;
+      document.getElementById('modalRoleId').readOnly = true;
+      document.getElementById('modalRoleName').value = name;
+      document.getElementById('modalRoleDesc').value = desc || '';
+      
+      // Load permissions
+      document.querySelectorAll('.permission-checkbox').forEach(cb => {
+         cb.checked = false;
+         var hasPermission = false;
+         if (phanQuyens && phanQuyens.length > 0) {
+            for(var i=0; i<phanQuyens.length; i++) {
+                if(phanQuyens[i].id.roleId === id && phanQuyens[i].id.maChucNang === cb.value) {
+                    hasPermission = true;
+                    break;
+                }
+            }
+         }
+         cb.checked = hasPermission;
+      });
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+      const modals = document.getElementsByClassName('modal');
+      for(let i=0; i<modals.length; i++) {
+          if (event.target == modals[i]) {
+            modals[i].style.display = 'none';
+          }
+      }
+    }
+  </script>
+</body>
+</html>

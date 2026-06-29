@@ -200,6 +200,7 @@ CREATE TABLE [dbo].[invoice] (
     [tong_tien]         FLOAT           NOT NULL DEFAULT 0,
     [phuong_thuc_tt]    VARCHAR(50)     NULL,
     [san_pham_json]     NVARCHAR(MAX)   NULL,
+	ngay_tao DATETIME DEFAULT GETDATE(),
     [da_xu_ly]          BIT             NOT NULL DEFAULT 0,
     CONSTRAINT [PK_INVOICE]         PRIMARY KEY CLUSTERED ([id] ASC),
     CONSTRAINT [UQ_INVOICE_MA_HD]   UNIQUE ([ma_hoa_don])
@@ -308,17 +309,17 @@ GO
 select * from vai_tro
 select * from staff
 select * from store
+select * from prize
 select * from invoice
 select * from customer
 select * from campaign
 select * from campaign_store
 select * from campaign_rule
 select * from customer_turn
+select * from store_prize_inventory
+select * from vai_tro
 delete invoice
 delete store
+delete customer
 truncate table campaign
-SELECT s.ma_store AS storeId, STRING_AGG(c.ten_chien_dich, ',') AS campaigns
-FROM store s 
-LEFT JOIN campaign_store cs ON s.ma_store = cs.id_cua_hang 
-LEFT JOIN campaign c ON cs.id_chien_dich = c.id 
-GROUP BY s.ma_store
+

@@ -38,7 +38,11 @@ SELECT
     c.ten_chien_dich AS tenChienDich,
     p.loai_giai AS loaiGiai,
     p.xac_suat AS xacSuat,
-    p.ton_kho_toan_he_thong AS tonKhoToanHeThong
+    p.ton_kho_toan_he_thong AS tonKhoToanHeThong,
+    p.gioi_han_trung_moi_customer AS gioiHanTrungMoiCustomer,
+    p.la_giai_thuong AS laGiaiThuong
 FROM prize p
 LEFT JOIN campaign c ON p.ma_chien_dich = c.ma_chien_dich;
 GO
+
+select * from vw_prize_list

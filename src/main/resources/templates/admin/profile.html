@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments/layout :: head('Thông tin cá nhân & Cài đặt')}">
+</head>
+<body>
+  <!-- Header -->
+  <header th:replace="~{admin/fragments/layout :: header}"></header>
+
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>
+        Cài đặt tài khoản
+        <small>Thông tin cá nhân & Bảo mật</small>
+      </h1>
+      <ul class="breadcrumb">
+        <li><a th:href="@{/admin}">🏠 LuckyDraw</a></li>
+        <li>Cài đặt</li>
+      </ul>
+    </section>
+    
+    <section class="content">
+      <div class="row">
+        
+        <!-- Cột bên trái: Thông tin hiển thị + Sửa thông tin cơ bản -->
+        <div class="col" style="flex: 1; min-width: 300px; padding: 10px;">
+          <div class="box box-primary">
+            <div class="box-header">
+              <h3 class="box-title">Thông tin cá nhân</h3>
+            </div>
+            <div class="box-body" style="text-align: center;">
+              <img class="profile-user-img" th:src="'https://ui-avatars.com/api/?name=' + ${staff.tenNhanVien} + '&background=fff&color=3c8dbc'" alt="User profile picture" style="margin: 0 auto 15px auto; width: 100px; height: 100px; border: 3px solid #d2d6de; border-radius: 50%; padding: 3px; display: block;">
+              <h3 class="profile-username" style="font-size: 21px; font-weight: 600; margin-bottom: 5px;" th:text="${staff.tenNhanVien}">Tên Nhân Viên</h3>
+              <p class="profile-role" style="color: #777; font-size: 14px; margin-bottom: 15px;"><span class="badge bg-blue" style="background-color: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 12px; font-weight: 600;" th:text="${staff.roleId}">ROLE</span></p>
+
+              <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+              <form id="profileForm" style="text-align: left;">
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #555;">Tên đăng nhập (Username)</label>
+                  <input type="text" class="form-control" style="width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; background-color: #f9f9f9; cursor: not-allowed; color: #777;" th:value="${staff.username}" disabled>
+                  <small style="color: #888; font-size: 12px; margin-top: 4px; display: block;">Tên đăng nhập không thể thay đổi.</small>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #555;">Họ và tên hiển thị *</label>
+                  <input type="text" class="form-control" id="tenNhanVien" name="tenNhanVien" style="width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;" th:value="${staff.tenNhanVien}" required>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #555;">Cửa hàng trực thuộc</label>
+                  <input type="text" class="form-control" style="width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; background-color: #f9f9f9; cursor: not-allowed; color: #777;" th:value="${storeName}" disabled>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #555;">Ngày tạo tài khoản</label>
+                  <input type="text" class="form-control" style="width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; background-color: #f9f9f9; cursor: not-allowed; color: #777;" th:value="${#temporals.format(staff.createdAt, 'dd/MM/yyyy HH:mm')}" disabled>
+                </div>
+              </form>
+            </div>
+            <div class="box-footer" style="padding: 15px 20px; border-top: 1px solid #f4f4f4; background-color: #fcfcfc; text-align: right;">
+              <div id="profileMsg" style="display:inline-block; margin-right: 15px; font-weight: bold;"></div>
+              <button class="btn btn-primary" id="btnUpdateProfile" style="padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 14px; background-color: #3c8dbc; color: #fff;">Cập nhật thông tin</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cột bên phải: Đổi mật khẩu -->
+        <div class="col" style="flex: 1; min-width: 300px; padding: 10px;">
+          <div class="box box-warning">
+            <div class="box-header">
+              <h3 class="box-title">Đổi mật khẩu</h3>
+            </div>
+            <div class="box-body">
+              <form id="passwordForm">
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #555;">Mật khẩu hiện tại *</label>
+                  <input type="password" class="form-control" name="oldPassword" id="oldPwd" style="width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Nhập mật khẩu hiện tại" required>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #555;">Mật khẩu mới *</label>
+                  <input type="password" class="form-control" name="newPassword" id="newPwd" style="width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Nhập mật khẩu mới" required>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                  <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #555;">Xác nhận mật khẩu mới *</label>
+                  <input type="password" class="form-control" id="confirmPwd" style="width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Nhập lại mật khẩu mới" required>
+                  <small id="pwdError" style="color: #dd4b39; font-size: 12px; display: none; margin-top: 5px;">Mật khẩu xác nhận không khớp!</small>
+                </div>
+              </form>
+            </div>
+            <div class="box-footer" style="padding: 15px 20px; border-top: 1px solid #f4f4f4; background-color: #fcfcfc; text-align: right;">
+              <div id="pwdMsg" style="display:inline-block; margin-right: 15px; font-weight: bold;"></div>
+              <button class="btn btn-warning" id="btnChangePwd" style="padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 14px; background-color: #f39c12; color: #fff;">Đổi mật khẩu</button>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Xử lý Cập nhật thông tin cơ bản
+    document.getElementById('btnUpdateProfile').addEventListener('click', async function() {
+        const nameVal = document.getElementById('tenNhanVien').value;
+        const msgBox = document.getElementById('profileMsg');
+        
+        if(!nameVal.trim()) {
+            msgBox.style.color = '#dd4b39';
+            msgBox.innerText = 'Vui lòng nhập Họ và tên!';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('tenNhanVien', nameVal);
+
+        try {
+            const response = await fetch('/admin/profile/update-info', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            
+            if(result.success) {
+                msgBox.style.color = '#00a65a';
+                msgBox.innerText = 'Cập nhật thành công!';
+                setTimeout(() => { window.location.reload(); }, 1000);
+            } else {
+                msgBox.style.color = '#dd4b39';
+                msgBox.innerText = result.message || 'Có lỗi xảy ra!';
+            }
+        } catch(e) {
+            msgBox.style.color = '#dd4b39';
+            msgBox.innerText = 'Lỗi kết nối máy chủ!';
+        }
+    });
+
+    // Xử lý Đổi mật khẩu
+    document.getElementById('btnChangePwd').addEventListener('click', async function() {
+        const oldPwd = document.getElementById('oldPwd').value;
+        const newPwd = document.getElementById('newPwd').value;
+        const confirmPwd = document.getElementById('confirmPwd').value;
+        const err = document.getElementById('pwdError');
+        const msgBox = document.getElementById('pwdMsg');
+
+        if(!oldPwd || !newPwd || !confirmPwd) {
+            msgBox.style.color = '#dd4b39';
+            msgBox.innerText = 'Vui lòng điền đủ thông tin!';
+            return;
+        }
+
+        if(newPwd !== confirmPwd) {
+            err.style.display = 'block';
+            msgBox.innerText = '';
+            return;
+        } else {
+            err.style.display = 'none';
+        }
+
+        const formData = new FormData();
+        formData.append('oldPassword', oldPwd);
+        formData.append('newPassword', newPwd);
+
+        try {
+            const response = await fetch('/admin/profile/change-password', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            
+            if(result.success) {
+                msgBox.style.color = '#00a65a';
+                msgBox.innerText = 'Đổi mật khẩu thành công!';
+                document.getElementById('passwordForm').reset();
+            } else {
+                msgBox.style.color = '#dd4b39';
+                msgBox.innerText = result.message || 'Có lỗi xảy ra!';
+            }
+        } catch(e) {
+            msgBox.style.color = '#dd4b39';
+            msgBox.innerText = 'Lỗi kết nối máy chủ!';
+        }
+    });
+  </script>
+</body>
+</html>

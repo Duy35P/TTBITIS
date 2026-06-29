@@ -10,4 +10,5 @@ public interface PrizeListDto {
     Double getXacSuat();
     Integer getTonKhoToanHeThong();
     Integer getGioiHanTrungMoiCustomer();
+    Boolean getLaGiaiThuong();
 }
