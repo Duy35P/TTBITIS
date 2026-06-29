@@ -68,7 +68,6 @@
                   <span class="badge bg-red" th:if="${customer.trangThai != 1}">Banned</span>
                 </td>
                 <td class="action-links">
-                  <a href="#">Lịch sử</a> <span class="action-separator">|</span>
                   <form th:action="@{/admin/customers/toggle-status}" method="post" style="display:inline;">
                     <input type="hidden" name="customerId" th:value="${customer.id}" />
                     <input type="hidden" name="status" th:value="${customer.trangThai == 1 ? 0 : 1}" />

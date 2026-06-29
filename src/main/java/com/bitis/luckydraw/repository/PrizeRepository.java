@@ -13,6 +13,7 @@ import java.util.List;
 @Repository
 public interface PrizeRepository extends JpaRepository<Prize, Long> {
     Optional<Prize> findByMaGiaiThuong(String maGiaiThuong);
+    List<Prize> findByMaChienDich(String maChienDich);
 
     @Query(value = "SELECT * FROM vw_prize_list", nativeQuery = true)
     List<PrizeListDto> getPrizeList();

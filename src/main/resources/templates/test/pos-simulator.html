@@ -383,6 +383,7 @@
 
       const phone = document.getElementById('customerPhone').value;
       const invoiceCode = document.getElementById('rInvoiceCode').innerText;
+      const originalInvoiceCode = document.getElementById('originalInvoiceCode').value;
       const storeId = document.getElementById('posStoreSelect').value;
       
       let totalAmount = 0;
@@ -400,6 +401,7 @@
       const payload = {
           maStore: storeId,
           invoiceCode: invoiceCode,
+          originalInvoiceCode: originalInvoiceCode,
           totalAmount: totalAmount,
           paymentMethod: currentPayment === 'Tiền mặt' ? 'CASH' : (currentPayment === 'Chuyển khoản' ? 'BANK_TRANSFER' : 'CARD'),
           customerPhone: phone,

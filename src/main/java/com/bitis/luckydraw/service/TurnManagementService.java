@@ -49,6 +49,9 @@ public class TurnManagementService {
         // 2. Tính Delta Amount
         Double deltaAmount = request.getTotalAmount();
         if (request.getOriginalInvoiceNumber() != null && !request.getOriginalInvoiceNumber().isEmpty()) {
+            if (invoiceRepo.existsByMaHoaDonGoc(request.getOriginalInvoiceNumber())) {
+                throw new Exception("Mã hóa đơn gốc đã được sử dụng để đổi hàng trước đó!");
+            }
             Optional<Invoice> originalOpt = invoiceRepo.findByMaHoaDon(request.getOriginalInvoiceNumber());
             if (originalOpt.isPresent()) {
                 deltaAmount = request.getTotalAmount() - originalOpt.get().getTongTien();

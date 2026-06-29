@@ -85,6 +85,7 @@
                      th:data-id="${campaign.id}"
                      th:data-name="${campaign.tenChienDich}"
                      onclick="openCampaignHistoryModal(this)" style="color: #605ca8;">Lịch sử</a> <span class="action-separator">|</span>
+                  <a th:href="@{/admin/campaigns/{id}/design(id=${campaign.id})}" style="color: #e83e8c;">Thiết kế</a> <span class="action-separator">|</span>
                      
                   <form th:action="@{/admin/campaigns/toggle-status}" method="post" style="display:inline;">
                     <input type="hidden" name="campaignId" th:value="${campaign.id}" />
@@ -108,6 +109,9 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://npmcdn.com/flatpickr/dist/l10n/vn.js"></script>
+
+  <!-- SheetJS for reading Excel files (needed by Import SKU in rules modal) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
   <!-- Modal Thêm/Sửa Chiến Dịch -->
   <div id="campaignModal" class="modal">
@@ -368,6 +372,88 @@
         <button type="button" onclick="this.parentElement.remove()" style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>
       `;
       container.appendChild(row);
+    }
+
+    // --- Import Excel cho SKU (phải đặt ở trang chính vì fragment load qua innerHTML không chạy script) ---
+    function handleExcelImport(input) {
+      var file = input.files[0];
+      if (!file) return;
+      
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          var data = new Uint8Array(e.target.result);
+          var workbook = XLSX.read(data, { type: 'array' });
+          var sheetName = workbook.SheetNames[0];
+          var worksheet = workbook.Sheets[sheetName];
+          var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          
+          if (jsonData.length < 2) {
+            alert('File Excel trống hoặc không có dữ liệu (cần ít nhất 1 hàng tiêu đề + 1 hàng dữ liệu).');
+            input.value = '';
+            return;
+          }
+          
+          // Tìm cột SKU và cột Số lượt thưởng từ hàng tiêu đề
+          var headers = jsonData[0].map(function(h) { return (h || '').toString().trim().toLowerCase(); });
+          var skuColIndex = -1;
+          var turnColIndex = -1;
+          
+          for (var i = 0; i < headers.length; i++) {
+            var h = headers[i];
+            if (h === 'sku' || h === 'ma_sku' || h === 'masku' || h === 'mã sku' || h === 'ma sku' || h === 'mã sản phẩm' || h === 'product_code') {
+              skuColIndex = i;
+            }
+            if (h === 'so_luot' || h === 'soluot' || h === 'số lượt' || h === 'so luot' || h === 'turns' || h === 'so_luot_thuong' || h === 'lượt thưởng' || h === 'luot thuong') {
+              turnColIndex = i;
+            }
+          }
+          
+          // Nếu không tìm thấy tiêu đề, mặc định cột A = SKU, cột B = Số lượt
+          if (skuColIndex === -1) skuColIndex = 0;
+          if (turnColIndex === -1) turnColIndex = 1;
+          
+          var count = 0;
+          var container = document.getElementById('sku-rules-container');
+          
+          for (var r = 1; r < jsonData.length; r++) {
+            var row = jsonData[r];
+            var sku = row[skuColIndex];
+            var turns = row[turnColIndex];
+            
+            if (!sku || sku.toString().trim() === '') continue;
+            
+            sku = sku.toString().trim();
+            turns = parseInt(turns) || 1;
+            
+            // Tạo dòng SKU mới
+            var div = document.createElement('div');
+            div.className = 'sku-row';
+            div.style.cssText = 'display: flex; gap: 15px; margin-bottom: 10px; align-items: center;';
+            div.innerHTML = '<div class="form-group" style="flex: 2; margin-bottom: 0;">' +
+              '<input type="text" class="form-control" name="skuCodes" value="' + sku + '" placeholder="Nhập mã SKU" required>' +
+              '</div>' +
+              '<div class="form-group" style="flex: 1; margin-bottom: 0;">' +
+              '<input type="number" class="form-control" name="skuTurns" value="' + turns + '" placeholder="Số lượt" required>' +
+              '</div>' +
+              '<button type="button" onclick="this.parentElement.remove()" style="color: red; border: none; background: none; font-size: 18px; cursor: pointer;">&times;</button>';
+            container.appendChild(div);
+            count++;
+          }
+          
+          if (count > 0) {
+            document.getElementById('importInfoBox').style.display = 'block';
+            document.getElementById('importCount').textContent = count;
+          } else {
+            alert('Không tìm thấy dữ liệu SKU hợp lệ trong file Excel. Vui lòng kiểm tra lại cấu trúc file.');
+          }
+        } catch (err) {
+          alert('Lỗi đọc file Excel: ' + err.message);
+        }
+        
+        input.value = '';
+      };
+      reader.readAsArrayBuffer(file);
     }
   </script>
 

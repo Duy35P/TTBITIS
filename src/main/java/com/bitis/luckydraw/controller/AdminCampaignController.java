@@ -11,11 +11,13 @@ import com.bitis.luckydraw.model.CampaignStore;
 import com.bitis.luckydraw.model.CampaignRule;
 import com.bitis.luckydraw.model.CampaignRulePayment;
 import com.bitis.luckydraw.model.CampaignRuleSku;
+import com.bitis.luckydraw.model.Prize;
 import com.bitis.luckydraw.repository.StoreRepository;
 import com.bitis.luckydraw.repository.CampaignStoreRepository;
 import com.bitis.luckydraw.repository.CampaignRuleRepository;
 import com.bitis.luckydraw.repository.CampaignRulePaymentRepository;
 import com.bitis.luckydraw.repository.CampaignRuleSkuRepository;
+import com.bitis.luckydraw.repository.PrizeRepository;
 import com.bitis.luckydraw.repository.SystemAuditLogRepository;
 import com.bitis.luckydraw.model.SystemAuditLog;
 import com.bitis.luckydraw.dto.CampaignRuleForm;
@@ -38,10 +40,11 @@ public class AdminCampaignController {
     private final CampaignRuleSkuRepository campaignRuleSkuRepository;
     private final SystemAuditLogRepository systemAuditLogRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final PrizeRepository prizeRepository;
 
     public AdminCampaignController(CampaignRepository campaignRepository, StoreRepository storeRepository, CampaignStoreRepository campaignStoreRepository,
                                    CampaignRuleRepository campaignRuleRepository, CampaignRulePaymentRepository campaignRulePaymentRepository, CampaignRuleSkuRepository campaignRuleSkuRepository,
-                                   SystemAuditLogRepository systemAuditLogRepository, JdbcTemplate jdbcTemplate) {
+                                   SystemAuditLogRepository systemAuditLogRepository, JdbcTemplate jdbcTemplate, PrizeRepository prizeRepository) {
         this.campaignRepository = campaignRepository;
         this.storeRepository = storeRepository;
         this.campaignStoreRepository = campaignStoreRepository;
@@ -50,6 +53,7 @@ public class AdminCampaignController {
         this.campaignRuleSkuRepository = campaignRuleSkuRepository;
         this.systemAuditLogRepository = systemAuditLogRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.prizeRepository = prizeRepository;
     }
 
     @GetMapping
@@ -421,5 +425,41 @@ public class AdminCampaignController {
         }
         
         return "redirect:/admin/campaigns";
+    }
+
+    @GetMapping("/{campaignId}/design")
+    public String designMinigame(@PathVariable Long campaignId, Model model) {
+        Campaign campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chiến dịch"));
+        
+        List<Prize> prizes = prizeRepository.findByMaChienDich(campaign.getMaChienDich());
+        
+        model.addAttribute("campaign", campaign);
+        model.addAttribute("prizes", prizes);
+        return "admin/minigame-builder";
+    }
+
+    @PostMapping("/design/save")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> saveDesign(@RequestBody java.util.Map<String, String> payload) {
+        try {
+            Long campaignId = Long.parseLong(payload.get("campaignId"));
+            String slug = payload.get("slug");
+            String configJson = payload.get("configJson");
+            
+            Campaign campaign = campaignRepository.findById(campaignId)
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chiến dịch"));
+            
+            campaign.setDuongDanSlug(slug);
+            campaign.setCauhinhThemeJson(configJson);
+            
+            campaignRepository.save(campaign);
+            
+            return org.springframework.http.ResponseEntity.ok(java.util.Map.of("status", "success"));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", "Từ khóa đường dẫn (Slug) đã tồn tại. Vui lòng chọn từ khóa khác."));
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
     }
 }

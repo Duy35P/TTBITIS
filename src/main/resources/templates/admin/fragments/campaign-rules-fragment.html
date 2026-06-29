@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
   <div th:fragment="content">
+
     <form th:action="@{/admin/campaigns/{id}/rules/save(id=${campaignId})}" method="post">
       <div class="box-body" style="max-height: 70vh; overflow-y: auto; padding-right: 15px;">
         <!-- 1. Basic Rule -->
@@ -40,9 +41,20 @@
         <!-- 3. SKU Rule -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-bottom: 1px solid #f4f4f4; padding-bottom: 5px; margin-bottom: 10px;">
           <h4 style="color: #3c8dbc; margin: 0;">3. Thưởng Sản Phẩm (SKU Ưu Tiên)</h4>
-          <button type="button" class="btn-primary" style="padding: 2px 10px; font-size: 12px; background-color: #00a65a; border: none;" onclick="addSkuRow()">+ Thêm SKU</button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-primary" style="padding: 2px 10px; font-size: 12px; background-color: #f39c12; border: none; color: #fff; border-radius: 3px; cursor: pointer;" onclick="document.getElementById('excelFileInput').click()">📥 Import Excel</button>
+            <button type="button" class="btn-primary" style="padding: 2px 10px; font-size: 12px; background-color: #00a65a; border: none;" onclick="addSkuRow()">+ Thêm SKU</button>
+          </div>
         </div>
         <small style="color:#777; display: block; margin-bottom: 10px;">Cấu hình mức thưởng riêng lẻ cho từng mã sản phẩm khi khách mua trúng.</small>
+        
+        <!-- Import Excel Info Box -->
+        <div id="importInfoBox" style="display: none; background: #d9edf7; border: 1px solid #bce8f1; color: #31708f; padding: 10px 15px; border-radius: 4px; margin-bottom: 15px; font-size: 13px;">
+          <strong>✅ Đã import thành công!</strong> <span id="importCount">0</span> dòng SKU được thêm vào danh sách bên dưới. Vui lòng kiểm tra và bấm <strong>"Lưu Cấu Hình"</strong> để hoàn tất.
+        </div>
+        
+        <!-- Hidden file input for Excel -->
+        <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleExcelImport(this)">
         
         <div id="sku-rules-container">
           <!-- Existing SKU Rules -->
@@ -63,6 +75,8 @@
         <button type="submit" class="btn-warning">Lưu Cấu Hình</button>
       </div>
     </form>
+    
+
   </div>
 </body>
 </html>

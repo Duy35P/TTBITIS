@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucky Draw - Minigame Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Source Sans Pro', sans-serif; background-color: #ecf0f5; display: flex; height: 100vh; overflow: hidden; }
+  
+  /* ===== Header & Sidebar (AdminLTE base) ===== */
+  .main-header { position: fixed; top: 0; left: 0; right: 0; height: 50px; background-color: #3c8dbc; z-index: 1000; display: flex; }
+  .logo { width: 230px; height: 50px; background-color: #367fa9; color: #fff; font-size: 20px; font-weight: 700; line-height: 50px; text-align: center; text-decoration: none; flex-shrink: 0; }
+  .navbar { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; }
+  .user-menu { display: flex; align-items: center; color: #fff; cursor: pointer; padding: 10px; }
+  .user-menu img { width: 25px; height: 25px; border-radius: 50%; margin-right: 10px; }
+  
+  .main-sidebar { position: fixed; top: 50px; left: 0; bottom: 0; width: 230px; background-color: #222d32; z-index: 800; overflow-y: auto; }
+  .sidebar-menu { list-style: none; margin: 0; padding: 0; margin-top: 20px;}
+  .sidebar-menu li a { padding: 12px 15px; display: flex; align-items: center; color: #b8c7ce; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+  .sidebar-menu li a:hover, .sidebar-menu li.active a { color: #fff; background: #1e282c; border-left-color: #3c8dbc; }
+  
+  /* ===== Builder Layout ===== */
+  .content-wrapper { margin-left: 230px; margin-top: 50px; display: flex; width: calc(100% - 230px); height: calc(100vh - 50px); }
+  
+  /* Left Panel: Settings */
+  .builder-settings { width: 400px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; overflow-y: auto; }
+  .settings-header { padding: 15px 20px; background: #f9fafb; border-bottom: 1px solid #ddd; }
+  .settings-header h2 { font-size: 18px; margin: 0; color: #333; }
+  .settings-body { padding: 20px; flex: 1; }
+  
+  .form-group { margin-bottom: 15px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px; }
+  .form-control { width: 100%; padding: 8px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
+  
+  .color-picker-row { display: flex; align-items: center; gap: 10px; }
+  .color-input { width: 40px; height: 35px; border: 1px solid #ccc; border-radius: 4px; padding: 0; cursor: pointer; }
+  
+  .prize-list-setup { border: 1px solid #eee; padding: 10px; border-radius: 4px; background: #fafafa; margin-bottom: 10px; }
+  .prize-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; }
+  .prize-row input[type="text"] { flex: 1; padding: 6px; font-size: 13px; border: 1px solid #ccc; border-radius: 3px; background-color: #e9ecef; cursor: not-allowed; }
+  .prize-row input[type="color"] { width: 30px; height: 30px; border: 1px solid #ccc; padding: 0; border-radius: 3px; }
+  
+  .btn-save { background: #f39c12; color: #fff; border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 20px; }
+  
+  /* Right Panel: Preview */
+  .builder-preview { flex: 1; background: #e0e6ed; display: flex; align-items: center; justify-content: center; position: relative; }
+  
+  .mobile-mockup { width: 375px; height: 812px; background: #000; border-radius: 40px; padding: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); position: relative; }
+  .mobile-screen { width: 100%; height: 100%; border-radius: 30px; overflow: hidden; background: linear-gradient(180deg, #4da6e8 0%, #7ec8f0 100%); position: relative; font-family: 'Be Vietnam Pro', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: background 0.3s; }
+  
+  .preview-title { color: #fff; font-size: 1.5rem; font-weight: 800; text-align: center; margin-bottom: 24px; text-shadow: 1px 2px 4px rgba(0,0,0,0.2); }
+  .wheel-stage { position: relative; display: flex; flex-direction: column; align-items: center; }
+  .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 20; width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 35px solid #ffd700; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3)); }
+  .wheel-wrapper { position: relative; width: 300px; height: 300px; }
+  
+  .blue-ring { position: absolute; top: -15px; left: -15px; right: -15px; bottom: -15px; border-radius: 50%; background: linear-gradient(145deg, #2b5ea7, #1e4a8a, #2b5ea7); box-shadow: 0 6px 30px rgba(0,0,0,0.3), inset 0 2px 8px rgba(255,255,255,0.15); transition: background 0.3s; }
+  .blue-ring-inner { position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px; border-radius: 50%; background: #ccc; }
+  .white-ring { position: absolute; top: -3px; left: -3px; right: -3px; bottom: -3px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.6); z-index: 4; pointer-events: none; }
+  
+  #wheelCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; z-index: 3; }
+  
+  .center-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(145deg, #2b5ea7, #1a3f7a); border: 3px solid #ffd700; box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: background 0.3s; }
+  .center-btn .logo-text { font-size: 0.7rem; font-weight: 900; color: #ffd700; }
+  
+  .spin-btn { margin-top: 40px; padding: 12px 30px; font-size: 1.1rem; font-weight: 700; color: #1e4a8a; background: linear-gradient(180deg, #fff 0%, #e0f2fe 100%); border: none; border-radius: 25px; box-shadow: 0 6px 0 #badaf2, 0 10px 15px rgba(0,0,0,0.2); cursor: pointer; }
+</style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="main-header">
+    <a th:href="@{/admin/campaigns}" class="logo">LuckyDraw</a>
+    <nav class="navbar">
+      <div style="color:white; font-size: 18px; font-weight: bold;">Giao Diện Thiết Kế Minigame: <span th:text="${campaign.tenChienDich}"></span></div>
+    </nav>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="main-sidebar">
+    <ul class="sidebar-menu">
+      <li><a th:href="@{/admin/campaigns}">⬅️ <span>Quay lại Chiến dịch</span></a></li>
+      <li class="active"><a href="#">🎨 <span>Design Minigame</span></a></li>
+    </ul>
+  </aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    
+    <!-- Left Panel: Settings -->
+    <div class="builder-settings">
+      <div class="settings-header">
+        <h2>Tùy chỉnh Giao diện</h2>
+      </div>
+      <div class="settings-body">
+        
+        <input type="hidden" id="campaignId" th:value="${campaign.id}" />
+
+        <div class="form-group">
+          <label>Tiêu đề (Header Text)</label>
+          <input type="text" class="form-control" id="setTitle" value="Vòng Quay May Mắn" oninput="updatePreview()">
+        </div>
+
+        <div class="form-group" style="background: #fdfae3; padding: 10px; border-radius: 4px; border: 1px dashed #f39c12;">
+          <label>Từ khóa Đường dẫn (URL Slug) *</label>
+          <div style="display: flex; align-items: center; background: #fff; border: 1px solid #ccc; border-radius: 4px; overflow: hidden;">
+            <span style="background: #eee; padding: 8px; color: #777; font-size: 13px; border-right: 1px solid #ccc;">game.tlc.com/play/</span>
+            <input type="text" style="flex: 1; border: none; padding: 8px; outline: none; font-weight: bold; color: #d35400;" id="setSlug" th:value="${campaign.duongDanSlug}" oninput="formatSlug(this)">
+          </div>
+          <small style="color: #777; font-size: 11px; margin-top: 5px; display: block;">Viết liền không dấu, ngăn cách bằng dấu gạch ngang (VD: khai-truong-hn)</small>
+        </div>
+
+        <div class="form-group">
+          <label>Màu Nền Trên (Background Top)</label>
+          <div class="color-picker-row">
+            <input type="color" class="color-input" id="setBgTop" value="#4da6e8" onchange="updatePreview()">
+            <input type="text" class="form-control" value="#4da6e8" readonly id="txtBgTop">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Màu Nền Dưới (Background Bottom)</label>
+          <div class="color-picker-row">
+            <input type="color" class="color-input" id="setBgBot" value="#7ec8f0" onchange="updatePreview()">
+            <input type="text" class="form-control" value="#7ec8f0" readonly id="txtBgBot">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Màu Viền Vòng Quay (Wheel Ring)</label>
+          <div class="color-picker-row">
+            <input type="color" class="color-input" id="setRingColor" value="#1e4a8a" onchange="updatePreview()">
+            <input type="text" class="form-control" value="#1e4a8a" readonly id="txtRingColor">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 25px;">
+          <label>Danh Sách Giải Thưởng (Slices)</label>
+          <div class="prize-list-setup" id="prizeContainer">
+            <!-- Dynamic Prize Rows -->
+          </div>
+        </div>
+
+        <button class="btn-save" onclick="saveDesign()">💾 LƯU CẤU HÌNH & XUẤT LINK</button>
+
+      </div>
+    </div>
+
+    <!-- Right Panel: Live Preview -->
+    <div class="builder-preview">
+      <div class="mobile-mockup">
+        <div class="mobile-screen" id="previewScreen">
+          
+          <h1 class="preview-title" id="previewTitle">Vòng Quay May Mắn</h1>
+
+          <div class="wheel-stage">
+            <div class="pointer"></div>
+            <div class="wheel-wrapper">
+              <div class="blue-ring" id="previewRing"></div>
+              <div class="blue-ring-inner"></div>
+              <div class="white-ring"></div>
+              <canvas id="wheelCanvas" width="300" height="300"></canvas>
+              <div class="center-btn" id="previewCenterBtn">
+                <span class="logo-text">TLC</span>
+              </div>
+            </div>
+            
+            <button class="spin-btn">Quay ngay</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal Xuất Link Thành Công -->
+  <style>
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 2000; }
+    .modal-overlay.active { display: flex; animation: fadeIn 0.3s; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .success-modal { background: #fff; width: 450px; border-radius: 8px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; position: relative; }
+    .success-icon { width: 60px; height: 60px; background: #dcfce7; color: #16a34a; border-radius: 50%; font-size: 30px; line-height: 60px; margin: 0 auto 15px; }
+    .success-title { font-size: 22px; color: #333; font-weight: bold; margin-bottom: 10px; }
+    .success-desc { font-size: 14px; color: #666; margin-bottom: 20px; }
+    
+    .link-box { display: flex; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; margin-bottom: 20px; }
+    .link-box input { flex: 1; border: none; padding: 12px; font-size: 14px; color: #374151; background: transparent; outline: none; }
+    .btn-copy { background: #3c8dbc; color: white; border: none; padding: 0 20px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-copy:hover { background: #367fa9; }
+    
+    .btn-close-modal { background: #fff; color: #555; border: 1px solid #ccc; padding: 10px 30px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+  </style>
+
+  <div class="modal-overlay" id="publishModal">
+    <div class="success-modal">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Xuất Bản Thành Công!</div>
+      <div class="success-desc">Cấu hình đã được lưu thành công.</div>
+      
+      <div class="link-box">
+        <input type="text" id="gameLink" value="" readonly>
+        <button class="btn-copy" onclick="copyLink()">COPY</button>
+      </div>
+      
+      <div>
+        <button class="btn-close-modal" onclick="closePublishModal()">Đóng Cửa Sổ</button>
+      </div>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    const serverPrizes = /*[[${prizes}]]*/ [];
+    const savedConfigRaw = /*[[${campaign.cauhinhThemeJson}]]*/ null;
+    
+    let config = {
+      title: 'Vòng Quay May Mắn',
+      bgTop: '#4da6e8',
+      bgBot: '#7ec8f0',
+      ringColor: '#1e4a8a',
+      prizes: []
+    };
+
+    if (savedConfigRaw && savedConfigRaw.trim() !== '') {
+      try {
+        const parsed = JSON.parse(savedConfigRaw);
+        config = { ...config, ...parsed };
+      } catch (e) {
+        console.error("Invalid config JSON", e);
+      }
+    }
+    
+    // Build prize configuration
+    // Fallback: If DB prize doesn't have a color in saved config, use default alternating colors
+    const prizeConfig = serverPrizes.map((p, index) => {
+      const defaultColor = (index % 2 === 0) ? '#1e4a8a' : '#d6ecfa';
+      // Find if we have saved color for this prize code
+      let savedColor = defaultColor;
+      if (config.prizes) {
+        const savedPrize = config.prizes.find(sp => sp.code === p.maGiaiThuong);
+        if (savedPrize && savedPrize.color) {
+            savedColor = savedPrize.color;
+        }
+      }
+      return { code: p.maGiaiThuong, name: p.tenGiai, color: savedColor };
+    });
+    
+    config.prizes = prizeConfig;
+
+    // Set initial values
+    document.getElementById('setTitle').value = config.title;
+    document.getElementById('setBgTop').value = config.bgTop;
+    document.getElementById('setBgBot').value = config.bgBot;
+    document.getElementById('setRingColor').value = config.ringColor;
+
+    function renderPrizeInputs() {
+      const container = document.getElementById('prizeContainer');
+      container.innerHTML = '';
+      if (config.prizes.length === 0) {
+          container.innerHTML = '<div style="color: #666; font-style: italic;">Chiến dịch này chưa có giải thưởng nào. Vui lòng thêm giải thưởng vào chiến dịch trước.</div>';
+          return;
+      }
+      config.prizes.forEach((p, index) => {
+        container.innerHTML += `
+          <div class="prize-row">
+            <input type="text" value="${p.name}" readonly>
+            <input type="color" value="${p.color}" onchange="updatePrizeColor(${index}, this.value)">
+          </div>
+        `;
+      });
+      drawWheelPreview();
+    }
+
+    function updatePrizeColor(index, val) { 
+        config.prizes[index].color = val; 
+        drawWheelPreview(); 
+    }
+
+    function updatePreview() {
+      config.title = document.getElementById('setTitle').value;
+      config.bgTop = document.getElementById('setBgTop').value;
+      config.bgBot = document.getElementById('setBgBot').value;
+      config.ringColor = document.getElementById('setRingColor').value;
+        
+      document.getElementById('txtBgTop').value = config.bgTop;
+      document.getElementById('txtBgBot').value = config.bgBot;
+      document.getElementById('previewScreen').style.background = `linear-gradient(180deg, ${config.bgTop} 0%, ${config.bgBot} 100%)`;
+
+      document.getElementById('txtRingColor').value = config.ringColor;
+      document.getElementById('previewRing').style.background = config.ringColor;
+      document.getElementById('previewCenterBtn').style.background = config.ringColor;
+
+      document.getElementById('previewTitle').innerText = config.title;
+
+      drawWheelPreview();
+    }
+
+    function drawWheelPreview() {
+      if (config.prizes.length === 0) return;
+      const canvas = document.getElementById('wheelCanvas');
+      const ctx = canvas.getContext('2d');
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const r = cx - 10;
+      const n = config.prizes.length;
+      const slice = (2 * Math.PI) / n;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      for (let i = 0; i < n; i++) {
+          const start = i * slice;
+          const end = start + slice;
+
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.arc(0, 0, r, start, end);
+          ctx.closePath();
+          ctx.fillStyle = config.prizes[i].color;
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          ctx.save();
+          ctx.rotate(start + slice / 2);
+          const textX = r * 0.65;
+          
+          const hex = config.prizes[i].color.replace('#', '');
+          const rColor = parseInt(hex.substr(0, 2), 16);
+          const gColor = parseInt(hex.substr(2, 2), 16);
+          const bColor = parseInt(hex.substr(4, 2), 16);
+          const yiq = ((rColor * 299) + (gColor * 587) + (bColor * 114)) / 1000;
+          ctx.fillStyle = (yiq >= 128) ? '#111' : '#fff';
+          
+          ctx.font = '28px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          ctx.fillText('🎁', textX, 0);
+          ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    function formatSlug(input) {
+      let slug = input.value.toLowerCase();
+      slug = slug.replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    }
+
+    async function saveDesign() {
+      const slugValue = document.getElementById('setSlug').value.trim();
+      if (!slugValue) {
+          alert('Vui lòng nhập Từ khóa Đường dẫn (URL Slug)');
+          return;
+      }
+      const campaignId = document.getElementById('campaignId').value;
+      
+      const payload = {
+          campaignId: campaignId,
+          slug: slugValue,
+          configJson: JSON.stringify(config)
+      };
+
+      try {
+          const response = await fetch('/admin/campaigns/design/save', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload)
+          });
+          
+          const result = await response.json();
+          if (response.ok) {
+              const finalUrl = 'https://game.tlc.com/play/' + slugValue;
+              document.getElementById('gameLink').value = finalUrl;
+              document.getElementById('publishModal').classList.add('active');
+          } else {
+              alert(result.message || 'Lưu thất bại!');
+          }
+      } catch (error) {
+          alert('Lỗi kết nối tới server');
+      }
+    }
+    
+    function closePublishModal() {
+      document.getElementById('publishModal').classList.remove('active');
+    }
+
+    function copyLink() {
+      const copyText = document.getElementById("gameLink");
+      copyText.select();
+      copyText.setSelectionRange(0, 99999);
+      document.execCommand("copy");
+      alert("Đã copy link: " + copyText.value);
+    }
+
+    // Init
+    renderPrizeInputs();
+    updatePreview();
+  </script>
+</body>
+</html>

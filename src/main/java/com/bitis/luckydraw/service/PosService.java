@@ -57,6 +57,12 @@ public class PosService {
 
         // 2. Save Invoice
         if (request.getInvoiceCode() != null && !request.getInvoiceCode().isEmpty()) {
+            if (request.getOriginalInvoiceCode() != null && !request.getOriginalInvoiceCode().isEmpty()) {
+                if (invoiceRepository.existsByMaHoaDonGoc(request.getOriginalInvoiceCode())) {
+                    return PosSyncResponse.builder().status("ERROR").message("Mã hóa đơn gốc đã được sử dụng để đổi hàng trước đó!").build();
+                }
+            }
+            
             Optional<Invoice> existingInvoice = invoiceRepository.findByMaHoaDon(request.getInvoiceCode());
             if (existingInvoice.isPresent()) {
                 return PosSyncResponse.builder().status("ERROR").message("Hóa đơn đã được đồng bộ trước đó!").build();
@@ -65,6 +71,7 @@ public class PosService {
             invoice.setMaStore(request.getMaStore());
             invoice.setMaKhachHang(customer.getMaKhachHang());
             invoice.setMaHoaDon(request.getInvoiceCode());
+            invoice.setMaHoaDonGoc(request.getOriginalInvoiceCode());
             invoice.setTongTien(request.getTotalAmount());
             invoice.setPhuongThucTt(request.getPaymentMethod());
             invoice.setDaXuLy(true); // Mặc định hợp lệ
@@ -81,6 +88,14 @@ public class PosService {
         }
 
         // 3. Process Campaigns
+        Double deltaAmount = request.getTotalAmount();
+        if (request.getOriginalInvoiceCode() != null && !request.getOriginalInvoiceCode().isEmpty()) {
+            Optional<Invoice> originalOpt = invoiceRepository.findByMaHoaDon(request.getOriginalInvoiceCode());
+            if (originalOpt.isPresent()) {
+                deltaAmount = request.getTotalAmount() - originalOpt.get().getTongTien();
+            }
+        }
+        
         List<CampaignStore> storeCampaigns = campaignStoreRepository.findByMaStore(request.getMaStore());
         LocalDateTime now = LocalDateTime.now();
         List<String> appliedCampaigns = new ArrayList<>();
@@ -94,17 +109,19 @@ public class PosService {
                     campaign.getNgayBatDau().isBefore(now) &&
                     campaign.getNgayKetThuc().isAfter(now)) {
                     
-                    int turnsForThisCampaign = calculateTurns(campaign.getMaChienDich(), request);
-                    if (turnsForThisCampaign > 0) {
-                        // Call Stored Procedure
-                        customerTurnRepository.addCustomerTurnsSafe(
-                            customer.getMaKhachHang(),
-                            campaign.getMaChienDich(),
-                            turnsForThisCampaign,
-                            request.getInvoiceCode() != null ? request.getInvoiceCode() : "POS-SYNC"
-                        );
-                        appliedCampaigns.add(campaign.getTenChienDich());
-                        totalTurnsEarned += turnsForThisCampaign;
+                    if (deltaAmount > 0) {
+                        int turnsForThisCampaign = calculateTurns(campaign.getMaChienDich(), request, deltaAmount);
+                        if (turnsForThisCampaign > 0) {
+                            // Call Stored Procedure
+                            customerTurnRepository.addCustomerTurnsSafe(
+                                customer.getMaKhachHang(),
+                                campaign.getMaChienDich(),
+                                turnsForThisCampaign,
+                                request.getInvoiceCode() != null ? request.getInvoiceCode() : "POS-SYNC"
+                            );
+                            appliedCampaigns.add(campaign.getTenChienDich());
+                            totalTurnsEarned += turnsForThisCampaign;
+                        }
                     }
                 }
             }
@@ -127,15 +144,15 @@ public class PosService {
         }
     }
 
-    private int calculateTurns(String maChienDich, PosSyncRequest request) {
+    private int calculateTurns(String maChienDich, PosSyncRequest request, Double deltaAmount) {
         int turns = 0;
 
         // 1. Basic Rule
         Optional<CampaignRule> optRule = campaignRuleRepository.findByMaChienDich(maChienDich);
         if (optRule.isPresent() && optRule.get().getGiaTriDonHangToiThieu() != null && optRule.get().getGiaTriDonHangToiThieu() > 0) {
             Double minOrderValue = optRule.get().getGiaTriDonHangToiThieu();
-            if (request.getTotalAmount() != null && request.getTotalAmount() >= minOrderValue) {
-                turns += (int) (request.getTotalAmount() / minOrderValue);
+            if (deltaAmount != null && deltaAmount >= minOrderValue) {
+                turns += (int) (deltaAmount / minOrderValue);
             }
         }
 

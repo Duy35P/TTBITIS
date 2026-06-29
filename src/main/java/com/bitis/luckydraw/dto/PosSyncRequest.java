@@ -8,6 +8,7 @@ public class PosSyncRequest {
     private String maStore; // Mock field for UI selection
     private String invoiceCode;
     private String customerPhone;
+    private String originalInvoiceCode;
     private Double totalAmount;
     private String paymentMethod;
     private List<PosSyncSku> skus;
