@@ -64,6 +64,17 @@ public class AdminPrizeController {
         String maGiaiThuong = (prizeParam != null && !prizeParam.equals("all") && !prizeParam.trim().isEmpty()) ? prizeParam : null;
 
         List<PrizeListDto> prizes = prizeRepository.getPrizeList();
+        
+        // Filter and sort prizes by Campaign
+        java.util.stream.Stream<PrizeListDto> prizeStream = prizes.stream();
+        if ("prizes".equals(tab) && maChienDich != null) {
+            prizeStream = prizeStream.filter(p -> maChienDich.equals(p.getMaChienDich()));
+        }
+        prizes = prizeStream.sorted(java.util.Comparator
+                .comparing(PrizeListDto::getTenChienDich, java.util.Comparator.nullsLast(String::compareToIgnoreCase))
+                .thenComparing(PrizeListDto::getTenGiai, java.util.Comparator.nullsLast(String::compareToIgnoreCase)))
+                .collect(java.util.stream.Collectors.toList());
+
         List<Campaign> campaigns = campaignRepository.findAll();
         List<Store> stores = storeRepository.findAll();
         List<StoreInventoryDto> allocations = storePrizeInventoryRepository.getStoreInventory(maStore, maChienDich, maGiaiThuong);
@@ -85,13 +96,18 @@ public class AdminPrizeController {
     }
 
     @PostMapping("/allocate")
-    public String allocatePrize(@RequestParam String maStore,
+    public String allocatePrize(@RequestParam List<String> storeMas,
                                 @RequestParam String maGiaiThuong,
                                 @RequestParam int soLuongCap,
                                 RedirectAttributes redirectAttributes) {
         try {
-            prizeService.allocatePrizeToStore(maStore, maGiaiThuong, soLuongCap);
-            redirectAttributes.addFlashAttribute("successMsg", "Phân bổ thành công!");
+            if (storeMas == null || storeMas.isEmpty()) {
+                throw new IllegalArgumentException("Vui lòng chọn ít nhất 1 cửa hàng.");
+            }
+            for (String maStore : storeMas) {
+                prizeService.allocatePrizeToStore(maStore, maGiaiThuong, soLuongCap);
+            }
+            redirectAttributes.addFlashAttribute("successMsg", "Phân bổ thành công cho " + storeMas.size() + " cửa hàng!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMsg", "Lỗi: " + e.getMessage());
         }
@@ -169,6 +185,29 @@ public class AdminPrizeController {
             redirectAttributes.addFlashAttribute("errorMsg", "Lỗi import: " + e.getMessage());
         }
         return "redirect:/admin/prizes";
+    }
+
+    @GetMapping("/export-excel")
+    public void exportExcel(jakarta.servlet.http.HttpServletResponse response) {
+        try {
+            List<com.bitis.luckydraw.dto.PrizeListDto> prizes = prizeRepository.getPrizeList();
+            String[] headers = {"Mã Chiến Dịch", "Tên Chiến Dịch", "Mã Quà", "Tên Quà", "Xác Suất", "Loại Quà", "Là Quà Tặng?", "Tồn Kho Tổng", "Giới hạn/Người"};
+            List<String[]> data = prizes.stream().map(p -> new String[]{
+                p.getMaChienDich(),
+                p.getTenChienDich() != null ? p.getTenChienDich() : "",
+                p.getMaGiaiThuong(),
+                p.getTenGiai(),
+                String.valueOf(p.getXacSuat()),
+                p.getLoaiGiai() != null && p.getLoaiGiai() == 1 ? "Hiện vật" : "Voucher",
+                p.getLaGiaiThuong() != null && p.getLaGiaiThuong() ? "Có" : "Không (Giải trượt)",
+                p.getTonKhoToanHeThong() != null ? (p.getTonKhoToanHeThong() == -1 ? "Không giới hạn" : String.valueOf(p.getTonKhoToanHeThong())) : "0",
+                p.getGioiHanTrungMoiCustomer() != null ? String.valueOf(p.getGioiHanTrungMoiCustomer()) : "Không giới hạn"
+            }).collect(java.util.stream.Collectors.toList());
+            
+            com.bitis.luckydraw.util.ExcelExportUtil.exportDataToExcel(response, "DanhSachQuaTang", headers, data);
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @PostMapping("/save")

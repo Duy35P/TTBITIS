@@ -76,10 +76,10 @@ public class AdminStoreController {
         } else {
             store = new Store();
             store.setTrangThai(0); // Luôn luôn tạm ngưng khi mới tạo
+            store.setMaStore(maStore);
         }
         
         store.setTenCuaHang(tenCuaHang);
-        store.setMaStore(maStore);
         store.setDiaChiStore(diaChiStore);
         
         storeRepository.save(store);
@@ -108,5 +108,23 @@ public class AdminStoreController {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi import: " + e.getMessage());
         }
         return "redirect:/admin/stores";
+    }
+
+    @GetMapping("/export-excel")
+    public void exportExcel(jakarta.servlet.http.HttpServletResponse response) {
+        try {
+            List<Store> stores = storeRepository.findAll();
+            String[] headers = {"Mã Cửa Hàng", "Tên Cửa Hàng", "Địa Chỉ", "Trạng Thái"};
+            List<String[]> data = stores.stream().map(s -> new String[]{
+                s.getMaStore(),
+                s.getTenCuaHang(),
+                s.getDiaChiStore(),
+                s.getTrangThai() != null && s.getTrangThai() == 1 ? "Hoạt động" : "Tạm ngưng"
+            }).collect(Collectors.toList());
+            
+            com.bitis.luckydraw.util.ExcelExportUtil.exportDataToExcel(response, "DanhSachCuaHang", headers, data);
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
     }
 }

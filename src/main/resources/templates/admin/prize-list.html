@@ -43,12 +43,25 @@
 
           <!-- Tab 1: Danh Sách Giải Thưởng -->
           <div id="prizes" class="tab-content" th:style="${activeTab == 'prizes' ? 'display:block;' : 'display:none;'}">
-            <div style="margin-bottom: 15px; display: flex; justify-content: flex-end; gap: 10px;">
-              <form th:action="@{/admin/prizes/import}" method="post" enctype="multipart/form-data" style="margin: 0;">
-                <input type="file" name="file" accept=".xlsx, .xls" style="display:none;" id="excelPrizeInput" onchange="this.form.submit()">
-                <button type="button" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c;" onclick="document.getElementById('excelPrizeInput').click()">Import Excel (Giải Thưởng)</button>
+            <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+              <!-- Lọc chiến dịch -->
+              <form method="get" th:action="@{/admin/prizes}" style="display: flex; gap: 10px; align-items: center; margin: 0;">
+                <input type="hidden" name="tab" value="prizes">
+                <label style="font-size: 14px; font-weight: 600; color: #555;">Lọc theo Chiến dịch:</label>
+                <select name="campaign" onchange="this.form.submit()" style="padding: 6px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none; min-width: 250px;">
+                  <option value="all">-- Tất cả Chiến dịch --</option>
+                  <option th:each="c : ${campaigns}" th:value="${c.maChienDich}" th:text="${c.tenChienDich}" th:selected="${c.maChienDich == selectedCampaign}"></option>
+                </select>
               </form>
-              <button class="btn-primary" onclick="openModal('prizeModal', 'Thêm Giải Thưởng Mới')">+ Thêm Giải Thưởng Mới</button>
+              
+              <div style="display: flex; gap: 10px;">
+                <a th:href="@{/admin/prizes/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
+                <form th:action="@{/admin/prizes/import}" method="post" enctype="multipart/form-data" style="margin: 0;">
+                  <input type="file" name="file" accept=".xlsx, .xls" style="display:none;" id="excelPrizeInput" onchange="this.form.submit()">
+                  <button type="button" class="btn-primary" style="background-color: #f39c12; border-color: #e08e0b;" onclick="document.getElementById('excelPrizeInput').click()">Import Excel (Giải Thưởng)</button>
+                </form>
+                <button class="btn-primary" onclick="openModal('prizeModal', 'Thêm Giải Thưởng Mới')">+ Thêm Giải Thưởng Mới</button>
+              </div>
             </div>
             <table class="table-striped" style="width: 100%; border-collapse: collapse;">
               <thead>
@@ -106,11 +119,25 @@
               
               <form th:action="@{/admin/prizes/allocate}" method="post" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
                 <div>
-                  <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Chọn Cửa Hàng</label>
-                  <select name="maStore" id="allocateStore" onchange="filterPrizesByStore()" required style="padding: 6px; width: 200px; border: 1px solid #ccc; border-radius: 3px;">
-                    <option value="">-- Chọn cửa hàng --</option>
-                    <option th:each="s : ${stores}" th:value="${s.maStore}" th:text="${s.tenCuaHang}"></option>
+                  <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Chọn Chiến Dịch</label>
+                  <select id="allocateCampaign" onchange="filterStoresByCampaign()" required style="padding: 6px; width: 200px; border: 1px solid #ccc; border-radius: 3px;">
+                    <option value="">-- Chọn chiến dịch --</option>
+                    <option th:each="c : ${campaigns}" th:value="${c.maChienDich}" th:text="${c.tenChienDich}"></option>
                   </select>
+                </div>
+                <div>
+                  <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Chọn Cửa Hàng</label>
+                  <div class="dropdown-check-list" style="position: relative; display: inline-block; width: 250px;">
+                    <span class="anchor" style="display: block; padding: 6px 12px; border: 1px solid #ccc; border-radius: 3px; background: #fff; cursor: pointer; user-select: none; font-size: 13px;">Chọn cửa hàng...</span>
+                    <ul class="items" id="allocateStoreList" style="display: none; position: absolute; left: 0; right: 0; border: 1px solid #ccc; border-top: none; background: #fff; max-height: 200px; overflow-y: auto; z-index: 1000; list-style: none; padding: 0; margin: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                      <li th:each="s : ${stores}" style="padding: 6px 10px; border-bottom: 1px solid #eee;">
+                        <label style="display: flex; align-items: center; cursor: pointer; font-weight: normal; margin: 0; font-size: 13px;">
+                          <input type="checkbox" name="storeMas" th:value="${s.maStore}" style="margin-right: 8px;">
+                          <span th:text="${s.tenCuaHang}"></span>
+                        </label>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
                 <div>
                   <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Chọn Giải Thưởng</label>
@@ -120,11 +147,11 @@
                   </select>
                 </div>
                 <div>
-                  <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Số lượng cấp</label>
-                  <input type="number" name="soLuongCap" required min="1" style="padding: 6px; width: 100px; border: 1px solid #ccc; border-radius: 3px;" value="1">
+                  <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Số lượng cấp/CH</label>
+                  <input type="number" name="soLuongCap" required min="-1" style="padding: 6px; width: 100px; border: 1px solid #ccc; border-radius: 3px;" value="1" title="Nhập -1 nếu không giới hạn">
                 </div>
-                <div>
-                  <button type="submit" class="btn-warning" style="background-color: #f39c12; color: #fff; padding: 6px 12px; border-radius: 3px; font-weight: 600; border: none; cursor: pointer;">Ghi nhận Phân Bổ</button>
+                <div style="margin-bottom: 2px;">
+                  <button type="submit" class="btn-warning" style="background-color: #f39c12; color: #fff; padding: 7px 15px; border-radius: 3px; font-weight: 600; border: none; cursor: pointer;">Ghi nhận Phân Bổ</button>
                 </div>
               </form>
             </div>
@@ -232,14 +259,14 @@
             </div>
             <div style="margin-bottom: 15px; flex: 1;">
               <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Giới hạn trúng/người</label>
-              <input type="number" name="gioiHanTrungMoiCustomer" id="prizeLimit" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;">
+              <input type="number" name="gioiHanTrungMoiCustomer" id="prizeLimit" min="0" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;">
             </div>
           </div>
           
           <div style="margin-bottom: 15px;">
              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                  <input type="checkbox" name="laGiaiThuong" id="prizeIsReal" value="true" checked>
-                 <span style="font-weight: 600; font-size: 14px; color: #555;">Đây là giải thưởng thật (Bỏ chọn nếu là ô "Chúc bạn may mắn lần sau")</span>
+                 <span style="font-weight: 600; font-size: 14px; color: #555;">Đây là giải thưởng thật</span>
              </label>
           </div>
           
@@ -253,7 +280,8 @@
           <div style="display: flex; gap: 15px;">
             <div style="margin-bottom: 15px; flex: 1;">
               <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Tồn kho tổng *</label>
-              <input type="number" name="tonKhoToanHeThong" id="prizeTotal" required min="0" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;">
+              <input type="number" name="tonKhoToanHeThong" id="prizeTotal" required min="-1" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;" title="Nhập -1 nếu là giải trượt / không giới hạn">
+              <small style="color: #777; font-size: 11px;">Nhập -1 nếu giải thưởng không giới hạn (Giải trượt)</small>
             </div>
             <div style="margin-bottom: 15px; flex: 1;">
               <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Tỷ lệ trúng (%) *</label>
@@ -288,7 +316,7 @@
           
           <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Tổng số lượng cấp mới *</label>
-            <input type="number" name="newTongLuongCap" id="editAllocTotal" required min="0" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;">
+            <input type="number" name="newTongLuongCap" id="editAllocTotal" required min="-1" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;">
           </div>
           
           <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f4f4f4; padding-top: 15px; margin-top: 15px;">
@@ -314,27 +342,49 @@
     /*<![CDATA[*/
     var campaignStores = /*[[${campaignStores}]]*/ [];
     
-    function filterPrizesByStore() {
-        var storeSelect = document.getElementById('allocateStore');
-        var prizeSelect = document.getElementById('allocatePrize');
-        var selectedStore = storeSelect.value;
+    function filterStoresByCampaign() {
+        var campaignSelect = document.getElementById('allocateCampaign');
+        var selectedCampaign = campaignSelect.value;
         
-        // Find campaigns valid for this store
-        var validCampaigns = [];
-        if (campaignStores && campaignStores.length > 0) {
-            validCampaigns = campaignStores.filter(cs => cs.maStore === selectedStore).map(cs => cs.maChienDich);
+        // Find stores valid for this campaign
+        var validStores = [];
+        if (campaignStores && campaignStores.length > 0 && selectedCampaign) {
+            validStores = campaignStores.filter(cs => cs.maChienDich === selectedCampaign).map(cs => cs.maStore);
         }
         
-        // Reset prize selection
+        var checkList = document.querySelector('.dropdown-check-list');
+        var anchor = checkList.querySelector('.anchor');
+        var listItems = checkList.querySelectorAll('.items li');
+        
+        listItems.forEach(li => {
+            var checkbox = li.querySelector('input[type="checkbox"]');
+            checkbox.checked = false; // Reset selection
+            var storeVal = checkbox.value;
+            if (!selectedCampaign || validStores.includes(storeVal)) {
+                li.style.display = '';
+            } else {
+                li.style.display = 'none';
+            }
+        });
+        
+        anchor.textContent = 'Chọn cửa hàng...';
+        
+        filterPrizesByCampaign();
+    }
+    
+    function filterPrizesByCampaign() {
+        var campaignSelect = document.getElementById('allocateCampaign');
+        var prizeSelect = document.getElementById('allocatePrize');
+        var selectedCampaign = campaignSelect.value;
+        
         prizeSelect.value = "";
         
-        // Hide/Show options based on campaign
         var options = prizeSelect.querySelectorAll('option');
         options.forEach(opt => {
             if (opt.value === "") return; // Skip placeholder
             
             var pCampaign = opt.getAttribute('data-campaign');
-            if (!selectedStore || validCampaigns.includes(pCampaign)) {
+            if (!selectedCampaign || pCampaign === selectedCampaign) {
                 opt.style.display = '';
             } else {
                 opt.style.display = 'none';
@@ -363,7 +413,7 @@
       document.getElementById('editAllocPrize').value = prize;
       document.getElementById('editAllocDaPhat').value = daPhat;
       document.getElementById('editAllocTotal').value = total;
-      document.getElementById('editAllocTotal').min = daPhat; // Cannot reduce below what's already distributed
+      document.getElementById('editAllocTotal').min = -1; // Cho phép -1
       
       document.getElementById('editAllocationModal').style.display = 'flex';
     }
@@ -406,6 +456,7 @@
            
            document.getElementById('prizeMa').value = pMa;
            document.getElementById('prizeMa').readOnly = true;
+           document.getElementById('prizeMa').style.backgroundColor = '#e9ecef';
            document.getElementById('prizeName').value = pTen;
            document.getElementById('prizeType').value = pLoai || 0;
            document.getElementById('prizeLimit').value = pLimit || '';
@@ -423,6 +474,7 @@
            
            document.getElementById('prizeMa').value = '';
            document.getElementById('prizeMa').readOnly = false;
+           document.getElementById('prizeMa').style.backgroundColor = '';
            document.getElementById('prizeName').value = '';
            document.getElementById('prizeLimit').value = '';
            document.getElementById('prizeTotal').value = '';
@@ -431,6 +483,43 @@
         }
       }
     }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        var checkList = document.querySelector('.dropdown-check-list');
+        if (checkList) {
+            var anchor = checkList.querySelector('.anchor');
+            anchor.onclick = function(e) {
+                if (checkList.classList.contains('visible')) {
+                    checkList.classList.remove('visible');
+                    checkList.querySelector('.items').style.display = 'none';
+                } else {
+                    checkList.classList.add('visible');
+                    checkList.querySelector('.items').style.display = 'block';
+                }
+            }
+            
+            // Cập nhật text của anchor khi chọn
+            var items = checkList.querySelectorAll('input[type="checkbox"]');
+            items.forEach(item => {
+                item.addEventListener('change', function() {
+                    var selectedCount = checkList.querySelectorAll('input[type="checkbox"]:checked').length;
+                    if (selectedCount > 0) {
+                        anchor.textContent = 'Đã chọn (' + selectedCount + ') cửa hàng';
+                    } else {
+                        anchor.textContent = 'Chọn cửa hàng...';
+                    }
+                });
+            });
+
+            // Đóng khi click ra ngoài
+            document.addEventListener('click', function(e) {
+                if (!checkList.contains(e.target)) {
+                    checkList.classList.remove('visible');
+                    checkList.querySelector('.items').style.display = 'none';
+                }
+            });
+        }
+    });
     
     function closeModal(modalId) {
       document.getElementById(modalId).style.display = 'none';

@@ -161,7 +161,7 @@ CREATE TABLE [dbo].[prize] (
     CONSTRAINT [UQ_PRIZE_MA]    UNIQUE ([ma_giai_thuong]),
     CONSTRAINT [CK_PRIZE_LOAI]  CHECK ([loai_giai] IN (0, 1)),
     --CHỐNG ÂM KHO:
-    CONSTRAINT [CK_PRIZE_INVENTORY] CHECK ([ton_kho_toan_he_thong] >= 0) 
+    CONSTRAINT [CK_PRIZE_INVENTORY] CHECK ([ton_kho_toan_he_thong] >= -1) 
 )
 GO
 
@@ -318,8 +318,8 @@ select * from campaign_rule
 select * from customer_turn
 select * from store_prize_inventory
 select * from vai_tro
-delete invoice
+delete invoice where ma_hoa_don ='POS-2026-81021'
 delete store
 delete customer
-truncate table campaign
+truncate table prize
 

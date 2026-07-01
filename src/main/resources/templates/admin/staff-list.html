@@ -29,9 +29,16 @@
         <div class="box-header">
           <h3 class="box-title">Danh sách tài khoản</h3>
           <div class="box-tools">
-            <button class="btn-primary" style="background-color: #3c8dbc; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px;" onclick="openModal('staffModal', 'Thêm Tài Khoản Mới')">+ Thêm Nhân Viên</button>
+            <input type="text" class="search-box" name="keyword" th:value="${selectedKeyword}" placeholder="Tìm username, tên..." style="width: 200px;">
+            <button type="submit" class="btn-primary" style="background-color: #3c8dbc; border-color: #367fa9;">Lọc</button>
+            <button type="button" class="btn-primary" style="background-color: #f39c12; border-color: #e08e0b;" onclick="document.getElementById('importStaffExcel').click()">Nhập Excel</button>
+            <a th:href="@{/admin/staffs/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
+            <button type="button" class="btn-primary" onclick="openModal('staffModal', 'Thêm Nhân Viên Mới')">+ Thêm Nhân Viên</button>
           </div>
         </div>
+        <form th:action="@{/admin/staffs/import-excel}" method="post" enctype="multipart/form-data" style="display:none;" id="importStaffForm">
+              <input type="file" name="file" accept=".xlsx" id="importStaffExcel" onchange="document.getElementById('importStaffForm').submit()">
+        </form>
         <div class="box-body">
           
           <div class="nav-tabs" style="display: flex; border-bottom: 1px solid #ddd; margin-bottom: 15px;">
@@ -299,6 +306,7 @@
       // Create mode
       document.getElementById('staffUsername').value = '';
       document.getElementById('staffUsername').readOnly = false;
+      document.getElementById('staffUsername').style.backgroundColor = '';
       document.getElementById('staffName').value = '';
       document.getElementById('staffPassword').value = '';
       document.getElementById('staffRole').value = 'STORE_STAFF';
@@ -326,6 +334,7 @@
       
       document.getElementById('staffUsername').value = username;
       document.getElementById('staffUsername').readOnly = true; // Không cho sửa username
+      document.getElementById('staffUsername').style.backgroundColor = '#e9ecef';
       document.getElementById('staffName').value = name;
       document.getElementById('staffPassword').value = '';
       document.getElementById('staffRole').value = role;
@@ -348,6 +357,7 @@
       
       document.getElementById('modalRoleId').value = '';
       document.getElementById('modalRoleId').readOnly = false;
+      document.getElementById('modalRoleId').style.backgroundColor = '';
       document.getElementById('modalRoleName').value = '';
       document.getElementById('modalRoleDesc').value = '';
       
@@ -369,6 +379,7 @@
       
       document.getElementById('modalRoleId').value = id;
       document.getElementById('modalRoleId').readOnly = true;
+      document.getElementById('modalRoleId').style.backgroundColor = '#e9ecef';
       document.getElementById('modalRoleName').value = name;
       document.getElementById('modalRoleDesc').value = desc || '';
       

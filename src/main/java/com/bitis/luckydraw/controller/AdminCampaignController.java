@@ -62,6 +62,14 @@ public class AdminCampaignController {
         return "admin/campaign-list";
     }
 
+    @GetMapping("/api/statuses")
+    @ResponseBody
+    public java.util.Map<Long, Integer> getCampaignStatuses() {
+        java.util.Map<Long, Integer> map = new java.util.HashMap<>();
+        campaignRepository.findAll().forEach(c -> map.put(c.getId(), c.getTrangThai()));
+        return map;
+    }
+
     @PostMapping("/save")
     @Transactional
     public String saveCampaign(@ModelAttribute Campaign formCampaign, org.springframework.validation.BindingResult bindingResult, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
@@ -75,6 +83,19 @@ public class AdminCampaignController {
             if (formCampaign.getNgayBatDau().isAfter(formCampaign.getNgayKetThuc())) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Ngày bắt đầu không thể diễn ra sau ngày kết thúc!");
                 return "redirect:/admin/campaigns";
+            }
+        }
+
+        // Cấm sửa Ngày kết thúc thành quá khứ
+        if (formCampaign.getId() != null && formCampaign.getNgayKetThuc() != null) {
+            Campaign existingById = campaignRepository.findById(formCampaign.getId()).orElse(null);
+            if (existingById != null && existingById.getNgayKetThuc() != null) {
+                java.time.LocalDateTime newEnd = formCampaign.getNgayKetThuc().withSecond(0).withNano(0);
+                java.time.LocalDateTime oldEnd = existingById.getNgayKetThuc().withSecond(0).withNano(0);
+                if (!newEnd.isEqual(oldEnd) && newEnd.isBefore(java.time.LocalDateTime.now())) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Không thể đổi ngày kết thúc về một thời điểm trong quá khứ!");
+                    return "redirect:/admin/campaigns";
+                }
             }
         }
         // Kiểm tra trùng lặp Mã Chiến Dịch
@@ -107,10 +128,14 @@ public class AdminCampaignController {
         try {
             Campaign campaign;
             String oldMaChienDich = null;
+            String actionDescription = "Tạo mới chiến dịch";
             if (formCampaign.getId() != null) {
                 campaign = campaignRepository.findById(formCampaign.getId()).orElse(new Campaign());
                 oldMaChienDich = campaign.getMaChienDich();
-                campaign.setMaChienDich(formCampaign.getMaChienDich());
+                
+                actionDescription = getUpdateDescription(campaign, formCampaign);
+                
+                // Không cập nhật maChienDich nếu là chỉnh sửa
                 campaign.setTenChienDich(formCampaign.getTenChienDich());
                 campaign.setNgayBatDau(formCampaign.getNgayBatDau());
                 campaign.setNgayKetThuc(formCampaign.getNgayKetThuc());
@@ -118,6 +143,16 @@ public class AdminCampaignController {
                 if (formCampaign.getTrangThai() != null) {
                     campaign.setTrangThai(formCampaign.getTrangThai());
                 }
+                
+                // Nếu kéo dài ngày kết thúc, trạng thái đang Đã Kết Thúc (2) thì chuyển về Tạm ngưng (0)
+                if (campaign.getTrangThai() != null && campaign.getTrangThai() == 2) {
+                    if (campaign.getNgayKetThuc() != null && campaign.getNgayKetThuc().isAfter(java.time.LocalDateTime.now())) {
+                        campaign.setTrangThai(0);
+                    }
+                }
+                
+                // Bỏ logic tự động chuyển về Tạm ngưng hay Đã lên lịch
+                
                 campaign.setMoTa(formCampaign.getMoTa());
             } else {
                 campaign = formCampaign;
@@ -142,7 +177,7 @@ public class AdminCampaignController {
             log.setActionType(formCampaign.getId() != null ? "UPDATE" : "CREATE");
             log.setTargetTable("campaign");
             log.setTargetRecordId(campaign.getMaChienDich());
-            log.setDescription(formCampaign.getId() != null ? "Chỉnh sửa thông tin chiến dịch" : "Tạo mới chiến dịch");
+            log.setDescription(actionDescription);
             log.setIpAddress("127.0.0.1"); // TODO: Get actual IP if needed
             systemAuditLogRepository.save(log);
         } catch (Exception e) {
@@ -172,6 +207,20 @@ public class AdminCampaignController {
                 response.put("success", false);
                 response.put("message", "Lỗi: Ngày bắt đầu không thể diễn ra sau ngày kết thúc!");
                 return response;
+            }
+        }
+
+        // Cấm sửa Ngày kết thúc thành quá khứ
+        if (formCampaign.getId() != null && formCampaign.getNgayKetThuc() != null) {
+            Campaign existingById = campaignRepository.findById(formCampaign.getId()).orElse(null);
+            if (existingById != null && existingById.getNgayKetThuc() != null) {
+                java.time.LocalDateTime newEnd = formCampaign.getNgayKetThuc().withSecond(0).withNano(0);
+                java.time.LocalDateTime oldEnd = existingById.getNgayKetThuc().withSecond(0).withNano(0);
+                if (!newEnd.isEqual(oldEnd) && newEnd.isBefore(java.time.LocalDateTime.now())) {
+                    response.put("success", false);
+                    response.put("message", "Lỗi: Không thể đổi ngày kết thúc về một thời điểm trong quá khứ!");
+                    return response;
+                }
             }
         }
         
@@ -208,10 +257,14 @@ public class AdminCampaignController {
         try {
             Campaign campaign;
             String oldMaChienDich = null;
+            String actionDescription = "Tạo mới chiến dịch";
             if (formCampaign.getId() != null) {
                 campaign = campaignRepository.findById(formCampaign.getId()).orElse(new Campaign());
                 oldMaChienDich = campaign.getMaChienDich();
-                campaign.setMaChienDich(formCampaign.getMaChienDich());
+                
+                actionDescription = getUpdateDescription(campaign, formCampaign);
+                
+                // Không cập nhật maChienDich nếu là chỉnh sửa
                 campaign.setTenChienDich(formCampaign.getTenChienDich());
                 campaign.setNgayBatDau(formCampaign.getNgayBatDau());
                 campaign.setNgayKetThuc(formCampaign.getNgayKetThuc());
@@ -219,6 +272,16 @@ public class AdminCampaignController {
                 if (formCampaign.getTrangThai() != null) {
                     campaign.setTrangThai(formCampaign.getTrangThai());
                 }
+                
+                // Nếu kéo dài ngày kết thúc, trạng thái đang Đã Kết Thúc (2) thì chuyển về Tạm ngưng (0)
+                if (campaign.getTrangThai() != null && campaign.getTrangThai() == 2) {
+                    if (campaign.getNgayKetThuc() != null && campaign.getNgayKetThuc().isAfter(java.time.LocalDateTime.now())) {
+                        campaign.setTrangThai(0);
+                    }
+                }
+                
+                // Bỏ logic tự động chuyển về Tạm ngưng hay Đã lên lịch
+                
                 campaign.setMoTa(formCampaign.getMoTa());
             } else {
                 campaign = formCampaign;
@@ -243,7 +306,7 @@ public class AdminCampaignController {
             log.setActionType(formCampaign.getId() != null ? "UPDATE" : "CREATE");
             log.setTargetTable("campaign");
             log.setTargetRecordId(campaign.getMaChienDich());
-            log.setDescription(formCampaign.getId() != null ? "Chỉnh sửa thông tin chiến dịch" : "Tạo mới chiến dịch");
+            log.setDescription(actionDescription);
             log.setIpAddress("127.0.0.1"); // TODO: Get actual IP if needed
             systemAuditLogRepository.save(log);
             
@@ -262,11 +325,6 @@ public class AdminCampaignController {
     public String toggleStatus(@RequestParam Long campaignId, @RequestParam Integer status, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         campaignRepository.findById(campaignId).ifPresent(campaign -> {
             if (status == 1) { // Đang yêu cầu Kích hoạt
-                if (campaign.getNgayBatDau() != null && campaign.getNgayBatDau().isAfter(java.time.LocalDateTime.now())) {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Không thể kích hoạt vì chưa đến ngày bắt đầu chiến dịch.");
-                    return;
-                }
-                
                 String maChienDich = campaign.getMaChienDich();
                 boolean hasRules = campaignRuleRepository.findByMaChienDich(maChienDich).isPresent() ||
                                    !campaignRulePaymentRepository.findByMaChienDich(maChienDich).isEmpty() ||
@@ -274,6 +332,15 @@ public class AdminCampaignController {
                 
                 if (!hasRules) {
                     redirectAttributes.addFlashAttribute("errorMessage", "Không thể kích hoạt vì chiến dịch chưa được cấu hình luật chơi (Basic, SKU, hoặc Payment).");
+                    return;
+                }
+                
+                if (campaign.getNgayKetThuc() != null && campaign.getNgayKetThuc().isBefore(java.time.LocalDateTime.now())) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Không thể kích hoạt vì chiến dịch đã qua ngày kết thúc.");
+                    return;
+                }
+                if (campaign.getNgayBatDau() != null && campaign.getNgayBatDau().isAfter(java.time.LocalDateTime.now())) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Không thể kích hoạt vì chưa đến ngày bắt đầu chiến dịch.");
                     return;
                 }
             }
@@ -324,9 +391,24 @@ public class AdminCampaignController {
     }
     
     @PostMapping("/{campaignId}/stores/save")
-    public String saveStoreAllocation(@PathVariable Long campaignId, @RequestParam(required = false) List<String> storeMas) {
+    public String saveStoreAllocation(@PathVariable Long campaignId, @RequestParam(required = false) List<String> storeMas, RedirectAttributes redirectAttributes) {
         Campaign campaign = campaignRepository.findById(campaignId).orElseThrow();
         String maChienDich = campaign.getMaChienDich();
+        
+        List<CampaignStore> oldStores = campaignStoreRepository.findByMaChienDich(maChienDich);
+        java.util.Set<String> oldStoreMas = oldStores.stream().map(CampaignStore::getMaStore).collect(Collectors.toSet());
+        
+        java.util.Set<String> newStoreMas = new java.util.HashSet<>();
+        if (storeMas != null) {
+            newStoreMas.addAll(storeMas);
+        }
+        
+        java.util.Set<String> addedStores = new java.util.HashSet<>(newStoreMas);
+        addedStores.removeAll(oldStoreMas);
+        
+        java.util.Set<String> removedStores = new java.util.HashSet<>(oldStoreMas);
+        removedStores.removeAll(newStoreMas);
+
         // Delete old assignments
         campaignStoreRepository.deleteByMaChienDich(maChienDich);
         
@@ -338,6 +420,28 @@ public class AdminCampaignController {
                 mapping.setMaStore(storeMa);
                 campaignStoreRepository.save(mapping);
             }
+        }
+        
+        if (!addedStores.isEmpty() || !removedStores.isEmpty()) {
+            StringBuilder desc = new StringBuilder("Thay đổi phân bổ cửa hàng:");
+            if (!addedStores.isEmpty()) {
+                desc.append(" thêm ");
+                desc.append(formatStoreList(addedStores));
+            }
+            if (!removedStores.isEmpty()) {
+                if (!addedStores.isEmpty()) desc.append(",");
+                desc.append(" gỡ bỏ ");
+                desc.append(formatStoreList(removedStores));
+            }
+            
+            SystemAuditLog log = new SystemAuditLog();
+            log.setStaffId(1L); // TODO: Get from auth
+            log.setActionType("UPDATE");
+            log.setTargetTable("campaign");
+            log.setTargetRecordId(maChienDich);
+            log.setDescription(desc.toString());
+            log.setIpAddress("127.0.0.1");
+            systemAuditLogRepository.save(log);
         }
         
         return "redirect:/admin/campaigns";
@@ -364,6 +468,52 @@ public class AdminCampaignController {
         try {
             Campaign campaign = campaignRepository.findById(campaignId).orElseThrow();
             String maChienDich = campaign.getMaChienDich();
+            
+            // Fetch old rules for comparison
+            CampaignRule oldBasicRule = campaignRuleRepository.findByMaChienDich(maChienDich).orElse(null);
+            List<CampaignRulePayment> oldPayments = campaignRulePaymentRepository.findByMaChienDich(maChienDich);
+            List<CampaignRuleSku> oldSkus = campaignRuleSkuRepository.findByMaChienDich(maChienDich);
+            
+            Double oldMinOrder = oldBasicRule != null ? oldBasicRule.getGiaTriDonHangToiThieu() : null;
+            Double newMinOrder = form.getGiaTriDonHangToiThieu();
+            boolean basicChanged = !java.util.Objects.equals(oldMinOrder, newMinOrder);
+            
+            java.util.Map<String, Integer> oldPaymentMap = new java.util.HashMap<>();
+            if (oldPayments != null) {
+                for (CampaignRulePayment p : oldPayments) {
+                    oldPaymentMap.put(p.getPhuongThucThanhToan(), p.getSoLuotThuong());
+                }
+            }
+            java.util.Map<String, Integer> newPaymentMap = new java.util.HashMap<>();
+            if (form.getPaymentMethods() != null && form.getPaymentTurns() != null) {
+                for (int i = 0; i < form.getPaymentMethods().size(); i++) {
+                    String method = form.getPaymentMethods().get(i);
+                    Integer turn = form.getPaymentTurns().get(i);
+                    if (method != null && !method.trim().isEmpty() && turn != null) {
+                        newPaymentMap.put(method.trim(), turn);
+                    }
+                }
+            }
+            boolean paymentChanged = !oldPaymentMap.equals(newPaymentMap);
+            
+            java.util.Map<String, Integer> oldSkuMap = new java.util.HashMap<>();
+            if (oldSkus != null) {
+                for (CampaignRuleSku s : oldSkus) {
+                    oldSkuMap.put(s.getMaSku(), s.getSoLuotThuong());
+                }
+            }
+            java.util.Map<String, Integer> newSkuMap = new java.util.HashMap<>();
+            if (form.getSkuCodes() != null && form.getSkuTurns() != null) {
+                for (int i = 0; i < form.getSkuCodes().size(); i++) {
+                    String sku = form.getSkuCodes().get(i);
+                    Integer turn = form.getSkuTurns().get(i);
+                    if (sku != null && !sku.trim().isEmpty() && turn != null) {
+                        newSkuMap.put(sku.trim(), turn);
+                    }
+                }
+            }
+            boolean skuChanged = !oldSkuMap.equals(newSkuMap);
+
             // 1. Delete old rules
             campaignRuleRepository.deleteByMaChienDich(maChienDich);
             campaignRulePaymentRepository.deleteByMaChienDich(maChienDich);
@@ -378,43 +528,43 @@ public class AdminCampaignController {
             }
             
             // 3. Save Payment Rules
-            if (form.getPaymentMethods() != null && form.getPaymentTurns() != null) {
-                for (int i = 0; i < form.getPaymentMethods().size(); i++) {
-                    String method = form.getPaymentMethods().get(i);
-                    Integer turn = form.getPaymentTurns().get(i);
-                    if (method != null && !method.trim().isEmpty() && turn != null) {
-                        CampaignRulePayment payment = new CampaignRulePayment();
-                        payment.setMaChienDich(maChienDich);
-                        payment.setPhuongThucThanhToan(method);
-                        payment.setSoLuotThuong(turn);
-                        campaignRulePaymentRepository.save(payment);
-                    }
-                }
+            for (java.util.Map.Entry<String, Integer> entry : newPaymentMap.entrySet()) {
+                CampaignRulePayment payment = new CampaignRulePayment();
+                payment.setMaChienDich(maChienDich);
+                payment.setPhuongThucThanhToan(entry.getKey());
+                payment.setSoLuotThuong(entry.getValue());
+                campaignRulePaymentRepository.save(payment);
             }
             
             // 4. Save SKU Rules
-            if (form.getSkuCodes() != null && form.getSkuTurns() != null) {
-                for (int i = 0; i < form.getSkuCodes().size(); i++) {
-                    String sku = form.getSkuCodes().get(i);
-                    Integer turn = form.getSkuTurns().get(i);
-                    if (sku != null && !sku.trim().isEmpty() && turn != null) {
-                        CampaignRuleSku ruleSku = new CampaignRuleSku();
-                        ruleSku.setMaChienDich(maChienDich);
-                        ruleSku.setMaSku(sku);
-                        ruleSku.setSoLuotThuong(turn);
-                        campaignRuleSkuRepository.save(ruleSku);
-                    }
-                }
+            for (java.util.Map.Entry<String, Integer> entry : newSkuMap.entrySet()) {
+                CampaignRuleSku ruleSku = new CampaignRuleSku();
+                ruleSku.setMaChienDich(maChienDich);
+                ruleSku.setMaSku(entry.getKey());
+                ruleSku.setSoLuotThuong(entry.getValue());
+                campaignRuleSkuRepository.save(ruleSku);
             }
             
-            SystemAuditLog log = new SystemAuditLog();
-            log.setStaffId(1L); // TODO: Get from auth
-            log.setActionType("UPDATE");
-            log.setTargetTable("campaign");
-            log.setTargetRecordId(maChienDich);
-            log.setDescription("Cập nhật luật ưu đãi (SKU, Payment, Tối thiểu)");
-            log.setIpAddress("127.0.0.1");
-            systemAuditLogRepository.save(log);
+            List<String> updatedRules = new java.util.ArrayList<>();
+            if (basicChanged) updatedRules.add("giá trị đơn hàng tối thiểu");
+            if (paymentChanged) updatedRules.add("phương thức thanh toán");
+            if (skuChanged) updatedRules.add("sản phẩm (SKU)");
+            
+            if (!updatedRules.isEmpty()) {
+                String ruleDesc = "Chỉnh sửa luật ưu đãi: cập nhật " + String.join(", ", updatedRules) + " của chiến dịch";
+                if (newMinOrder == null && newPaymentMap.isEmpty() && newSkuMap.isEmpty()) {
+                    ruleDesc = "Xóa toàn bộ luật ưu đãi của chiến dịch";
+                }
+                
+                SystemAuditLog log = new SystemAuditLog();
+                log.setStaffId(1L); // TODO: Get from auth
+                log.setActionType("UPDATE");
+                log.setTargetTable("campaign");
+                log.setTargetRecordId(maChienDich);
+                log.setDescription(ruleDesc);
+                log.setIpAddress("127.0.0.1");
+                systemAuditLogRepository.save(log);
+            }
             
         } catch (Exception e) {
             String errorMsg = "Đã xảy ra lỗi khi lưu cấu hình luật.";
@@ -460,6 +610,66 @@ public class AdminCampaignController {
             return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", "Từ khóa đường dẫn (Slug) đã tồn tại. Vui lòng chọn từ khóa khác."));
         } catch (Exception e) {
             return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
+
+    private String getUpdateDescription(Campaign existing, Campaign newValues) {
+        List<String> changes = new java.util.ArrayList<>();
+        if (!java.util.Objects.equals(existing.getMaChienDich(), newValues.getMaChienDich())) {
+            changes.add("mã chiến dịch");
+        }
+        if (!java.util.Objects.equals(existing.getTenChienDich(), newValues.getTenChienDich())) {
+            changes.add("tên chiến dịch");
+        }
+        if (!java.util.Objects.equals(existing.getNgayBatDau(), newValues.getNgayBatDau())) {
+            changes.add("ngày bắt đầu");
+        }
+        if (!java.util.Objects.equals(existing.getNgayKetThuc(), newValues.getNgayKetThuc())) {
+            changes.add("ngày kết thúc");
+        }
+        if (!java.util.Objects.equals(existing.getDuongDanSlug(), newValues.getDuongDanSlug())) {
+            changes.add("đường dẫn slug");
+        }
+        if (newValues.getTrangThai() != null && !java.util.Objects.equals(existing.getTrangThai(), newValues.getTrangThai())) {
+            changes.add("trạng thái");
+        }
+        if (!java.util.Objects.equals(existing.getMoTa(), newValues.getMoTa())) {
+            changes.add("mô tả");
+        }
+        
+        if (changes.isEmpty()) {
+            return "Chỉnh sửa thông tin chiến dịch";
+        }
+        return "Chỉnh sửa " + String.join(", ", changes) + " của chiến dịch";
+    }
+
+    private String formatStoreList(java.util.Set<String> stores) {
+        List<String> list = new java.util.ArrayList<>(stores);
+        if (list.size() <= 5) {
+            return String.join(", ", list);
+        } else {
+            return String.join(", ", list.subList(0, 5)) + " và " + (list.size() - 5) + " cửa hàng khác";
+        }
+    }
+
+    @GetMapping("/export-excel")
+    public void exportExcel(jakarta.servlet.http.HttpServletResponse response) {
+        try {
+            List<Campaign> campaigns = campaignRepository.findAll();
+            String[] headers = {"Mã Chiến Dịch", "Tên Chiến Dịch", "Ngày Bắt Đầu", "Ngày Kết Thúc", "Trạng Thái"};
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            
+            List<String[]> data = campaigns.stream().map(c -> new String[]{
+                c.getMaChienDich(),
+                c.getTenChienDich(),
+                c.getNgayBatDau() != null ? c.getNgayBatDau().format(formatter) : "Chưa thiết lập",
+                c.getNgayKetThuc() != null ? c.getNgayKetThuc().format(formatter) : "Chưa thiết lập",
+                c.getTrangThai() != null && c.getTrangThai() == 1 ? "Hoạt động" : "Tạm ngưng"
+            }).collect(java.util.stream.Collectors.toList());
+            
+            com.bitis.luckydraw.util.ExcelExportUtil.exportDataToExcel(response, "DanhSachChienDich", headers, data);
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
         }
     }
 }

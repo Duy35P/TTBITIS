@@ -26,7 +26,7 @@
   .content-wrapper { margin-left: 230px; margin-top: 50px; display: flex; width: calc(100% - 230px); height: calc(100vh - 50px); }
   
   /* Left Panel: Settings */
-  .builder-settings { width: 400px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; overflow-y: auto; }
+  .builder-settings { width: 450px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; overflow-y: auto; }
   .settings-header { padding: 15px 20px; background: #f9fafb; border-bottom: 1px solid #ddd; }
   .settings-header h2 { font-size: 18px; margin: 0; color: #333; }
   .settings-body { padding: 20px; flex: 1; }
@@ -39,9 +39,12 @@
   .color-input { width: 40px; height: 35px; border: 1px solid #ccc; border-radius: 4px; padding: 0; cursor: pointer; }
   
   .prize-list-setup { border: 1px solid #eee; padding: 10px; border-radius: 4px; background: #fafafa; margin-bottom: 10px; }
-  .prize-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; }
+  .prize-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
   .prize-row input[type="text"] { flex: 1; padding: 6px; font-size: 13px; border: 1px solid #ccc; border-radius: 3px; background-color: #e9ecef; cursor: not-allowed; }
   .prize-row input[type="color"] { width: 30px; height: 30px; border: 1px solid #ccc; padding: 0; border-radius: 3px; }
+  .prize-row input.icon-input { width: 65px; background-color: #fff; cursor: text; text-align: center; }
+  .btn-upload { background: #fff; border: 1px solid #ccc; padding: 6px 10px; border-radius: 3px; cursor: pointer; font-size: 13px; color: #333; display: flex; align-items: center; justify-content: center; }
+  .btn-upload:hover { background: #f4f4f4; }
   
   .btn-save { background: #f39c12; color: #fff; border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 20px; }
   
@@ -64,6 +67,7 @@
   
   .center-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(145deg, #2b5ea7, #1a3f7a); border: 3px solid #ffd700; box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: background 0.3s; }
   .center-btn .logo-text { font-size: 0.7rem; font-weight: 900; color: #ffd700; }
+  .center-btn .logo-sub { font-size: 0.4rem; font-weight: 600; color: rgba(255,255,255,0.8); letter-spacing: 1px; }
   
   .spin-btn { margin-top: 40px; padding: 12px 30px; font-size: 1.1rem; font-weight: 700; color: #1e4a8a; background: linear-gradient(180deg, #fff 0%, #e0f2fe 100%); border: none; border-radius: 25px; box-shadow: 0 6px 0 #badaf2, 0 10px 15px rgba(0,0,0,0.2); cursor: pointer; }
 </style>
@@ -98,11 +102,6 @@
         
         <input type="hidden" id="campaignId" th:value="${campaign.id}" />
 
-        <div class="form-group">
-          <label>Tiêu đề (Header Text)</label>
-          <input type="text" class="form-control" id="setTitle" value="Vòng Quay May Mắn" oninput="updatePreview()">
-        </div>
-
         <div class="form-group" style="background: #fdfae3; padding: 10px; border-radius: 4px; border: 1px dashed #f39c12;">
           <label>Từ khóa Đường dẫn (URL Slug) *</label>
           <div style="display: flex; align-items: center; background: #fff; border: 1px solid #ccc; border-radius: 4px; overflow: hidden;">
@@ -110,6 +109,27 @@
             <input type="text" style="flex: 1; border: none; padding: 8px; outline: none; font-weight: bold; color: #d35400;" id="setSlug" th:value="${campaign.duongDanSlug}" oninput="formatSlug(this)">
           </div>
           <small style="color: #777; font-size: 11px; margin-top: 5px; display: block;">Viết liền không dấu, ngăn cách bằng dấu gạch ngang (VD: khai-truong-hn)</small>
+        </div>
+
+        <div class="form-group">
+          <label>Tiêu đề (Header Text)</label>
+          <input type="text" class="form-control" id="setTitle" value="Vòng Quay May Mắn" oninput="updatePreview()">
+        </div>
+
+        <div class="form-group" style="display: flex; gap: 10px;">
+          <div style="flex: 1;">
+            <label>Chữ tâm vòng quay 1</label>
+            <input type="text" class="form-control" id="setCenterText1" value="QUAY" oninput="updatePreview()">
+          </div>
+          <div style="flex: 1;">
+            <label>Chữ tâm vòng quay 2</label>
+            <input type="text" class="form-control" id="setCenterText2" value="THƯỞNG" oninput="updatePreview()">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Chữ nút bấm (Button)</label>
+          <input type="text" class="form-control" id="setButtonText" value="Quay ngay" oninput="updatePreview()">
         </div>
 
         <div class="form-group">
@@ -141,6 +161,7 @@
           <div class="prize-list-setup" id="prizeContainer">
             <!-- Dynamic Prize Rows -->
           </div>
+          <small style="color: #666; font-size: 11px;">Mẹo: Điền Text/Emoji hoặc Bấm vào biểu tượng 📷 để tải ảnh lên cho từng giải.</small>
         </div>
 
         <button class="btn-save" onclick="saveDesign()">💾 LƯU CẤU HÌNH & XUẤT LINK</button>
@@ -163,11 +184,12 @@
               <div class="white-ring"></div>
               <canvas id="wheelCanvas" width="300" height="300"></canvas>
               <div class="center-btn" id="previewCenterBtn">
-                <span class="logo-text">TLC</span>
+                <span class="logo-text" id="previewCenterText1">QUAY</span>
+                <span class="logo-sub" id="previewCenterText2">THƯỞNG</span>
               </div>
             </div>
             
-            <button class="spin-btn">Quay ngay</button>
+            <button class="spin-btn" id="previewButtonText">Quay ngay</button>
           </div>
 
         </div>
@@ -217,6 +239,9 @@
     
     let config = {
       title: 'Vòng Quay May Mắn',
+      centerText1: 'QUAY',
+      centerText2: 'THƯỞNG',
+      buttonText: 'Quay ngay',
       bgTop: '#4da6e8',
       bgBot: '#7ec8f0',
       ringColor: '#1e4a8a',
@@ -233,24 +258,39 @@
     }
     
     // Build prize configuration
-    // Fallback: If DB prize doesn't have a color in saved config, use default alternating colors
     const prizeConfig = serverPrizes.map((p, index) => {
       const defaultColor = (index % 2 === 0) ? '#1e4a8a' : '#d6ecfa';
-      // Find if we have saved color for this prize code
       let savedColor = defaultColor;
+      let savedIcon = '🎁';
       if (config.prizes) {
         const savedPrize = config.prizes.find(sp => sp.code === p.maGiaiThuong);
-        if (savedPrize && savedPrize.color) {
-            savedColor = savedPrize.color;
+        if (savedPrize) {
+            if (savedPrize.color) savedColor = savedPrize.color;
+            if (savedPrize.icon) savedIcon = savedPrize.icon;
         }
       }
-      return { code: p.maGiaiThuong, name: p.tenGiai, color: savedColor };
+      return { code: p.maGiaiThuong, name: p.tenGiai, color: savedColor, icon: savedIcon };
     });
     
     config.prizes = prizeConfig;
 
+    // Load initial Base64 images into Image objects
+    config.prizes.forEach(p => {
+        if (p.icon && p.icon.startsWith('data:image')) {
+            const img = new Image();
+            img.onload = () => {
+                p.imgObj = img;
+                drawWheelPreview();
+            };
+            img.src = p.icon;
+        }
+    });
+
     // Set initial values
     document.getElementById('setTitle').value = config.title;
+    document.getElementById('setCenterText1').value = config.centerText1 || 'QUAY';
+    document.getElementById('setCenterText2').value = config.centerText2 || 'THƯỞNG';
+    document.getElementById('setButtonText').value = config.buttonText || 'Quay ngay';
     document.getElementById('setBgTop').value = config.bgTop;
     document.getElementById('setBgBot').value = config.bgBot;
     document.getElementById('setRingColor').value = config.ringColor;
@@ -263,23 +303,60 @@
           return;
       }
       config.prizes.forEach((p, index) => {
+        const displayIconValue = (p.icon && p.icon.startsWith('data:image')) ? '[Ảnh]' : p.icon;
         container.innerHTML += `
           <div class="prize-row">
-            <input type="text" value="${p.name}" readonly>
-            <input type="color" value="${p.color}" onchange="updatePrizeColor(${index}, this.value)">
+            <input type="text" value="${p.name}" readonly title="${p.name}">
+            <input type="color" value="${p.color}" onchange="updatePrize(${index}, 'color', this.value)" title="Màu ô">
+            <input type="text" class="icon-input" id="icon-input-${index}" value="${displayIconValue}" oninput="updatePrize(${index}, 'icon', this.value)" title="Biểu tượng/Emoji">
+            <label class="btn-upload" title="Tải ảnh lên">
+                📷
+                <input type="file" accept="image/*" style="display:none;" onchange="uploadPrizeImage(${index}, this)">
+            </label>
           </div>
         `;
       });
       drawWheelPreview();
     }
 
-    function updatePrizeColor(index, val) { 
-        config.prizes[index].color = val; 
+    function updatePrize(index, field, val) { 
+        config.prizes[index][field] = val; 
+        if (field === 'icon') {
+            config.prizes[index].imgObj = null; // Clear image object if user types emoji
+        }
         drawWheelPreview(); 
+    }
+
+    function uploadPrizeImage(index, input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            // Validate size if needed, e.g. < 500KB for Base64 efficiency
+            if (file.size > 500 * 1024) {
+                alert('Vui lòng chọn ảnh có kích thước dưới 500KB để tối ưu tốc độ.');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result;
+                config.prizes[index].icon = base64Data;
+                document.getElementById(`icon-input-${index}`).value = '[Ảnh]';
+                
+                const img = new Image();
+                img.onload = () => {
+                    config.prizes[index].imgObj = img;
+                    drawWheelPreview();
+                };
+                img.src = base64Data;
+            };
+            reader.readAsDataURL(file);
+        }
     }
 
     function updatePreview() {
       config.title = document.getElementById('setTitle').value;
+      config.centerText1 = document.getElementById('setCenterText1').value;
+      config.centerText2 = document.getElementById('setCenterText2').value;
+      config.buttonText = document.getElementById('setButtonText').value;
       config.bgTop = document.getElementById('setBgTop').value;
       config.bgBot = document.getElementById('setBgBot').value;
       config.ringColor = document.getElementById('setRingColor').value;
@@ -293,6 +370,9 @@
       document.getElementById('previewCenterBtn').style.background = config.ringColor;
 
       document.getElementById('previewTitle').innerText = config.title;
+      document.getElementById('previewCenterText1').innerText = config.centerText1;
+      document.getElementById('previewCenterText2').innerText = config.centerText2;
+      document.getElementById('previewButtonText').innerText = config.buttonText;
 
       drawWheelPreview();
     }
@@ -329,18 +409,25 @@
           ctx.rotate(start + slice / 2);
           const textX = r * 0.65;
           
-          const hex = config.prizes[i].color.replace('#', '');
-          const rColor = parseInt(hex.substr(0, 2), 16);
-          const gColor = parseInt(hex.substr(2, 2), 16);
-          const bColor = parseInt(hex.substr(4, 2), 16);
-          const yiq = ((rColor * 299) + (gColor * 587) + (bColor * 114)) / 1000;
-          ctx.fillStyle = (yiq >= 128) ? '#111' : '#fff';
+          if (config.prizes[i].imgObj) {
+              // Draw image
+              const imgSize = 40; // 40x40 pixels
+              ctx.drawImage(config.prizes[i].imgObj, textX - imgSize/2, -imgSize/2, imgSize, imgSize);
+          } else {
+              // Draw text / emoji
+              const hex = config.prizes[i].color.replace('#', '');
+              const rColor = parseInt(hex.substr(0, 2), 16);
+              const gColor = parseInt(hex.substr(2, 2), 16);
+              const bColor = parseInt(hex.substr(4, 2), 16);
+              const yiq = ((rColor * 299) + (gColor * 587) + (bColor * 114)) / 1000;
+              ctx.fillStyle = (yiq >= 128) ? '#111' : '#fff';
+              
+              ctx.font = '24px Arial';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(config.prizes[i].icon || '🎁', textX, 0);
+          }
           
-          ctx.font = '28px Arial';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          
-          ctx.fillText('🎁', textX, 0);
           ctx.restore();
       }
 
@@ -360,10 +447,29 @@
       }
       const campaignId = document.getElementById('campaignId').value;
       
+      // We don't save imgObj to DB, it's a DOM object. JSON.stringify will ignore it or throw error if circular.
+      // Better to clean config before saving, but JSON.stringify usually drops functions and ignores DOM objects.
+      // Let's create a clean copy just in case.
+      const cleanConfig = {
+          title: config.title,
+          centerText1: config.centerText1,
+          centerText2: config.centerText2,
+          buttonText: config.buttonText,
+          bgTop: config.bgTop,
+          bgBot: config.bgBot,
+          ringColor: config.ringColor,
+          prizes: config.prizes.map(p => ({
+              code: p.code,
+              name: p.name,
+              color: p.color,
+              icon: p.icon // Base64 string or Emoji
+          }))
+      };
+
       const payload = {
           campaignId: campaignId,
           slug: slugValue,
-          configJson: JSON.stringify(config)
+          configJson: JSON.stringify(cleanConfig)
       };
 
       try {

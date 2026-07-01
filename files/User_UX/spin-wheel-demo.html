@@ -10,12 +10,12 @@
 
         body {
             font-family: 'Be Vietnam Pro', sans-serif;
-            background: linear-gradient(180deg, #4da6e8 0%, #7ec8f0 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            /* bg is set by JS */
         }
 
         h1 {
@@ -66,8 +66,8 @@
             right: -22px;
             bottom: -22px;
             border-radius: 50%;
-            background: linear-gradient(145deg, #2b5ea7, #1e4a8a, #2b5ea7);
             box-shadow: 0 6px 30px rgba(0,0,0,0.3), inset 0 2px 8px rgba(255,255,255,0.15);
+            /* background is set by JS */
         }
 
         .blue-ring-inner {
@@ -111,7 +111,6 @@
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: linear-gradient(145deg, #2b5ea7, #1a3f7a);
             border: 4px solid #ffd700;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             cursor: pointer;
@@ -122,6 +121,7 @@
             transition: transform 0.2s;
             color: #fff;
             line-height: 1.1;
+            /* background is set by JS */
         }
 
         .center-btn:hover {
@@ -158,7 +158,6 @@
             font-weight: 800;
             font-family: 'Be Vietnam Pro', sans-serif;
             color: #fff;
-            background: linear-gradient(to bottom, #2b5ea7, #1a3f7a);
             border: 3px solid #ffd700;
             border-radius: 50px;
             cursor: pointer;
@@ -166,6 +165,7 @@
             letter-spacing: 2px;
             transition: all 0.2s;
             box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+            /* background is set by JS */
         }
 
         .spin-btn:hover {
@@ -262,18 +262,18 @@
         </a>
     </nav>
 
-    <h1>VÒNG QUAY MAY MẮN</h1>
+    <h1 id="appTitle">VÒNG QUAY MAY MẮN</h1>
 
     <div class="wheel-stage">
         <div class="pointer"> </div>
 
         <div class="wheel-wrapper">
-            <div class="blue-ring"><div class="blue-ring-inner"></div></div>
+            <div class="blue-ring" id="wheelRing"><div class="blue-ring-inner"></div></div>
             <div class="white-ring"></div>
             <canvas id="wheelCanvas" width="840" height="840"></canvas>
             <div class="center-btn" id="centerBtn">
-                <span class="logo-text">QUAY</span>
-                <span class="logo-sub">THƯỞNG</span>
+                <span class="logo-text" id="centerText1">QUAY</span>
+                <span class="logo-sub" id="centerText2">THƯỞNG</span>
             </div>
         </div>
     </div>
@@ -291,16 +291,28 @@
     </div>
 
     <script>
-        const PRIZES = [
-            { name: 'Bóng đèn LED', color: '#1e4a8a' },
-            { name: 'Voucher 200K',  color: '#d6ecfa' },
-            { name: 'Đèn trang trí', color: '#1e4a8a' },
-            { name: 'Voucher 50K',   color: '#d6ecfa' },
-            { name: 'Đèn downlight', color: '#1e4a8a' },
-            { name: 'Voucher 100K',  color: '#d6ecfa' },
-            { name: 'Đèn pha LED',   color: '#1e4a8a' },
-            { name: 'Mất lượt',      color: '#d6ecfa' },
-        ];
+        // Cấu hình động từ Admin Minigame Builder (Ví dụ JSON)
+        // Backend sẽ render Object này dựa trên 'slug' của chiến dịch
+        const wheelConfig = {
+            title: "VÒNG QUAY MAY MẮN",
+            centerText1: "QUAY",
+            centerText2: "THƯỞNG",
+            buttonText: "Quay ngay",
+            bgTop: "#4da6e8",
+            bgBottom: "#7ec8f0",
+            ringColor: "#2b5ea7",
+            btnColor: "#1a3f7a",
+            prizes: [
+                { name: 'Bóng đèn LED', color: '#1e4a8a', icon: '🎁' },
+                { name: 'Voucher 200K',  color: '#d6ecfa', icon: '🎟️' },
+                { name: 'Đèn trang trí', color: '#1e4a8a', icon: '💡' },
+                { name: 'Voucher 50K',   color: '#d6ecfa', icon: '🎟️' },
+                { name: 'Đèn downlight', color: '#1e4a8a', icon: '💎' },
+                { name: 'Voucher 100K',  color: '#d6ecfa', icon: '🎟️' },
+                { name: 'Đèn pha LED',   color: '#1e4a8a', icon: '🌟' },
+                { name: 'Mất lượt',      color: '#d6ecfa', icon: '😢' },
+            ]
+        };
 
         const canvas = document.getElementById('wheelCanvas');
         const ctx = canvas.getContext('2d');
@@ -311,11 +323,36 @@
         let isSpinning = false;
         let currentRotation = 0;
 
+        function adjustColor(color, amount) {
+            return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
+        }
+
+        // Apply Dynamic Config
+        function applyConfig() {
+            document.getElementById('appTitle').textContent = wheelConfig.title || 'VÒNG QUAY MAY MẮN';
+            document.getElementById('centerText1').textContent = wheelConfig.centerText1 || 'QUAY';
+            document.getElementById('centerText2').textContent = wheelConfig.centerText2 || 'THƯỞNG';
+            spinBtn.textContent = wheelConfig.buttonText || 'Quay ngay';
+
+            document.body.style.background = `linear-gradient(180deg, ${wheelConfig.bgTop || '#4da6e8'} 0%, ${wheelConfig.bgBottom || '#7ec8f0'} 100%)`;
+            
+            const ringColor = wheelConfig.ringColor || '#2b5ea7';
+            const ringLight = adjustColor(ringColor, 20);
+            const ringDark = adjustColor(ringColor, -20);
+            document.getElementById('wheelRing').style.background = `linear-gradient(145deg, ${ringLight}, ${ringDark}, ${ringLight})`;
+            
+            const btnColor = wheelConfig.btnColor || ringColor;
+            const btnLight = adjustColor(btnColor, 20);
+            const btnDark = adjustColor(btnColor, -20);
+            centerBtn.style.background = `linear-gradient(145deg, ${btnLight}, ${btnDark})`;
+            spinBtn.style.background = `linear-gradient(to bottom, ${btnLight}, ${btnDark})`;
+        }
+
         function drawWheel(rotation) {
             const cx = canvas.width / 2;
             const cy = canvas.height / 2;
             const r = cx - 16;
-            const n = PRIZES.length;
+            const n = wheelConfig.prizes.length;
             const slice = (2 * Math.PI) / n;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -332,45 +369,47 @@
                 ctx.moveTo(0, 0);
                 ctx.arc(0, 0, r, start, end);
                 ctx.closePath();
-                ctx.fillStyle = PRIZES[i].color;
+                ctx.fillStyle = wheelConfig.prizes[i].color;
                 ctx.fill();
                 ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 4;
                 ctx.stroke();
 
-                // Icon tròn placeholder
+                // Draw configured emoji icon or Base64 Image
                 ctx.save();
                 ctx.rotate(start + slice / 2);
-                const iconX = r * 0.62;
-                const iconR = 36;
-                ctx.beginPath();
-                ctx.arc(iconX, 0, iconR, 0, 2 * Math.PI);
-                ctx.fillStyle = 'rgba(255,255,255,0.2)';
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // Text trong icon
-                const isDark = PRIZES[i].color === '#1e4a8a';
-                ctx.fillStyle = isDark ? '#fff' : '#1e4a8a';
-                ctx.font = '32px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
+                const iconX = r * 0.65;
                 
-                // Draw a gift box icon instead of text
-                ctx.fillText('🎁', iconX, 0);
+                if (wheelConfig.prizes[i].imgObj) {
+                    // Draw Image
+                    const imgSize = 75; // Adjust size for high-res canvas (840x840)
+                    ctx.drawImage(wheelConfig.prizes[i].imgObj, iconX - imgSize/2, -imgSize/2, imgSize, imgSize);
+                } else {
+                    // Draw Emoji in a white circle placeholder
+                    ctx.beginPath();
+                    ctx.arc(iconX, 0, 45, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    
+                    ctx.font = '45px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(wheelConfig.prizes[i].icon || '🎁', iconX, 0);
+                }
 
                 ctx.restore();
             }
 
             // Viền vòng tròn giữa
             ctx.beginPath();
-            ctx.arc(0, 0, 48, 0, 2 * Math.PI);
-            ctx.fillStyle = '#1a3f7a';
+            ctx.arc(0, 0, 68, 0, 2 * Math.PI);
+            ctx.fillStyle = wheelConfig.btnColor || wheelConfig.ringColor || '#1a3f7a';
             ctx.fill();
             ctx.strokeStyle = '#ffd700';
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 6;
             ctx.stroke();
 
             ctx.restore();
@@ -382,7 +421,7 @@
             spinBtn.disabled = true;
             centerBtn.classList.add('disabled');
 
-            const n = PRIZES.length;
+            const n = wheelConfig.prizes.length;
             const sliceAngle = 360 / n;
             const prizeIndex = Math.floor(Math.random() * n);
             const extraSpins = 5 + Math.floor(Math.random() * 3);
@@ -406,7 +445,7 @@
                     isSpinning = false;
                     spinBtn.disabled = false;
                     centerBtn.classList.remove('disabled');
-                    showResult(PRIZES[prizeIndex]);
+                    showResult(wheelConfig.prizes[prizeIndex]);
                 }
             }
             requestAnimationFrame(animate);
@@ -414,7 +453,7 @@
 
         function showResult(prize) {
             document.getElementById('modalPrize').textContent = prize.name;
-            if (prize.name === 'Mất lượt') {
+            if (prize.name === 'Mất lượt' || prize.name.toLowerCase().includes('mất lượt')) {
                 document.getElementById('modalTitle').textContent = 'Tiếc quá!';
                 document.getElementById('modalDesc').textContent = 'Chúc bạn may mắn lần sau!';
             } else {
@@ -439,7 +478,29 @@
         document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('active'));
         modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
 
-        drawWheel(0);
+        applyConfig();
+        
+        // Load Base64 Images if any exist
+        let imagesToLoad = 0;
+        let imagesLoaded = 0;
+        wheelConfig.prizes.forEach(p => {
+            if (p.icon && p.icon.startsWith('data:image')) {
+                imagesToLoad++;
+                const img = new Image();
+                img.onload = () => {
+                    p.imgObj = img;
+                    imagesLoaded++;
+                    if (imagesLoaded === imagesToLoad) {
+                        drawWheel(0);
+                    }
+                };
+                img.src = p.icon;
+            }
+        });
+        
+        if (imagesToLoad === 0) {
+            drawWheel(0);
+        }
     </script>
 </body>
 </html>

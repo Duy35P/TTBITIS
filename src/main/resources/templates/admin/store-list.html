@@ -33,10 +33,12 @@
           <h3 class="box-title">Danh sách Cửa Hàng / Đại Lý</h3>
           <div class="box-tools" style="display: flex; gap: 10px;">
             <input type="text" class="search-box" placeholder="Tìm tên cửa hàng, mã đại lý...">
+            <a th:href="@{/admin/stores/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
+            <button type="button" class="btn-primary" style="background-color: #f39c12; border-color: #e08e0b;" onclick="document.getElementById('excelFileInput').click()">Nhập Excel</button>
             <button class="btn-primary" onclick="openModal('storeModal', 'Thêm Cửa Hàng Mới')">+ Thêm Cửa Hàng</button>
             <form th:action="@{/admin/stores/import-excel}" method="post" enctype="multipart/form-data" style="display:inline-block; margin: 0;">
                 <input type="file" name="file" accept=".xlsx" style="display:none;" id="excelFileInput" onchange="this.form.submit()">
-                <button type="button" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c;" onclick="document.getElementById('excelFileInput').click()">Import Excel</button>
+
             </form>
           </div>
         </div>
@@ -155,6 +157,8 @@
           document.getElementById('storeId').value = '';
           document.getElementById('storeName').value = '';
           document.getElementById('storeCode').value = '';
+          document.getElementById('storeCode').removeAttribute('readonly');
+          document.getElementById('storeCode').style.backgroundColor = '';
           document.getElementById('storeAddress').value = '';
           document.getElementById('storeStatus').value = '0';
           document.getElementById('storeStatusGroup').style.display = 'none'; // Ẩn khi thêm mới
@@ -168,6 +172,8 @@
       document.getElementById('storeId').value = btn.getAttribute('data-id');
       document.getElementById('storeName').value = btn.getAttribute('data-name');
       document.getElementById('storeCode').value = btn.getAttribute('data-code');
+      document.getElementById('storeCode').setAttribute('readonly', 'readonly');
+      document.getElementById('storeCode').style.backgroundColor = '#e9ecef';
       document.getElementById('storeAddress').value = btn.getAttribute('data-address');
       document.getElementById('storeStatusGroup').style.display = 'block'; // Hiện khi sửa
       document.getElementById('storeStatus').value = btn.getAttribute('data-status');

@@ -31,8 +31,9 @@
       <div class="box">
         <div class="box-header" style="display: flex; justify-content: space-between; align-items: center;">
           <h3 class="box-title">Danh sách Chiến Dịch</h3>
-          <div class="box-tools">
+          <div class="box-tools" style="display: flex; gap: 10px;">
             <input type="text" class="search-box" placeholder="Tìm tên chiến dịch...">
+            <a th:href="@{/admin/campaigns/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
             <button style="background-color: #3c8dbc; border: none; color: #fff; padding: 6px 12px; border-radius: 3px; font-size: 14px; font-weight: 600; cursor: pointer;" onclick="openAddCampaignModal()">+ Thêm mới</button>
           </div>
         </div>
@@ -49,7 +50,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr th:each="campaign : ${campaigns}">
+              <tr th:each="campaign : ${campaigns}" th:data-campaign-id="${campaign.id}">
                 <td>
                   <strong th:text="${campaign.tenChienDich}">Tên Chiến Dịch</strong>
                   <br>
@@ -57,9 +58,11 @@
                 </td>
                 <td th:text="${#temporals.format(campaign.ngayBatDau, 'dd/MM/yyyy HH:mm')}">01/06/2026</td>
                 <td th:text="${#temporals.format(campaign.ngayKetThuc, 'dd/MM/yyyy HH:mm')}">30/06/2026</td>
-                <td>
+                <td class="status-badge-cell">
                   <span class="badge bg-green" th:if="${campaign.trangThai == 1}">Hoạt động</span>
                   <span class="badge bg-red" th:if="${campaign.trangThai == 0}">Tạm ngưng</span>
+                  <span class="badge bg-blue" th:if="${campaign.trangThai == 3}" style="background-color: #007bff; color: white;">Đã lên lịch</span>
+                  <span class="badge bg-gray" th:if="${campaign.trangThai == 2}" style="background-color: #999; color: white;">Đã kết thúc</span>
                 </td>
                 <td><a th:href="@{/play/{slug}(slug=${campaign.duongDanSlug})}" target="_blank">Link</a></td>
                 <td class="action-links">
@@ -87,12 +90,12 @@
                      onclick="openCampaignHistoryModal(this)" style="color: #605ca8;">Lịch sử</a> <span class="action-separator">|</span>
                   <a th:href="@{/admin/campaigns/{id}/design(id=${campaign.id})}" style="color: #e83e8c;">Thiết kế</a> <span class="action-separator">|</span>
                      
-                  <form th:action="@{/admin/campaigns/toggle-status}" method="post" style="display:inline;">
+                  <form class="toggle-status-form" th:action="@{/admin/campaigns/toggle-status}" method="post" th:style="${campaign.trangThai == 2 ? 'display:none;' : 'display:inline;'}">
                     <input type="hidden" name="campaignId" th:value="${campaign.id}" />
-                    <input type="hidden" name="status" th:value="${campaign.trangThai == 1 ? 0 : 1}" />
+                    <input type="hidden" name="status" th:value="${campaign.trangThai == 1 || campaign.trangThai == 3 ? 0 : 1}" />
                     <button type="submit" 
                             style="background:none; border:none; cursor:pointer; font-weight:600; padding:0; font-family:inherit; font-size:inherit; color: #dd4b39;" 
-                            th:text="${campaign.trangThai == 1 ? 'Tạm ngưng' : 'Kích hoạt'}"
+                            th:text="${campaign.trangThai == 1 ? 'Tạm ngưng' : (campaign.trangThai == 3 ? 'Hủy lịch' : 'Kích hoạt')}"
                             onclick="return confirm('Thay đổi trạng thái chiến dịch?')"></button>
                   </form>
                 </td>
@@ -127,7 +130,7 @@
         <div id="campaignFormError" style="display:none; padding: 10px; background-color: #f2dede; color: #a94442; border: 1px solid #ebccd1; border-radius: 4px; margin-bottom: 15px;">
         </div>
         <div class="form-group">
-          <label>Mã chiến dịch * (Dùng để định danh và liên kết)</label>
+          <label>Mã chiến dịch * </label>
           <input type="text" class="form-control" name="maChienDich" id="campaignCode" placeholder="VD: MUAHE2026" required>
         </div>
         <div class="form-group">
@@ -187,6 +190,8 @@
       
       document.getElementById('campaignId').value = '';
       document.getElementById('campaignCode').value = '';
+      document.getElementById('campaignCode').removeAttribute('readonly');
+      document.getElementById('campaignCode').style.backgroundColor = '';
       document.getElementById('campaignName').value = '';
       if(startPicker) startPicker.clear();
       if(endPicker) endPicker.clear();
@@ -207,6 +212,8 @@
       
       document.getElementById('campaignId').value = btn.getAttribute('data-id');
       document.getElementById('campaignCode').value = btn.getAttribute('data-code');
+      document.getElementById('campaignCode').setAttribute('readonly', 'readonly');
+      document.getElementById('campaignCode').style.backgroundColor = '#e9ecef';
       document.getElementById('campaignName').value = btn.getAttribute('data-name');
       if(startPicker) startPicker.setDate(btn.getAttribute('data-start'));
       if(endPicker) endPicker.setDate(btn.getAttribute('data-end'));
@@ -492,6 +499,54 @@
       </div>
     </div>
   </div>
+  <script>
+    // Live update campaign statuses every 10 seconds
+    setInterval(async () => {
+        try {
+            const response = await fetch('/admin/campaigns/api/statuses');
+            const statuses = await response.json();
+            
+            document.querySelectorAll('tr[data-campaign-id]').forEach(row => {
+                const campaignId = row.getAttribute('data-campaign-id');
+                const newStatus = statuses[campaignId];
+                if (newStatus !== undefined) {
+                    const badgeCell = row.querySelector('.status-badge-cell');
+                    if (badgeCell) {
+                        let badgeHtml = '';
+                        if (newStatus === 1) badgeHtml = '<span class="badge bg-green">Hoạt động</span>';
+                        else if (newStatus === 0) badgeHtml = '<span class="badge bg-red">Tạm ngưng</span>';
+                        else if (newStatus === 3) badgeHtml = '<span class="badge bg-blue" style="background-color: #007bff; color: white;">Đã lên lịch</span>';
+                        else if (newStatus === 2) badgeHtml = '<span class="badge bg-gray" style="background-color: #999; color: white;">Đã kết thúc</span>';
+                        badgeCell.innerHTML = badgeHtml;
+                    }
+                    
+                    const toggleForm = row.querySelector('.toggle-status-form');
+                    if (toggleForm) {
+                        if (newStatus === 2) {
+                            toggleForm.style.display = 'none';
+                        } else {
+                            toggleForm.style.display = 'inline';
+                            const toggleBtn = toggleForm.querySelector('button');
+                            const statusInput = toggleForm.querySelector('input[name="status"]');
+                            if (newStatus === 1) {
+                                toggleBtn.textContent = 'Tạm ngưng';
+                                statusInput.value = 0;
+                            } else if (newStatus === 3) {
+                                toggleBtn.textContent = 'Hủy lịch';
+                                statusInput.value = 0;
+                            } else {
+                                toggleBtn.textContent = 'Kích hoạt';
+                                statusInput.value = 1;
+                            }
+                        }
+                    }
+                }
+            });
+        } catch(e) {
+            console.error("Lỗi khi cập nhật trạng thái:", e);
+        }
+    }, 10000);
+  </script>
 </body>
 </html>
 

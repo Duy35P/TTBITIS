@@ -43,6 +43,9 @@ public class AdminStaffController {
     @Autowired
     private PhanQuyenRepository phanQuyenRepository;
 
+    @Autowired
+    private com.bitis.luckydraw.service.StaffExcelService staffExcelService;
+
     @GetMapping
     public String index(Model model,
                         @RequestParam(name = "keyword", required = false) String keyword,
@@ -177,5 +180,47 @@ public class AdminStaffController {
             redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái thành công!");
         }
         return "redirect:/admin/staffs";
+    }
+
+    @PostMapping("/import-excel")
+    public String importExcel(@RequestParam("file") org.springframework.web.multipart.MultipartFile file, RedirectAttributes redirectAttributes) {
+        if (file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn file Excel!");
+            return "redirect:/admin/staffs";
+        }
+        try {
+            List<Staff> staffs = staffExcelService.parseExcelFile(file);
+            int count = 0;
+            for (Staff staff : staffs) {
+                if (!staffRepository.findByUsername(staff.getUsername()).isPresent()) {
+                    staffRepository.save(staff);
+                    count++;
+                }
+            }
+            redirectAttributes.addFlashAttribute("successMessage", "Đã import thành công " + count + " nhân viên mới!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi import: " + e.getMessage());
+        }
+        return "redirect:/admin/staffs";
+    }
+
+    @GetMapping("/export-excel")
+    public void exportExcel(jakarta.servlet.http.HttpServletResponse response) {
+        try {
+            List<StaffListDto> staffs = staffRepository.getStaffList();
+            String[] headers = {"Username", "Tên Nhân Viên", "Mã Nhân Viên", "Vai Trò", "Tên Cửa Hàng", "Trạng Thái"};
+            List<String[]> data = staffs.stream().map(s -> new String[]{
+                s.getUsername(),
+                s.getTenNhanVien(),
+                s.getMaNhanVien(),
+                s.getRoleId(),
+                s.getTenCuaHang() != null ? s.getTenCuaHang() : "Tất cả hệ thống",
+                s.getTrangThai() != null && s.getTrangThai() == 1 ? "Hoạt động" : "Tạm ngưng"
+            }).collect(Collectors.toList());
+            
+            com.bitis.luckydraw.util.ExcelExportUtil.exportDataToExcel(response, "DanhSachNhanVien", headers, data);
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
     }
 }
