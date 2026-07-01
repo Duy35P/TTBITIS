@@ -51,4 +51,34 @@ public class AdminCustomerController {
         });
         return "redirect:/admin/customers";
     }
+
+    @GetMapping("/export-excel")
+    public void exportExcel(jakarta.servlet.http.HttpServletResponse response) {
+        try {
+            List<Customer> customers = customerRepository.findAll();
+            List<CustomerTurn> turns = customerTurnRepository.findAll();
+            
+            Map<String, String> turnsMap = turns.stream()
+                .collect(Collectors.groupingBy(
+                    CustomerTurn::getMaKhachHang,
+                    Collectors.mapping(
+                        t -> t.getMaChienDich() + ": " + t.getLuotConLai(),
+                        Collectors.joining(", ")
+                    )
+                ));
+
+            String[] headers = {"Mã Khách Hàng", "Tên Khách Hàng", "Số Điện Thoại", "Trạng Thái", "Lượt Còn Lại"};
+            List<String[]> data = customers.stream().map(c -> new String[]{
+                c.getMaKhachHang(),
+                c.getTenKhach() != null ? c.getTenKhach() : "",
+                c.getPhone() != null ? c.getPhone() : "",
+                (c.getTrangThai() != null && c.getTrangThai() == 1) ? "Hoạt động" : "Bị khóa",
+                turnsMap.getOrDefault(c.getMaKhachHang(), "Không có")
+            }).collect(Collectors.toList());
+            
+            com.bitis.luckydraw.util.ExcelExportUtil.exportDataToExcel(response, "DanhSachKhachHang", headers, data);
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

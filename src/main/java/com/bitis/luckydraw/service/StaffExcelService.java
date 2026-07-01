@@ -38,7 +38,7 @@ public class StaffExcelService {
                 
                 Iterator<Cell> cellsInRow = currentRow.iterator();
                 int cellIdx = 0;
-                while (cellsInRow.hasNext() && cellIdx < 6) {
+                while (cellsInRow.hasNext() && cellIdx < 5) {
                     Cell currentCell = cellsInRow.next();
                     String cellValue = "";
                     if (currentCell.getCellType() == CellType.STRING) {
@@ -51,20 +51,25 @@ public class StaffExcelService {
                         case 0: // Username
                             staff.setUsername(cellValue);
                             break;
-                        case 1: // Password
-                            staff.setPassword(cellValue.isEmpty() ? "123456" : cellValue);
-                            break;
-                        case 2: // Tên nhân viên
+                        case 1: // Tên nhân viên
                             staff.setTenNhanVien(cellValue);
                             break;
-                        case 3: // Role ID
-                            staff.setRoleId(cellValue);
+                        case 2: // Role ID
+                            if (cellValue.equalsIgnoreCase("admin") || cellValue.equalsIgnoreCase("ROLE_ADMIN")) {
+                                staff.setRoleId("ADMIN");
+                            } else {
+                                staff.setRoleId(cellValue.toUpperCase());
+                            }
                             break;
-                        case 4: // Mã Store
-                            staff.setMaStore(cellValue.isEmpty() ? null : cellValue);
+                        case 3: // Mã Store
+                            staff.setMaStore(cellValue);
                             break;
-                        case 5: // Trạng thái
-                            staff.setTrangThai(cellValue.equals("1") || cellValue.equalsIgnoreCase("Hoạt động") ? 1 : 0);
+                        case 4: // Trạng Thái
+                            if (cellValue.equals("1") || cellValue.equalsIgnoreCase("Hoạt động") || cellValue.equalsIgnoreCase("True")) {
+                                staff.setTrangThai(1);
+                            } else {
+                                staff.setTrangThai(0);
+                            }
                             break;
                         default:
                             break;

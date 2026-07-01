@@ -101,6 +101,10 @@ public class PosService {
         List<String> appliedCampaigns = new ArrayList<>();
         int totalTurnsEarned = 0;
 
+        List<Campaign> eligibleCampaigns = new java.util.ArrayList<>();
+        java.util.Map<String, Integer> campaignTurns = new java.util.HashMap<>();
+        boolean hasExclusive = false;
+
         for (CampaignStore cs : storeCampaigns) {
             Optional<Campaign> optCampaign = campaignRepository.findByMaChienDich(cs.getMaChienDich());
             if (optCampaign.isPresent()) {
@@ -112,18 +116,34 @@ public class PosService {
                     if (deltaAmount > 0) {
                         int turnsForThisCampaign = calculateTurns(campaign.getMaChienDich(), request, deltaAmount);
                         if (turnsForThisCampaign > 0) {
-                            // Call Stored Procedure
-                            customerTurnRepository.addCustomerTurnsSafe(
-                                customer.getMaKhachHang(),
-                                campaign.getMaChienDich(),
-                                turnsForThisCampaign,
-                                request.getInvoiceCode() != null ? request.getInvoiceCode() : "POS-SYNC"
-                            );
-                            appliedCampaigns.add(campaign.getTenChienDich());
-                            totalTurnsEarned += turnsForThisCampaign;
+                            eligibleCampaigns.add(campaign);
+                            campaignTurns.put(campaign.getMaChienDich(), turnsForThisCampaign);
+                            if (Boolean.TRUE.equals(campaign.getDocQuyen())) {
+                                hasExclusive = true;
+                            }
                         }
                     }
                 }
+            }
+        }
+
+        for (Campaign campaign : eligibleCampaigns) {
+            if (hasExclusive && !Boolean.TRUE.equals(campaign.getDocQuyen())) {
+                continue; // Bỏ qua các chương trình thường nếu có chương trình độc quyền
+            }
+            
+            int turns = campaignTurns.get(campaign.getMaChienDich());
+            customerTurnRepository.addCustomerTurnsSafe(
+                customer.getMaKhachHang(),
+                campaign.getMaChienDich(),
+                turns,
+                request.getInvoiceCode() != null ? request.getInvoiceCode() : "POS-SYNC"
+            );
+            appliedCampaigns.add(campaign.getTenChienDich());
+            totalTurnsEarned += turns;
+            
+            if (hasExclusive) {
+                break; // Chỉ áp dụng 1 chương trình độc quyền duy nhất cho 1 hóa đơn
             }
         }
 

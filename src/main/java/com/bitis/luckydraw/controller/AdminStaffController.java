@@ -192,7 +192,22 @@ public class AdminStaffController {
             List<Staff> staffs = staffExcelService.parseExcelFile(file);
             int count = 0;
             for (Staff staff : staffs) {
-                if (!staffRepository.findByUsername(staff.getUsername()).isPresent()) {
+                Optional<Staff> opt = staffRepository.findByUsername(staff.getUsername());
+                if (opt.isPresent()) {
+                    Staff existing = opt.get();
+                    existing.setTenNhanVien(staff.getTenNhanVien());
+                    existing.setRoleId(staff.getRoleId());
+                    existing.setMaStore(staff.getMaStore());
+                    existing.setTrangThai(staff.getTrangThai());
+                    if (staff.getPassword() != null && !staff.getPassword().isEmpty()) {
+                        existing.setPassword(staff.getPassword());
+                    }
+                    staffRepository.save(existing);
+                    count++;
+                } else {
+                    if (staff.getPassword() == null || staff.getPassword().isEmpty()) {
+                        staff.setPassword("123456");
+                    }
                     staffRepository.save(staff);
                     count++;
                 }
@@ -208,14 +223,13 @@ public class AdminStaffController {
     public void exportExcel(jakarta.servlet.http.HttpServletResponse response) {
         try {
             List<StaffListDto> staffs = staffRepository.getStaffList();
-            String[] headers = {"Username", "Tên Nhân Viên", "Mã Nhân Viên", "Vai Trò", "Tên Cửa Hàng", "Trạng Thái"};
+            String[] headers = {"Username", "Tên Nhân Viên", "Vai Trò", "Mã Cửa Hàng", "Trạng Thái"};
             List<String[]> data = staffs.stream().map(s -> new String[]{
                 s.getUsername(),
                 s.getTenNhanVien(),
-                s.getMaNhanVien(),
                 s.getRoleId(),
-                s.getTenCuaHang() != null ? s.getTenCuaHang() : "Tất cả hệ thống",
-                s.getTrangThai() != null && s.getTrangThai() == 1 ? "Hoạt động" : "Tạm ngưng"
+                s.getMaStore() != null ? s.getMaStore() : "",
+                s.getTrangThai() != null && s.getTrangThai() == 1 ? "1" : "0"
             }).collect(Collectors.toList());
             
             com.bitis.luckydraw.util.ExcelExportUtil.exportDataToExcel(response, "DanhSachNhanVien", headers, data);

@@ -83,6 +83,7 @@
                      th:data-end="${campaign.ngayKetThuc != null ? #temporals.format(campaign.ngayKetThuc, 'dd/MM/yyyy HH:mm') : ''}"
                      th:data-slug="${campaign.duongDanSlug}"
                      th:data-status="${campaign.trangThai}"
+                     th:data-docquyen="${campaign.docQuyen}"
                      onclick="openEditCampaignModal(this)">Sửa</a> <span class="action-separator">|</span>
                   <a href="javascript:void(0)" 
                      th:data-id="${campaign.id}"
@@ -151,6 +152,12 @@
           <label>Đường dẫn Slug (Tùy chọn)</label>
           <input type="text" class="form-control" name="duongDanSlug" id="campaignSlug" placeholder="VD: vui-he-2026">
         </div>
+        <div class="form-group">
+           <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+               <input type="checkbox" name="docQuyen" id="campaignDocQuyen" value="true">
+               <span style="font-weight: 600; font-size: 14px; color: #555;">Đây là chiến dịch độc quyền</span>
+           </label>
+        </div>
         <div class="form-group" id="campaignStatusGroup">
           <label>Trạng thái</label>
           <select class="form-control" name="trangThai" id="campaignStatus">
@@ -196,6 +203,7 @@
       if(startPicker) startPicker.clear();
       if(endPicker) endPicker.clear();
       document.getElementById('campaignSlug').value = '';
+      document.getElementById('campaignDocQuyen').checked = false;
       document.getElementById('campaignStatus').value = '0';
       document.getElementById('campaignStatusGroup').style.display = 'none'; // Ẩn khi thêm mới
       document.getElementById('campaignDesc').value = '';
@@ -218,6 +226,7 @@
       if(startPicker) startPicker.setDate(btn.getAttribute('data-start'));
       if(endPicker) endPicker.setDate(btn.getAttribute('data-end'));
       document.getElementById('campaignSlug').value = btn.getAttribute('data-slug');
+      document.getElementById('campaignDocQuyen').checked = btn.getAttribute('data-docquyen') === 'true';
       document.getElementById('campaignStatusGroup').style.display = 'block'; // Hiện khi sửa
       document.getElementById('campaignStatus').value = btn.getAttribute('data-status');
       

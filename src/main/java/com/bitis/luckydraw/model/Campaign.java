@@ -47,4 +47,7 @@ public class Campaign {
 
     @Column(name = "trang_thai", nullable = false)
     private Integer trangThai;
+
+    @Column(name = "doc_quyen")
+    private Boolean docQuyen;
 }

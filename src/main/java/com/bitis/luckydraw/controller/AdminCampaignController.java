@@ -140,6 +140,7 @@ public class AdminCampaignController {
                 campaign.setNgayBatDau(formCampaign.getNgayBatDau());
                 campaign.setNgayKetThuc(formCampaign.getNgayKetThuc());
                 campaign.setDuongDanSlug(formCampaign.getDuongDanSlug());
+                campaign.setDocQuyen(formCampaign.getDocQuyen() != null ? formCampaign.getDocQuyen() : false);
                 if (formCampaign.getTrangThai() != null) {
                     campaign.setTrangThai(formCampaign.getTrangThai());
                 }
@@ -157,6 +158,7 @@ public class AdminCampaignController {
             } else {
                 campaign = formCampaign;
                 campaign.setTrangThai(0); // Luôn luôn tạm ngưng khi mới tạo
+                if (campaign.getDocQuyen() == null) campaign.setDocQuyen(false);
             }
             campaignRepository.save(campaign);
             
@@ -269,6 +271,7 @@ public class AdminCampaignController {
                 campaign.setNgayBatDau(formCampaign.getNgayBatDau());
                 campaign.setNgayKetThuc(formCampaign.getNgayKetThuc());
                 campaign.setDuongDanSlug(formCampaign.getDuongDanSlug());
+                campaign.setDocQuyen(formCampaign.getDocQuyen() != null ? formCampaign.getDocQuyen() : false);
                 if (formCampaign.getTrangThai() != null) {
                     campaign.setTrangThai(formCampaign.getTrangThai());
                 }
@@ -286,6 +289,7 @@ public class AdminCampaignController {
             } else {
                 campaign = formCampaign;
                 campaign.setTrangThai(0); // Luôn luôn tạm ngưng khi mới tạo
+                if (campaign.getDocQuyen() == null) campaign.setDocQuyen(false);
             }
             campaignRepository.save(campaign);
             
@@ -635,6 +639,12 @@ public class AdminCampaignController {
         }
         if (!java.util.Objects.equals(existing.getMoTa(), newValues.getMoTa())) {
             changes.add("mô tả");
+        }
+        
+        Boolean oldDocQuyen = existing.getDocQuyen() != null ? existing.getDocQuyen() : false;
+        Boolean newDocQuyen = newValues.getDocQuyen() != null ? newValues.getDocQuyen() : false;
+        if (!java.util.Objects.equals(oldDocQuyen, newDocQuyen)) {
+            changes.add("thiết lập độc quyền");
         }
         
         if (changes.isEmpty()) {

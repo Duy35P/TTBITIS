@@ -120,4 +120,31 @@ public class AdminInvoiceController {
 
         return "admin/invoice-list";
     }
+
+    @GetMapping("/export-excel")
+    public void exportExcel(Model model,
+                            @RequestParam(name = "keyword", required = false) String keyword,
+                            @RequestParam(name = "status", required = false) String status,
+                            jakarta.servlet.http.HttpServletResponse response) {
+        try {
+            // Reuse index logic to get filtered list
+            this.index(model, keyword, status);
+            List<InvoiceListDto> dtos = (List<InvoiceListDto>) model.getAttribute("invoices");
+            
+            String[] headers = {"Mã Hóa Đơn", "Cửa Hàng", "SĐT Khách Hàng", "Ngày Tạo", "Tổng Tiền", "Đã Xử Lý Cấp Lượt", "Chi Tiết Cấp Lượt"};
+            List<String[]> data = dtos.stream().map(dto -> new String[]{
+                dto.getMaHoaDon(),
+                dto.getTenCuaHang(),
+                dto.getKhachHangSdt(),
+                dto.getNgayTao() != null ? dto.getNgayTao().toString() : "",
+                dto.getTongTien() != null ? dto.getTongTien().toString() : "0",
+                dto.getDaXuLy() != null && dto.getDaXuLy() ? "Đã xử lý" : "Chưa xử lý",
+                String.join(", ", dto.getChiTietCapLuot())
+            }).collect(Collectors.toList());
+            
+            com.bitis.luckydraw.util.ExcelExportUtil.exportDataToExcel(response, "DanhSachHoaDon", headers, data);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

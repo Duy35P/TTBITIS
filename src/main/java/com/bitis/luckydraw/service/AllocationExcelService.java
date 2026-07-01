@@ -1,6 +1,6 @@
 package com.bitis.luckydraw.service;
 
-import com.bitis.luckydraw.model.Store;
+import com.bitis.luckydraw.model.StorePrizeInventory;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
@@ -12,10 +12,10 @@ import java.util.Iterator;
 import java.util.List;
 
 @Service
-public class StoreExcelService {
+public class AllocationExcelService {
 
-    public List<Store> parseExcelFile(MultipartFile file) {
-        List<Store> stores = new ArrayList<>();
+    public List<StorePrizeInventory> parseExcelFile(MultipartFile file) {
+        List<StorePrizeInventory> allocations = new ArrayList<>();
         try (InputStream is = file.getInputStream();
              Workbook workbook = new XSSFWorkbook(is)) {
 
@@ -32,54 +32,51 @@ public class StoreExcelService {
                     continue;
                 }
 
-                Store store = new Store();
+                StorePrizeInventory allocation = new StorePrizeInventory();
 
-                for (int cellIdx = 0; cellIdx < 4; cellIdx++) {
+                for (int cellIdx = 0; cellIdx < 7; cellIdx++) {
                     Cell currentCell = currentRow.getCell(cellIdx, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
 
                     switch (cellIdx) {
                         case 0: // Mã Cửa Hàng
                             if (currentCell.getCellType() == CellType.NUMERIC) {
-                                store.setMaStore(String.valueOf((long) currentCell.getNumericCellValue()));
+                                allocation.setMaStore(String.valueOf((long) currentCell.getNumericCellValue()));
                             } else if (currentCell.getCellType() == CellType.STRING) {
-                                store.setMaStore(currentCell.getStringCellValue().trim());
+                                allocation.setMaStore(currentCell.getStringCellValue().trim());
                             }
                             break;
-                        case 1: // Tên Cửa Hàng
-                            if (currentCell.getCellType() == CellType.STRING) {
-                                store.setTenCuaHang(currentCell.getStringCellValue().trim());
-                            } else if (currentCell.getCellType() == CellType.NUMERIC) {
-                                store.setTenCuaHang(String.valueOf(currentCell.getNumericCellValue()));
+                        case 2: // Mã Giải Thưởng
+                            if (currentCell.getCellType() == CellType.NUMERIC) {
+                                allocation.setMaGiaiThuong(String.valueOf((long) currentCell.getNumericCellValue()));
+                            } else if (currentCell.getCellType() == CellType.STRING) {
+                                allocation.setMaGiaiThuong(currentCell.getStringCellValue().trim());
                             }
                             break;
-                        case 2: // Địa Chỉ
-                            if (currentCell.getCellType() == CellType.STRING) {
-                                store.setDiaChiStore(currentCell.getStringCellValue().trim());
-                            } else if (currentCell.getCellType() == CellType.NUMERIC) {
-                                store.setDiaChiStore(String.valueOf(currentCell.getNumericCellValue()));
-                            }
-                            break;
-                        case 3: // Trạng Thái
+                        case 6: // Số Lượng Phân Bổ (Tổng Cấp)
                             if (currentCell.getCellType() == CellType.STRING) {
                                 String val = currentCell.getStringCellValue().trim();
-                                store.setTrangThai(val.equalsIgnoreCase("Hoạt động") || val.equals("1") ? 1 : 0);
+                                if (val.equalsIgnoreCase("Không giới hạn") || val.isEmpty()) {
+                                    allocation.setTongLuongCap(-1);
+                                } else {
+                                    try { allocation.setTongLuongCap(Integer.parseInt(val)); } catch(Exception e){ allocation.setTongLuongCap(0); }
+                                }
                             } else if (currentCell.getCellType() == CellType.NUMERIC) {
-                                store.setTrangThai((int) currentCell.getNumericCellValue());
+                                allocation.setTongLuongCap((int) currentCell.getNumericCellValue());
                             }
                             break;
                         default:
                             break;
                     }
                 }
-                
-                if (store.getMaStore() != null && !store.getMaStore().trim().isEmpty() && 
-                    store.getTenCuaHang() != null && !store.getTenCuaHang().trim().isEmpty()) {
-                    stores.add(store);
+
+                if (allocation.getMaStore() != null && !allocation.getMaStore().isEmpty() &&
+                    allocation.getMaGiaiThuong() != null && !allocation.getMaGiaiThuong().isEmpty()) {
+                    allocations.add(allocation);
                 }
             }
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi đọc file Excel: " + e.getMessage());
         }
-        return stores;
+        return allocations;
     }
 }

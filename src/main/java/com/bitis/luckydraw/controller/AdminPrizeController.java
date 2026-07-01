@@ -107,9 +107,9 @@ public class AdminPrizeController {
             for (String maStore : storeMas) {
                 prizeService.allocatePrizeToStore(maStore, maGiaiThuong, soLuongCap);
             }
-            redirectAttributes.addFlashAttribute("successMsg", "Phân bổ thành công cho " + storeMas.size() + " cửa hàng!");
+            redirectAttributes.addFlashAttribute("successMessage", "Phân bổ thành công cho " + storeMas.size() + " cửa hàng!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMsg", "Lỗi: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
         return "redirect:/admin/prizes?tab=allocations";
     }
@@ -121,9 +121,9 @@ public class AdminPrizeController {
                                    RedirectAttributes redirectAttributes) {
         try {
             prizeService.updateAllocation(maStore, maGiaiThuong, newTongLuongCap);
-            redirectAttributes.addFlashAttribute("successMsg", "Cập nhật số lượng thành công!");
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật số lượng thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMsg", "Lỗi: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
         return "redirect:/admin/prizes?tab=allocations";
     }
@@ -135,9 +135,9 @@ public class AdminPrizeController {
         try {
             com.bitis.luckydraw.model.StorePrizeInventory inv = storePrizeInventoryRepository.findByMaStoreAndMaGiaiThuong(maStore, maGiaiThuong).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phân bổ"));
             prizeService.updateAllocation(maStore, maGiaiThuong, inv.getDaPhat());
-            redirectAttributes.addFlashAttribute("successMsg", "Thu hồi thành công số lượng tồn kho!");
+            redirectAttributes.addFlashAttribute("successMessage", "Thu hồi thành công số lượng tồn kho!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMsg", "Lỗi: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
         return "redirect:/admin/prizes?tab=allocations";
     }
@@ -145,7 +145,7 @@ public class AdminPrizeController {
     @PostMapping("/import")
     public String importPrizes(@RequestParam("file") org.springframework.web.multipart.MultipartFile file, RedirectAttributes redirectAttributes) {
         if (file.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMsg", "Vui lòng chọn file Excel!");
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn file Excel!");
             return "redirect:/admin/prizes";
         }
         try {
@@ -164,6 +164,11 @@ public class AdminPrizeController {
                     throw new RuntimeException("Mã chiến dịch '" + p.getMaChienDich() + "' (tại giải thưởng '" + p.getMaGiaiThuong() + "') chưa tồn tại. Vui lòng tạo chiến dịch trước khi import!");
                 }
                 
+                // Kiểm tra ràng buộc: quà tặng thật không thể có số lượng -1
+                if (Boolean.TRUE.equals(p.getLaGiaiThuong()) && p.getTonKhoToanHeThong() != null && p.getTonKhoToanHeThong() < 0) {
+                    throw new RuntimeException("Giải thưởng '" + p.getMaGiaiThuong() + "' là quà tặng thật nên không thể có số lượng vô hạn (-1). Vui lòng nhập số lượng >= 0.");
+                }
+                
                 java.util.Optional<com.bitis.luckydraw.model.Prize> existingOpt = prizeRepository.findByMaGiaiThuong(p.getMaGiaiThuong());
                 if (existingOpt.isPresent()) {
                     com.bitis.luckydraw.model.Prize existing = existingOpt.get();
@@ -180,9 +185,9 @@ public class AdminPrizeController {
                     countNew++;
                 }
             }
-            redirectAttributes.addFlashAttribute("successMsg", "Import thành công: " + countNew + " giải mới, cập nhật " + countUpdate + " giải.");
+            redirectAttributes.addFlashAttribute("successMessage", "Import thành công: " + countNew + " giải mới, cập nhật " + countUpdate + " giải.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMsg", "Lỗi import: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi import: " + e.getMessage());
         }
         return "redirect:/admin/prizes";
     }
@@ -216,6 +221,11 @@ public class AdminPrizeController {
             Boolean laGiaiThuong = prize.getLaGiaiThuong();
             if (laGiaiThuong == null) {
                 laGiaiThuong = false;
+            }
+
+            if (laGiaiThuong && prize.getTonKhoToanHeThong() != null && prize.getTonKhoToanHeThong() < 0) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Giải thưởng là quà tặng thật không thể có số lượng vô hạn (-1). Vui lòng nhập số lượng >= 0.");
+                return "redirect:/admin/prizes?tab=prizes";
             }
 
             // Check if exists
@@ -267,5 +277,79 @@ public class AdminPrizeController {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi xoá giải thưởng: " + e.getMessage());
         }
         return "redirect:/admin/prizes?tab=prizes";
+    }
+
+    @GetMapping("/allocations/export-excel")
+    public void exportAllocationsExcel(
+            @RequestParam(name = "store", required = false) String store,
+            @RequestParam(name = "campaign", required = false) String campaign,
+            @RequestParam(name = "prize", required = false) String prizeParam,
+            jakarta.servlet.http.HttpServletResponse response) {
+        try {
+            List<StoreInventoryDto> allocations = storePrizeInventoryRepository.getStoreInventory(
+                    (store != null && !store.isEmpty()) ? store : null,
+                    (campaign != null && !campaign.isEmpty()) ? campaign : null,
+                    (prizeParam != null && !prizeParam.isEmpty()) ? prizeParam : null
+            );
+            
+            String[] headers = {"Mã Cửa Hàng", "Tên Cửa Hàng", "Mã Quà", "Tên Quà", "Mã Chiến Dịch", "Tên Chiến Dịch", "Tổng Cấp", "Đã Phát", "Tồn Kho"};
+            List<String[]> data = allocations.stream().map(a -> new String[]{
+                a.getMaStore(),
+                a.getTenCuaHang(),
+                a.getMaGiaiThuong(),
+                a.getTenGiai(),
+                a.getMaChienDich(),
+                a.getTenChienDich(),
+                a.getTongLuongCap() == -1 ? "Không giới hạn" : String.valueOf(a.getTongLuongCap()),
+                String.valueOf(a.getDaPhat()),
+                a.getTonKho() == -1 ? "Không giới hạn" : String.valueOf(a.getTonKho())
+            }).collect(java.util.stream.Collectors.toList());
+            
+            com.bitis.luckydraw.util.ExcelExportUtil.exportDataToExcel(response, "PhanBoCuaHang", headers, data);
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @PostMapping("/allocations/import")
+    public String importAllocations(@RequestParam("file") org.springframework.web.multipart.MultipartFile file, RedirectAttributes redirectAttributes) {
+        if (file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn file Excel!");
+            return "redirect:/admin/prizes?tab=allocations";
+        }
+        try {
+            // Because we didn't wire the bean via constructor (to avoid changing signature too much), we fetch it from application context or just instantiate it. Wait, no, we must wire it or just instantiate it since it has no dependencies!
+            com.bitis.luckydraw.service.AllocationExcelService allocationExcelService = new com.bitis.luckydraw.service.AllocationExcelService();
+            List<com.bitis.luckydraw.model.StorePrizeInventory> allocsToImport = allocationExcelService.parseExcelFile(file);
+            
+            int countSuccess = 0;
+            int countError = 0;
+            StringBuilder errors = new StringBuilder();
+            
+            for (com.bitis.luckydraw.model.StorePrizeInventory alloc : allocsToImport) {
+                try {
+                    // Cập nhật phân bổ (Nếu chưa có thì nó tự add)
+                    java.util.Optional<com.bitis.luckydraw.model.StorePrizeInventory> existingOpt = storePrizeInventoryRepository.findByMaStoreAndMaGiaiThuong(alloc.getMaStore(), alloc.getMaGiaiThuong());
+                    if (existingOpt.isPresent()) {
+                        prizeService.updateAllocation(alloc.getMaStore(), alloc.getMaGiaiThuong(), alloc.getTongLuongCap());
+                    } else {
+                        prizeService.allocatePrizeToStore(alloc.getMaStore(), alloc.getMaGiaiThuong(), alloc.getTongLuongCap());
+                    }
+                    countSuccess++;
+                } catch (Exception ex) {
+                    countError++;
+                    errors.append(" Lỗi dòng CH ").append(alloc.getMaStore()).append(" Quà ").append(alloc.getMaGiaiThuong()).append(": ").append(ex.getMessage()).append(";");
+                }
+            }
+            
+            if (countError > 0) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Import thành công " + countSuccess + ". Lỗi " + countError + ": " + errors.toString());
+            } else {
+                redirectAttributes.addFlashAttribute("successMessage", "Import thành công " + countSuccess + " phân bổ.");
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi import: " + e.getMessage());
+        }
+        return "redirect:/admin/prizes?tab=allocations";
     }
 }

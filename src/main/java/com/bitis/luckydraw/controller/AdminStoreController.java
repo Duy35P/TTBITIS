@@ -97,8 +97,15 @@ public class AdminStoreController {
             List<Store> stores = storeExcelService.parseExcelFile(file);
             int count = 0;
             for (Store store : stores) {
-                // Kiểm tra xem store đã tồn tại chưa
-                if (!storeRepository.findByMaStore(store.getMaStore()).isPresent()) {
+                java.util.Optional<Store> opt = storeRepository.findByMaStore(store.getMaStore());
+                if (opt.isPresent()) {
+                    Store existing = opt.get();
+                    existing.setTenCuaHang(store.getTenCuaHang());
+                    existing.setDiaChiStore(store.getDiaChiStore());
+                    // Không đổi trạng thái nếu đã tồn tại để tránh rủi ro
+                    storeRepository.save(existing);
+                    count++;
+                } else {
                     storeRepository.save(store);
                     count++;
                 }
