@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài Khoản Người Dùng</title>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background: linear-gradient(180deg, #4da6e8 0%, #7ec8f0 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 80px 16px 40px;
+        }
+
+        /* Nav */
+        nav {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 50;
+        }
+        nav a {
+            color: #fff;
+            background: rgba(30,74,138,0.7);
+            padding: 8px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        nav a:hover { background: rgba(30,74,138,0.95); }
+
+        /* Khung Tài Khoản */
+        .account-card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 480px;
+            overflow: hidden;
+            position: relative;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Phần Cover & Avatar */
+        .card-header {
+            background: linear-gradient(135deg, #2b5ea7, #1a3f7a);
+            height: 120px;
+            position: relative;
+            margin-bottom: 60px;
+        }
+
+        .avatar-wrapper {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #fff;
+            padding: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #d6ecfa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: #2b5ea7;
+        }
+
+        /* Thông tin User */
+        .user-info {
+            text-align: center;
+            padding: 0 24px;
+        }
+
+        .user-name {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #1a3f7a;
+            margin-bottom: 4px;
+        }
+
+        .user-tier {
+            display: inline-block;
+            background: linear-gradient(135deg, #ffd700, #daa520);
+            color: #5c3d00;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 50px;
+            margin-bottom: 24px;
+        }
+
+        /* Chi tiết liên hệ */
+        .info-list {
+            list-style: none;
+            padding: 0 24px 24px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #eef4fa;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #f0f6fc;
+            color: #2b5ea7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-right: 16px;
+        }
+
+        .item-content {
+            flex: 1;
+        }
+
+        .item-label {
+            font-size: 0.8rem;
+            color: #888;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .item-value {
+            font-size: 1rem;
+            color: #333;
+            font-weight: 700;
+        }
+
+        /* Các Nút Menu */
+        .menu-section {
+            padding: 0 24px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .menu-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: #f8fbff;
+            border: 1px solid #d6ecfa;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #1a3f7a;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+
+        .menu-btn:hover {
+            background: #2b5ea7;
+            color: #fff;
+            border-color: #2b5ea7;
+        }
+
+        .menu-btn.logout {
+            color: #c0392b;
+            background: #fff;
+            border-color: #f5c6cb;
+        }
+
+        .menu-btn.logout:hover {
+            background: #c0392b;
+            color: #fff;
+            border-color: #c0392b;
+        }
+
+        @media (max-width: 500px) {
+            .user-name { font-size: 1.4rem; }
+            .item-value { font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="/customer/index">← Trang chủ</a>
+    </nav>
+
+    <div class="account-card">
+        <div class="card-header">
+            <div class="avatar-wrapper">
+                <div class="avatar">👤</div>
+            </div>
+        </div>
+
+        <div class="user-info">
+            <h1 class="user-name" th:text="${customer.tenKhach}">Tên Khách Hàng</h1>
+            <div class="user-tier">Thành Viên Vàng</div>
+        </div>
+
+        <ul class="info-list">
+            <li class="info-item">
+                <div class="item-icon">📱</div>
+                <div class="item-content">
+                    <div class="item-label">Số điện thoại</div>
+                    <div class="item-value" th:text="${customer.phone}">0900000000</div>
+                </div>
+            </li>
+            <li class="info-item">
+                <div class="item-icon">📧</div>
+                <div class="item-content">
+                    <div class="item-label">Email</div>
+                    <div class="item-value">Chưa cập nhật</div>
+                </div>
+            </li>
+            <li class="info-item">
+                <div class="item-icon">📍</div>
+                <div class="item-content">
+                    <div class="item-label">Địa chỉ</div>
+                    <div class="item-value">Chưa cập nhật</div>
+                </div>
+            </li>
+        </ul>
+
+        <div class="menu-section">
+            <a href="/customer/history" class="menu-btn">
+                <span>🎁 Lịch sử trúng thưởng</span>
+                <span>→</span>
+            </a>
+            <a href="/customer/auth/logout" class="menu-btn logout">
+                <span>🚪 Đăng xuất</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

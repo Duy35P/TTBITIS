@@ -78,11 +78,23 @@ public class AdminInvoiceController {
             }
 
             boolean matchStatus = true;
+            List<TurnTransaction> turns = null;
+            
             if (status != null && !status.isEmpty() && !status.equals("all")) {
-                if (status.equals("1")) {
-                    matchStatus = Boolean.TRUE.equals(inv.getDaXuLy());
-                } else if (status.equals("0")) {
+                if (status.equals("0")) {
                     matchStatus = Boolean.FALSE.equals(inv.getDaXuLy());
+                } else if (status.equals("1")) {
+                    matchStatus = Boolean.TRUE.equals(inv.getDaXuLy());
+                    if (matchStatus) {
+                        turns = turnTransactionRepository.findByNguonThamChieu(inv.getMaHoaDon());
+                        matchStatus = turns.stream().mapToLong(TurnTransaction::getSoLuong).sum() > 0;
+                    }
+                } else if (status.equals("2")) {
+                    matchStatus = Boolean.TRUE.equals(inv.getDaXuLy());
+                    if (matchStatus) {
+                        turns = turnTransactionRepository.findByNguonThamChieu(inv.getMaHoaDon());
+                        matchStatus = turns.stream().mapToLong(TurnTransaction::getSoLuong).sum() == 0;
+                    }
                 }
             }
 
@@ -98,7 +110,9 @@ public class AdminInvoiceController {
                 dto.setKhachHangSdt(customerPhone);
                 
                 // Get turns
-                List<TurnTransaction> turns = turnTransactionRepository.findByNguonThamChieu(inv.getMaHoaDon());
+                if (turns == null) {
+                    turns = turnTransactionRepository.findByNguonThamChieu(inv.getMaHoaDon());
+                }
                 Map<String, Integer> campaignTurns = turns.stream()
                         .filter(t -> t.getSoLuong() > 0)
                         .collect(Collectors.groupingBy(TurnTransaction::getMaChienDich, Collectors.summingInt(TurnTransaction::getSoLuong)));

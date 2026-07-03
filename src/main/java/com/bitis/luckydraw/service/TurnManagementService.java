@@ -92,7 +92,7 @@ public class TurnManagementService {
         // 5. Nếu được cấp ít nhất 1 lượt, sinh GameAccessToken
         if (totalTurnsGrantedAcrossCampaigns > 0) {
             GameAccessToken token = new GameAccessToken();
-            token.setToken(UUID.randomUUID().toString());
+            token.setToken(invoice.getMaHoaDon()); // Dùng mã hóa đơn làm mã QR
             token.setMaHoaDon(invoice.getMaHoaDon());
             token.setSoLuongLuotThuong(totalTurnsGrantedAcrossCampaigns);
             token.setDaSuDung(false);
@@ -115,5 +115,90 @@ public class TurnManagementService {
         invoice.setSanPhamJson(objectMapper.writeValueAsString(request.getSkuList()));
         invoice.setDaXuLy(true);
         return invoiceRepo.save(invoice);
+    }
+
+    @Transactional
+    public java.util.List<String> claimInvoice(String maHoaDon, String maKhachHang) throws Exception {
+        Optional<Invoice> optInvoice = invoiceRepo.findByMaHoaDon(maHoaDon);
+        if (optInvoice.isEmpty()) {
+            throw new Exception("Không tìm thấy hóa đơn này trên hệ thống.");
+        }
+        
+        Invoice invoice = optInvoice.get();
+        if (Boolean.TRUE.equals(invoice.getDaXuLy())) {
+            throw new Exception("Hóa đơn này đã được nhận lượt quay trước đó.");
+        }
+
+        // Cập nhật chủ nhân hóa đơn
+        invoice.setMaKhachHang(maKhachHang);
+        
+        // Tính toán lượt quay
+        Double deltaAmount = invoice.getTongTien();
+        if (invoice.getMaHoaDonGoc() != null && !invoice.getMaHoaDonGoc().isEmpty()) {
+            Optional<Invoice> originalOpt = invoiceRepo.findByMaHoaDon(invoice.getMaHoaDonGoc());
+            if (originalOpt.isPresent()) {
+                deltaAmount = invoice.getTongTien() - originalOpt.get().getTongTien();
+            }
+        }
+
+        java.util.List<String> awardedCampaigns = new java.util.ArrayList<>();
+        int totalTurnsGranted = 0;
+
+        if (deltaAmount > 0) {
+            List<CampaignStore> campaigns = campaignStoreRepo.findByMaStore(invoice.getMaStore());
+            
+            // Reconstruct SKU list from JSON
+            List<InvoiceRequestDTO.SkuItem> skuList = new java.util.ArrayList<>();
+            if (invoice.getSanPhamJson() != null && !invoice.getSanPhamJson().isEmpty()) {
+                try {
+                    skuList = objectMapper.readValue(invoice.getSanPhamJson(), objectMapper.getTypeFactory().constructCollectionType(List.class, InvoiceRequestDTO.SkuItem.class));
+                } catch (Exception ignored) {}
+            }
+
+            for (CampaignStore cs : campaigns) {
+                String maChienDich = cs.getMaChienDich();
+                int turns = ruleEngine.calculateTurns(maChienDich, deltaAmount, invoice.getPhuongThucTt(), skuList);
+
+                if (turns > 0) {
+                    customerTurnRepo.addCustomerTurnsSafe(maKhachHang, maChienDich, turns, "INVOICE:" + maHoaDon);
+                    awardedCampaigns.add(maChienDich);
+                    totalTurnsGranted += turns;
+                }
+            }
+        }
+
+        // Đánh dấu đã xử lý
+        invoice.setDaXuLy(true);
+        invoiceRepo.save(invoice);
+        
+        // Sinh GameAccessToken nếu có lượt thưởng
+        if (totalTurnsGranted > 0) {
+            GameAccessToken token = new GameAccessToken();
+            token.setToken(invoice.getMaHoaDon());
+            token.setMaHoaDon(invoice.getMaHoaDon());
+            token.setSoLuongLuotThuong(totalTurnsGranted);
+            token.setDaSuDung(true); // Đã dùng để vào game luôn
+            token.setMaKhachHangKichHoat(maKhachHang);
+            token.setHetHanLuc(LocalDateTime.now().plusDays(30));
+            tokenRepo.save(token);
+        }
+
+        return awardedCampaigns; // Trả về danh sách các campaign đã được cộng lượt
+    }
+
+    @Transactional
+    public boolean useGameAccessToken(String qrCode, String maKhachHang) throws Exception {
+        Optional<GameAccessToken> optToken = tokenRepo.findByToken(qrCode);
+        if (optToken.isPresent()) {
+            GameAccessToken token = optToken.get();
+            if (Boolean.TRUE.equals(token.getDaSuDung())) {
+                throw new Exception("Mã QR (Hóa đơn) này đã được sử dụng để vào game.");
+            }
+            token.setDaSuDung(true);
+            token.setMaKhachHangKichHoat(maKhachHang);
+            tokenRepo.save(token);
+            return true; // Đã xử lý token thành công
+        }
+        return false; // Token chưa tồn tại
     }
 }

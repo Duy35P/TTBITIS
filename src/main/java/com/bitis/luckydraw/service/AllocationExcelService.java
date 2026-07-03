@@ -70,7 +70,8 @@ public class AllocationExcelService {
                 }
 
                 if (allocation.getMaStore() != null && !allocation.getMaStore().isEmpty() &&
-                    allocation.getMaGiaiThuong() != null && !allocation.getMaGiaiThuong().isEmpty()) {
+                    allocation.getMaGiaiThuong() != null && !allocation.getMaGiaiThuong().isEmpty() &&
+                    allocation.getTongLuongCap() > 0) {
                     allocations.add(allocation);
                 }
             }

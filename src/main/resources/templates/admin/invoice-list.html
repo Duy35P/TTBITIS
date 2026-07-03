@@ -36,8 +36,9 @@
               <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Trạng thái Cấp Lượt</label>
               <select name="status" class="form-control" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
                 <option value="all" th:selected="${selectedStatus == 'all'}">-- Tất cả --</option>
-                <option value="1" th:selected="${selectedStatus == '1'}">Đã cấp lượt (Processed)</option>
-                <option value="0" th:selected="${selectedStatus == '0'}">Chưa cấp lượt</option>
+                <option value="1" th:selected="${selectedStatus == '1'}">Đã xử lý (Có cộng lượt)</option>
+                <option value="2" th:selected="${selectedStatus == '2'}">Đã xử lý (Không đủ ĐK cộng lượt)</option>
+                <option value="0" th:selected="${selectedStatus == '0'}">Chưa xử lý (Chưa cấp lượt)</option>
               </select>
             </div>
             <div class="filter-group" style="flex: 0; justify-content: flex-end; display: flex; gap: 10px;">

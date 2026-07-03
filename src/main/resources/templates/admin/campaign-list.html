@@ -64,7 +64,10 @@
                   <span class="badge bg-blue" th:if="${campaign.trangThai == 3}" style="background-color: #007bff; color: white;">Đã lên lịch</span>
                   <span class="badge bg-gray" th:if="${campaign.trangThai == 2}" style="background-color: #999; color: white;">Đã kết thúc</span>
                 </td>
-                <td><a th:href="@{/play/{slug}(slug=${campaign.duongDanSlug})}" target="_blank">Link</a></td>
+                <td>
+                  <a th:if="${campaign.duongDanSlug != null && !campaign.duongDanSlug.empty}" th:href="@{/game/{slug}(slug=${campaign.duongDanSlug})}" target="_blank">Link</a>
+                  <a th:if="${campaign.duongDanSlug == null || campaign.duongDanSlug.empty}" th:href="@{/customer/spin(campaign=${campaign.maChienDich})}" target="_blank">Link</a>
+                </td>
                 <td class="action-links">
                   <!-- Actions -->
                   <a href="javascript:void(0)" 

@@ -279,8 +279,6 @@ CREATE TABLE [dbo].[system_audit_log] (
     [action_type]       VARCHAR(50)     NOT NULL,       -- Loại thao tác: CREATE, UPDATE, DELETE
     [target_table]      VARCHAR(100)    NOT NULL,       -- Tên bảng bị tác động (vd: 'prize')
     [target_record_id]  VARCHAR(255)    NOT NULL,       -- ID của dòng dữ liệu bị tác động
-    [old_values]        NVARCHAR(MAX)   NULL,           -- Dữ liệu trước khi sửa (Định dạng JSON)
-    [new_values]        NVARCHAR(MAX)   NULL,           -- Dữ liệu sau khi sửa (Định dạng JSON)
     [description]       NVARCHAR(500)   NULL,           -- Mô tả tóm tắt để người quản lý dễ đọc
     [ip_address]        VARCHAR(50)     NULL,           -- IP thiết bị của Staff/Admin
     [created_at]        DATETIME2       NOT NULL DEFAULT SYSDATETIME(),
@@ -318,8 +316,9 @@ select * from campaign_rule
 select * from customer_turn
 select * from store_prize_inventory
 select * from vai_tro
-delete invoice where ma_hoa_don ='POS-2026-81021'
+
 delete store
 delete customer
 truncate table prize
+truncate table staff
 

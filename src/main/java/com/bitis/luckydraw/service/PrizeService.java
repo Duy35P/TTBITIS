@@ -29,6 +29,7 @@ public class PrizeService {
 
     @Transactional
     public void allocatePrizeToStore(String maStore, String maGiaiThuong, int quantity) {
+        if (quantity <= 0) return; // ponytail: ignore dummy/infinite prizes
         storePrizeInventoryRepository.allocatePrizeToStore(maStore, maGiaiThuong, quantity);
     }
 

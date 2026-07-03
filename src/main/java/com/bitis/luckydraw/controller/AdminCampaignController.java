@@ -70,122 +70,96 @@ public class AdminCampaignController {
         return map;
     }
 
-    @PostMapping("/save")
-    @Transactional
-    public String saveCampaign(@ModelAttribute Campaign formCampaign, org.springframework.validation.BindingResult bindingResult, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+    private void processCampaignSave(Campaign formCampaign, org.springframework.validation.BindingResult bindingResult) throws IllegalArgumentException {
         if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Dữ liệu nhập vào không hợp lệ. Vui lòng kiểm tra lại định dạng ngày giờ (chuẩn: dd/MM/yyyy HH:mm) hoặc các trường bắt buộc!");
-            return "redirect:/admin/campaigns";
+            throw new IllegalArgumentException("Dữ liệu nhập vào không hợp lệ. Vui lòng kiểm tra lại định dạng ngày giờ (chuẩn: dd/MM/yyyy HH:mm) hoặc các trường bắt buộc!");
         }
         
-        // Kiểm tra logic Ngày bắt đầu và Ngày kết thúc
-        if (formCampaign.getNgayBatDau() != null && formCampaign.getNgayKetThuc() != null) {
-            if (formCampaign.getNgayBatDau().isAfter(formCampaign.getNgayKetThuc())) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Ngày bắt đầu không thể diễn ra sau ngày kết thúc!");
-                return "redirect:/admin/campaigns";
-            }
+        if (formCampaign.getNgayBatDau() != null && formCampaign.getNgayKetThuc() != null && formCampaign.getNgayBatDau().isAfter(formCampaign.getNgayKetThuc())) {
+            throw new IllegalArgumentException("Lỗi: Ngày bắt đầu không thể diễn ra sau ngày kết thúc!");
         }
 
-        // Cấm sửa Ngày kết thúc thành quá khứ
         if (formCampaign.getId() != null && formCampaign.getNgayKetThuc() != null) {
             Campaign existingById = campaignRepository.findById(formCampaign.getId()).orElse(null);
             if (existingById != null && existingById.getNgayKetThuc() != null) {
                 java.time.LocalDateTime newEnd = formCampaign.getNgayKetThuc().withSecond(0).withNano(0);
                 java.time.LocalDateTime oldEnd = existingById.getNgayKetThuc().withSecond(0).withNano(0);
                 if (!newEnd.isEqual(oldEnd) && newEnd.isBefore(java.time.LocalDateTime.now())) {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Không thể đổi ngày kết thúc về một thời điểm trong quá khứ!");
-                    return "redirect:/admin/campaigns";
+                    throw new IllegalArgumentException("Lỗi: Không thể đổi ngày kết thúc về một thời điểm trong quá khứ!");
                 }
             }
         }
-        // Kiểm tra trùng lặp Mã Chiến Dịch
-        if (formCampaign.getId() == null) {
-            if (formCampaign.getMaChienDich() != null && !formCampaign.getMaChienDich().trim().isEmpty()) {
-                if (campaignRepository.findByMaChienDich(formCampaign.getMaChienDich()).isPresent()) {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Mã chiến dịch '" + formCampaign.getMaChienDich() + "' đã tồn tại!");
-                    return "redirect:/admin/campaigns";
-                }
-            }
-        } else {
-            Campaign existingById = campaignRepository.findById(formCampaign.getId()).orElse(null);
-            if (existingById != null && formCampaign.getMaChienDich() != null && !existingById.getMaChienDich().equals(formCampaign.getMaChienDich())) {
-                if (campaignRepository.findByMaChienDich(formCampaign.getMaChienDich()).isPresent()) {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Mã chiến dịch '" + formCampaign.getMaChienDich() + "' đã tồn tại!");
-                    return "redirect:/admin/campaigns";
+        
+        boolean isNew = formCampaign.getId() == null;
+        String maChienDich = formCampaign.getMaChienDich();
+        if (maChienDich != null && !maChienDich.trim().isEmpty()) {
+            Campaign existingById = isNew ? null : campaignRepository.findById(formCampaign.getId()).orElse(null);
+            if (isNew || (existingById != null && !existingById.getMaChienDich().equals(maChienDich))) {
+                if (campaignRepository.findByMaChienDich(maChienDich).isPresent()) {
+                    throw new IllegalArgumentException("Lỗi: Mã chiến dịch '" + maChienDich + "' đã tồn tại!");
                 }
             }
         }
 
-        // Kiểm tra trùng lặp Đường dẫn Slug
         if (formCampaign.getDuongDanSlug() != null && !formCampaign.getDuongDanSlug().trim().isEmpty()) {
-            java.util.Optional<Campaign> existingSlug = campaignRepository.findByDuongDanSlug(formCampaign.getDuongDanSlug());
-            if (existingSlug.isPresent() && (formCampaign.getId() == null || !existingSlug.get().getId().equals(formCampaign.getId()))) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Đường dẫn Slug '" + formCampaign.getDuongDanSlug() + "' đã được sử dụng!");
-                return "redirect:/admin/campaigns";
-            }
+            campaignRepository.findByDuongDanSlug(formCampaign.getDuongDanSlug()).ifPresent(existingSlug -> {
+                if (formCampaign.getId() == null || !existingSlug.getId().equals(formCampaign.getId())) {
+                    throw new IllegalArgumentException("Lỗi: Đường dẫn Slug '" + formCampaign.getDuongDanSlug() + "' đã được sử dụng!");
+                }
+            });
         }
         
+        Campaign campaign;
+        String oldMaChienDich = null;
+        String actionDescription = "Tạo mới chiến dịch";
+        if (!isNew) {
+            campaign = campaignRepository.findById(formCampaign.getId()).orElse(new Campaign());
+            oldMaChienDich = campaign.getMaChienDich();
+            actionDescription = getUpdateDescription(campaign, formCampaign);
+            
+            campaign.setTenChienDich(formCampaign.getTenChienDich());
+            campaign.setNgayBatDau(formCampaign.getNgayBatDau());
+            campaign.setNgayKetThuc(formCampaign.getNgayKetThuc());
+            campaign.setDuongDanSlug(formCampaign.getDuongDanSlug());
+            campaign.setDocQuyen(formCampaign.getDocQuyen() != null ? formCampaign.getDocQuyen() : false);
+            if (formCampaign.getTrangThai() != null) campaign.setTrangThai(formCampaign.getTrangThai());
+            
+            if (campaign.getTrangThai() != null && campaign.getTrangThai() == 2 && campaign.getNgayKetThuc() != null && campaign.getNgayKetThuc().isAfter(java.time.LocalDateTime.now())) {
+                campaign.setTrangThai(0);
+            }
+            campaign.setMoTa(formCampaign.getMoTa());
+        } else {
+            campaign = formCampaign;
+            campaign.setTrangThai(0);
+            if (campaign.getDocQuyen() == null) campaign.setDocQuyen(false);
+        }
+        campaignRepository.save(campaign);
+        
+        if (oldMaChienDich != null && !oldMaChienDich.equals(campaign.getMaChienDich())) {
+            String newMaChienDich = campaign.getMaChienDich();
+            String[] relatedTables = {"campaign_store", "campaign_rule", "campaign_rule_payment", "campaign_rule_sku", "customer_turn", "prize", "turn_transaction"};
+            for (String table : relatedTables) jdbcTemplate.update("UPDATE " + table + " SET ma_chien_dich = ? WHERE ma_chien_dich = ?", newMaChienDich, oldMaChienDich);
+        }
+        
+        SystemAuditLog log = new SystemAuditLog();
+        log.setStaffId(1L);
+        log.setActionType(isNew ? "CREATE" : "UPDATE");
+        log.setTargetTable("campaign");
+        log.setTargetRecordId(campaign.getMaChienDich());
+        log.setDescription(actionDescription);
+        log.setIpAddress("127.0.0.1");
+        systemAuditLogRepository.save(log);
+    }
+
+    @PostMapping("/save")
+    @Transactional
+    public String saveCampaign(@ModelAttribute Campaign formCampaign, org.springframework.validation.BindingResult bindingResult, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         try {
-            Campaign campaign;
-            String oldMaChienDich = null;
-            String actionDescription = "Tạo mới chiến dịch";
-            if (formCampaign.getId() != null) {
-                campaign = campaignRepository.findById(formCampaign.getId()).orElse(new Campaign());
-                oldMaChienDich = campaign.getMaChienDich();
-                
-                actionDescription = getUpdateDescription(campaign, formCampaign);
-                
-                // Không cập nhật maChienDich nếu là chỉnh sửa
-                campaign.setTenChienDich(formCampaign.getTenChienDich());
-                campaign.setNgayBatDau(formCampaign.getNgayBatDau());
-                campaign.setNgayKetThuc(formCampaign.getNgayKetThuc());
-                campaign.setDuongDanSlug(formCampaign.getDuongDanSlug());
-                campaign.setDocQuyen(formCampaign.getDocQuyen() != null ? formCampaign.getDocQuyen() : false);
-                if (formCampaign.getTrangThai() != null) {
-                    campaign.setTrangThai(formCampaign.getTrangThai());
-                }
-                
-                // Nếu kéo dài ngày kết thúc, trạng thái đang Đã Kết Thúc (2) thì chuyển về Tạm ngưng (0)
-                if (campaign.getTrangThai() != null && campaign.getTrangThai() == 2) {
-                    if (campaign.getNgayKetThuc() != null && campaign.getNgayKetThuc().isAfter(java.time.LocalDateTime.now())) {
-                        campaign.setTrangThai(0);
-                    }
-                }
-                
-                // Bỏ logic tự động chuyển về Tạm ngưng hay Đã lên lịch
-                
-                campaign.setMoTa(formCampaign.getMoTa());
-            } else {
-                campaign = formCampaign;
-                campaign.setTrangThai(0); // Luôn luôn tạm ngưng khi mới tạo
-                if (campaign.getDocQuyen() == null) campaign.setDocQuyen(false);
-            }
-            campaignRepository.save(campaign);
-            
-            // Cascade update ma_chien_dich for all related tables
-            if (oldMaChienDich != null && !oldMaChienDich.equals(campaign.getMaChienDich())) {
-                String newMaChienDich = campaign.getMaChienDich();
-                String[] relatedTables = {
-                    "campaign_store", "campaign_rule", "campaign_rule_payment", 
-                    "campaign_rule_sku", "customer_turn", "prize", "turn_transaction"
-                };
-                for (String table : relatedTables) {
-                    jdbcTemplate.update("UPDATE " + table + " SET ma_chien_dich = ? WHERE ma_chien_dich = ?", newMaChienDich, oldMaChienDich);
-                }
-            }
-            
-            SystemAuditLog log = new SystemAuditLog();
-            log.setStaffId(1L); // TODO: Get from auth
-            log.setActionType(formCampaign.getId() != null ? "UPDATE" : "CREATE");
-            log.setTargetTable("campaign");
-            log.setTargetRecordId(campaign.getMaChienDich());
-            log.setDescription(actionDescription);
-            log.setIpAddress("127.0.0.1"); // TODO: Get actual IP if needed
-            systemAuditLogRepository.save(log);
+            processCampaignSave(formCampaign, bindingResult);
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
-            String errorMsg = e.getCause() != null && e.getCause().getCause() != null 
-                ? e.getCause().getCause().getMessage() 
-                : e.getMessage();
+            String errorMsg = e.getCause() != null && e.getCause().getCause() != null ? e.getCause().getCause().getMessage() : e.getMessage();
             redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
         }
         return "redirect:/admin/campaigns";
@@ -196,129 +170,14 @@ public class AdminCampaignController {
     @Transactional
     public java.util.Map<String, Object> saveCampaignAjax(@ModelAttribute Campaign formCampaign, org.springframework.validation.BindingResult bindingResult) {
         java.util.Map<String, Object> response = new java.util.HashMap<>();
-        
-        if (bindingResult.hasErrors()) {
-            response.put("success", false);
-            response.put("message", "Dữ liệu nhập vào không hợp lệ. Vui lòng kiểm tra lại định dạng ngày giờ (chuẩn: dd/MM/yyyy HH:mm) hoặc các trường bắt buộc!");
-            return response;
-        }
-        
-        // Kiểm tra logic Ngày bắt đầu và Ngày kết thúc
-        if (formCampaign.getNgayBatDau() != null && formCampaign.getNgayKetThuc() != null) {
-            if (formCampaign.getNgayBatDau().isAfter(formCampaign.getNgayKetThuc())) {
-                response.put("success", false);
-                response.put("message", "Lỗi: Ngày bắt đầu không thể diễn ra sau ngày kết thúc!");
-                return response;
-            }
-        }
-
-        // Cấm sửa Ngày kết thúc thành quá khứ
-        if (formCampaign.getId() != null && formCampaign.getNgayKetThuc() != null) {
-            Campaign existingById = campaignRepository.findById(formCampaign.getId()).orElse(null);
-            if (existingById != null && existingById.getNgayKetThuc() != null) {
-                java.time.LocalDateTime newEnd = formCampaign.getNgayKetThuc().withSecond(0).withNano(0);
-                java.time.LocalDateTime oldEnd = existingById.getNgayKetThuc().withSecond(0).withNano(0);
-                if (!newEnd.isEqual(oldEnd) && newEnd.isBefore(java.time.LocalDateTime.now())) {
-                    response.put("success", false);
-                    response.put("message", "Lỗi: Không thể đổi ngày kết thúc về một thời điểm trong quá khứ!");
-                    return response;
-                }
-            }
-        }
-        
-        // Kiểm tra trùng lặp Mã Chiến Dịch
-        if (formCampaign.getId() == null) {
-            if (formCampaign.getMaChienDich() != null && !formCampaign.getMaChienDich().trim().isEmpty()) {
-                if (campaignRepository.findByMaChienDich(formCampaign.getMaChienDich()).isPresent()) {
-                    response.put("success", false);
-                    response.put("message", "Lỗi: Mã chiến dịch '" + formCampaign.getMaChienDich() + "' đã tồn tại!");
-                    return response;
-                }
-            }
-        } else {
-            Campaign existingById = campaignRepository.findById(formCampaign.getId()).orElse(null);
-            if (existingById != null && formCampaign.getMaChienDich() != null && !existingById.getMaChienDich().equals(formCampaign.getMaChienDich())) {
-                if (campaignRepository.findByMaChienDich(formCampaign.getMaChienDich()).isPresent()) {
-                    response.put("success", false);
-                    response.put("message", "Lỗi: Mã chiến dịch '" + formCampaign.getMaChienDich() + "' đã tồn tại!");
-                    return response;
-                }
-            }
-        }
-
-        // Kiểm tra trùng lặp Đường dẫn Slug
-        if (formCampaign.getDuongDanSlug() != null && !formCampaign.getDuongDanSlug().trim().isEmpty()) {
-            java.util.Optional<Campaign> existingSlug = campaignRepository.findByDuongDanSlug(formCampaign.getDuongDanSlug());
-            if (existingSlug.isPresent() && (formCampaign.getId() == null || !existingSlug.get().getId().equals(formCampaign.getId()))) {
-                response.put("success", false);
-                response.put("message", "Lỗi: Đường dẫn Slug '" + formCampaign.getDuongDanSlug() + "' đã được sử dụng!");
-                return response;
-            }
-        }
-        
         try {
-            Campaign campaign;
-            String oldMaChienDich = null;
-            String actionDescription = "Tạo mới chiến dịch";
-            if (formCampaign.getId() != null) {
-                campaign = campaignRepository.findById(formCampaign.getId()).orElse(new Campaign());
-                oldMaChienDich = campaign.getMaChienDich();
-                
-                actionDescription = getUpdateDescription(campaign, formCampaign);
-                
-                // Không cập nhật maChienDich nếu là chỉnh sửa
-                campaign.setTenChienDich(formCampaign.getTenChienDich());
-                campaign.setNgayBatDau(formCampaign.getNgayBatDau());
-                campaign.setNgayKetThuc(formCampaign.getNgayKetThuc());
-                campaign.setDuongDanSlug(formCampaign.getDuongDanSlug());
-                campaign.setDocQuyen(formCampaign.getDocQuyen() != null ? formCampaign.getDocQuyen() : false);
-                if (formCampaign.getTrangThai() != null) {
-                    campaign.setTrangThai(formCampaign.getTrangThai());
-                }
-                
-                // Nếu kéo dài ngày kết thúc, trạng thái đang Đã Kết Thúc (2) thì chuyển về Tạm ngưng (0)
-                if (campaign.getTrangThai() != null && campaign.getTrangThai() == 2) {
-                    if (campaign.getNgayKetThuc() != null && campaign.getNgayKetThuc().isAfter(java.time.LocalDateTime.now())) {
-                        campaign.setTrangThai(0);
-                    }
-                }
-                
-                // Bỏ logic tự động chuyển về Tạm ngưng hay Đã lên lịch
-                
-                campaign.setMoTa(formCampaign.getMoTa());
-            } else {
-                campaign = formCampaign;
-                campaign.setTrangThai(0); // Luôn luôn tạm ngưng khi mới tạo
-                if (campaign.getDocQuyen() == null) campaign.setDocQuyen(false);
-            }
-            campaignRepository.save(campaign);
-            
-            // Cascade update ma_chien_dich for all related tables
-            if (oldMaChienDich != null && !oldMaChienDich.equals(campaign.getMaChienDich())) {
-                String newMaChienDich = campaign.getMaChienDich();
-                String[] relatedTables = {
-                    "campaign_store", "campaign_rule", "campaign_rule_payment", 
-                    "campaign_rule_sku", "customer_turn", "prize", "turn_transaction"
-                };
-                for (String table : relatedTables) {
-                    jdbcTemplate.update("UPDATE " + table + " SET ma_chien_dich = ? WHERE ma_chien_dich = ?", newMaChienDich, oldMaChienDich);
-                }
-            }
-            
-            SystemAuditLog log = new SystemAuditLog();
-            log.setStaffId(1L); // TODO: Get from auth
-            log.setActionType(formCampaign.getId() != null ? "UPDATE" : "CREATE");
-            log.setTargetTable("campaign");
-            log.setTargetRecordId(campaign.getMaChienDich());
-            log.setDescription(actionDescription);
-            log.setIpAddress("127.0.0.1"); // TODO: Get actual IP if needed
-            systemAuditLogRepository.save(log);
-            
+            processCampaignSave(formCampaign, bindingResult);
             response.put("success", true);
+        } catch (IllegalArgumentException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
         } catch (Exception e) {
-            String errorMsg = e.getCause() != null && e.getCause().getCause() != null 
-                ? e.getCause().getCause().getMessage() 
-                : e.getMessage();
+            String errorMsg = e.getCause() != null && e.getCause().getCause() != null ? e.getCause().getCause().getMessage() : e.getMessage();
             response.put("success", false);
             response.put("message", "Lỗi máy chủ: " + errorMsg);
         }

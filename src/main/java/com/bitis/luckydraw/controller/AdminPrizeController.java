@@ -228,6 +228,37 @@ public class AdminPrizeController {
                 return "redirect:/admin/prizes?tab=prizes";
             }
 
+            // Ponytail logic: Kiểm tra tổng tỷ lệ trúng thưởng & Tự động tính giải trượt
+            List<Prize> existingPrizes = prizeRepository.findByMaChienDich(prize.getMaChienDich());
+            
+            // 1. Chỉ cho phép 1 giải trượt
+            if (!laGiaiThuong) {
+                long countTruot = existingPrizes.stream().filter(p -> !Boolean.TRUE.equals(p.getLaGiaiThuong()) && !p.getMaGiaiThuong().equals(prize.getMaGiaiThuong())).count();
+                if (countTruot > 0) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Mỗi chiến dịch chỉ được phép có TỐI ĐA 1 giải trượt!");
+                    return "redirect:/admin/prizes?tab=prizes";
+                }
+            }
+
+            // 2. Tính tổng tỷ lệ các giải thật
+            double totalReal = 0;
+            for (Prize p : existingPrizes) {
+                if (Boolean.TRUE.equals(p.getLaGiaiThuong()) && !p.getMaGiaiThuong().equals(prize.getMaGiaiThuong())) {
+                    totalReal += (p.getXacSuat() != null ? p.getXacSuat() : 0);
+                }
+            }
+
+            if (laGiaiThuong) {
+                totalReal += (prize.getXacSuat() != null ? prize.getXacSuat() : 0);
+                if (totalReal > 100) {
+                    redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Tổng tỷ lệ trúng thưởng của các giải thật đã vượt quá 100% (" + totalReal + "%). Vui lòng giảm bớt!");
+                    return "redirect:/admin/prizes?tab=prizes";
+                }
+            } else {
+                // Tự động ép tỷ lệ giải trượt = 100 - tổng giải thật
+                prize.setXacSuat(100.0 - totalReal);
+            }
+
             // Check if exists
             java.util.Optional<Prize> existingOpt = prizeRepository.findByMaGiaiThuong(prize.getMaGiaiThuong());
             if (existingOpt.isPresent()) {
@@ -241,13 +272,19 @@ public class AdminPrizeController {
                 existing.setXacSuat(prize.getXacSuat());
                 existing.setLaGiaiThuong(laGiaiThuong);
                 prizeRepository.save(existing);
-                redirectAttributes.addFlashAttribute("successMessage", "Cập nhật giải thưởng thành công.");
+                redirectAttributes.addFlashAttribute("successMessage", "Cập nhật giải thưởng thành công. Giải trượt đã được tự động cập nhật!");
             } else {
                 // Create
                 prize.setLaGiaiThuong(laGiaiThuong);
                 prizeRepository.save(prize);
-                redirectAttributes.addFlashAttribute("successMessage", "Thêm giải thưởng mới thành công.");
+                redirectAttributes.addFlashAttribute("successMessage", "Thêm giải thưởng mới thành công. Giải trượt đã được tự động cập nhật!");
             }
+
+            // 3. Tự động cập nhật lại tỷ lệ giải trượt nếu vừa sửa giải thật
+            if (laGiaiThuong) {
+                prizeRepository.recalibrateDummyPrize(prize.getMaChienDich());
+            }
+
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi lưu giải thưởng: " + e.getMessage());
         }
@@ -262,6 +299,7 @@ public class AdminPrizeController {
                 redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy giải thưởng.");
                 return "redirect:/admin/prizes?tab=prizes";
             }
+            Prize prizeToDelete = prizeOpt.get();
             // Simple constraint check
             java.util.Optional<com.bitis.luckydraw.model.StorePrizeInventory> invOpt = 
                 storePrizeInventoryRepository.findAll().stream()
@@ -270,8 +308,15 @@ public class AdminPrizeController {
             if (invOpt.isPresent()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Không thể xoá giải thưởng đã được phân bổ cho cửa hàng. Bạn chỉ có thể thu hồi.");
             } else {
-                prizeRepository.delete(prizeOpt.get());
-                redirectAttributes.addFlashAttribute("successMessage", "Xoá giải thưởng thành công.");
+                prizeRepository.delete(prizeToDelete);
+                
+                // Tự động cập nhật lại tỷ lệ giải trượt nếu vừa xóa giải thật
+                if (Boolean.TRUE.equals(prizeToDelete.getLaGiaiThuong())) {
+                    prizeRepository.recalibrateDummyPrize(prizeToDelete.getMaChienDich());
+                    redirectAttributes.addFlashAttribute("successMessage", "Xoá giải thưởng thành công. Giải trượt đã được tự động cập nhật!");
+                } else {
+                    redirectAttributes.addFlashAttribute("successMessage", "Xoá giải thưởng thành công.");
+                }
             }
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi xoá giải thưởng: " + e.getMessage());

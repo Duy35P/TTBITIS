@@ -29,7 +29,12 @@ public class AdminVoucherController {
                         @RequestParam(name = "prize", required = false) String prizeMa,
                         @RequestParam(name = "status", required = false) String statusStr) {
         
-        List<PrizeListDto> prizes = prizeRepository.getPrizeList();
+        List<PrizeListDto> allPrizes = prizeRepository.getPrizeList();
+        // Ponytail: Chỉ hiển thị các giải thật trên bộ lọc thả xuống
+        List<PrizeListDto> prizes = allPrizes.stream()
+                .filter(p -> Boolean.TRUE.equals(p.getLaGiaiThuong()))
+                .collect(Collectors.toList());
+                
         List<RewardVoucherListDto> vouchers = rewardVoucherRepository.getRewardVoucherList();
 
         // Apply filters

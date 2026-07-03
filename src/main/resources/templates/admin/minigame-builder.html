@@ -105,7 +105,7 @@
         <div class="form-group" style="background: #fdfae3; padding: 10px; border-radius: 4px; border: 1px dashed #f39c12;">
           <label>Từ khóa Đường dẫn (URL Slug) *</label>
           <div style="display: flex; align-items: center; background: #fff; border: 1px solid #ccc; border-radius: 4px; overflow: hidden;">
-            <span style="background: #eee; padding: 8px; color: #777; font-size: 13px; border-right: 1px solid #ccc;">game.tlc.com/play/</span>
+            <span style="background: #eee; padding: 8px; color: #777; font-size: 13px; border-right: 1px solid #ccc;">.../game/</span>
             <input type="text" style="flex: 1; border: none; padding: 8px; outline: none; font-weight: bold; color: #d35400;" id="setSlug" th:value="${campaign.duongDanSlug}" oninput="formatSlug(this)">
           </div>
           <small style="color: #777; font-size: 11px; margin-top: 5px; display: block;">Viết liền không dấu, ngăn cách bằng dấu gạch ngang (VD: khai-truong-hn)</small>
@@ -483,7 +483,7 @@
           
           const result = await response.json();
           if (response.ok) {
-              const finalUrl = 'https://game.tlc.com/play/' + slugValue;
+              const finalUrl = window.location.origin + '/game/' + slugValue;
               document.getElementById('gameLink').value = finalUrl;
               document.getElementById('publishModal').classList.add('active');
           } else {

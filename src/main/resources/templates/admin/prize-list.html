@@ -143,7 +143,7 @@
                   <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Chọn Giải Thưởng</label>
                   <select name="maGiaiThuong" id="allocatePrize" required style="padding: 6px; width: 250px; border: 1px solid #ccc; border-radius: 3px;">
                     <option value="">-- Chọn giải thưởng --</option>
-                    <option th:each="p : ${prizes}" th:value="${p.maGiaiThuong}" th:data-campaign="${p.maChienDich}" th:text="${p.tenGiai + ' (Còn ' + p.tonKhoToanHeThong + ')'}"></option>
+                    <option th:each="p : ${prizes}" th:if="${p.laGiaiThuong != null and p.laGiaiThuong}" th:value="${p.maGiaiThuong}" th:data-campaign="${p.maChienDich}" th:text="${p.tenGiai + ' (Còn ' + p.tonKhoToanHeThong + ')'}"></option>
                   </select>
                 </div>
                 <div>
@@ -182,13 +182,9 @@
                 </div>
                 <div class="filter-group" style="flex: 0; justify-content: flex-end; display: flex; gap: 10px;">
                   <button type="submit" class="btn-primary" style="height: 38px; white-space: nowrap; background-color: #3c8dbc; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px;">Lọc dữ liệu</button>
-                  <a th:href="@{/admin/prizes/allocations/export-excel(store=${selectedStore}, campaign=${selectedCampaign}, prize=${selectedPrize})}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 8px 16px; display: inline-block; color: #fff; border-radius: 4px; font-weight: 600; font-size: 14px; height: 38px; box-sizing: border-box; line-height: 22px;">Xuất Excel</a>
-                  <button type="button" onclick="document.getElementById('allocationExcelFile').click()" class="btn-primary" style="height: 38px; white-space: nowrap; background-color: #f39c12; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px;">Nhập Excel</button>
+                  <a th:href="@{/admin/prizes/allocations/export-excel(store=${selectedStore}, campaign=${selectedCampaign}, prize=${selectedPrize})}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 9px 20px; display: inline-block; height: 38px; white-space: nowrap; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; ">Xuất Excel</a>
                 </div>
               </div>
-            </form>
-            <form id="importAllocationsForm" th:action="@{/admin/prizes/allocations/import}" method="post" enctype="multipart/form-data" style="display: none;">
-                <input type="file" id="allocationExcelFile" name="file" accept=".xlsx, .xls" onchange="if(this.value) document.getElementById('importAllocationsForm').submit();">
             </form>
 
             <table class="table-striped" style="width: 100%; border-collapse: collapse;">
@@ -486,10 +482,69 @@
            document.getElementById('prizeProb').value = '';
            document.getElementById('prizeIsReal').checked = true;
         }
+        
+        // Cập nhật lại UI dựa trên trạng thái checkbox
+        updateDummyPrizeFields();
       }
     }
     
+    function deletePrize(maGiaiThuong) {
+        if (confirm('Xoá giải này? Chú ý: Không thể xoá nếu giải đã phân bổ.')) {
+            document.getElementById('deleteMaGiaiThuong').value = maGiaiThuong;
+            document.getElementById('deleteForm').submit();
+        }
+    }
+
+    function updateDummyPrizeFields() {
+        var isReal = document.getElementById('prizeIsReal').checked;
+        var totalInput = document.getElementById('prizeTotal');
+        var probInput = document.getElementById('prizeProb');
+        var campaignSelect = document.getElementById('prizeCampaign');
+        var currentPrizeMa = document.getElementById('prizeMa').value;
+
+        if (!isReal) {
+            // Tự động điền tồn kho = -1 và khóa lại
+            totalInput.value = -1;
+            totalInput.readOnly = true;
+            totalInput.style.backgroundColor = '#e9ecef';
+
+            // Tính xác suất còn lại
+            var selectedCampaign = campaignSelect.value;
+            var totalRealProb = 0;
+            
+            // Lặp qua tất cả các giải thưởng hiện có trên view để tính tổng tỉ lệ các giải thật của campaign này
+            var prizeLinks = document.querySelectorAll('a[onclick^="openEditModal"]');
+            prizeLinks.forEach(function(link) {
+                var pChien = link.getAttribute('data-chien');
+                var pIsReal = link.getAttribute('data-is-real');
+                var pXac = parseFloat(link.getAttribute('data-xac')) || 0;
+                var pMa = link.getAttribute('data-ma');
+                
+                // Nếu cùng chiến dịch, là giải thật, và khác với giải đang sửa (để tính đúng khi update)
+                if (pChien === selectedCampaign && (pIsReal === 'true' || pIsReal === true) && pMa !== currentPrizeMa) {
+                    totalRealProb += pXac;
+                }
+            });
+            
+            var leftProb = 100 - totalRealProb;
+            if (leftProb < 0) leftProb = 0;
+            
+            probInput.value = leftProb.toFixed(2);
+            probInput.readOnly = true;
+            probInput.style.backgroundColor = '#e9ecef';
+        } else {
+            // Mở khóa nếu là giải thật
+            totalInput.readOnly = false;
+            totalInput.style.backgroundColor = '';
+            if(totalInput.value == -1) totalInput.value = '';
+            
+            probInput.readOnly = false;
+            probInput.style.backgroundColor = '';
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
+        // ... (phần code checkbox dropdown cũ) ...
         var checkList = document.querySelector('.dropdown-check-list');
         if (checkList) {
             var anchor = checkList.querySelector('.anchor');
@@ -503,7 +558,6 @@
                 }
             }
             
-            // Cập nhật text của anchor khi chọn
             var items = checkList.querySelectorAll('input[type="checkbox"]');
             items.forEach(item => {
                 item.addEventListener('change', function() {
@@ -516,7 +570,6 @@
                 });
             });
 
-            // Đóng khi click ra ngoài
             document.addEventListener('click', function(e) {
                 if (!checkList.contains(e.target)) {
                     checkList.classList.remove('visible');
@@ -524,17 +577,18 @@
                 }
             });
         }
+
+        // Bắt sự kiện thay đổi checkbox Giải thật và Campaign
+        document.getElementById('prizeIsReal').addEventListener('change', updateDummyPrizeFields);
+        document.getElementById('prizeCampaign').addEventListener('change', function() {
+            if (!document.getElementById('prizeIsReal').checked) {
+                updateDummyPrizeFields();
+            }
+        });
     });
-    
+
     function closeModal(modalId) {
       document.getElementById(modalId).style.display = 'none';
-    }
-
-    function deletePrize(maGiaiThuong) {
-        if (confirm('Xoá giải này? Chú ý: Không thể xoá nếu giải đã phân bổ.')) {
-            document.getElementById('deleteMaGiaiThuong').value = maGiaiThuong;
-            document.getElementById('deleteForm').submit();
-        }
     }
   </script>
 </body>

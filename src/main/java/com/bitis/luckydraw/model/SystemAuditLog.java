@@ -37,6 +37,7 @@ public class SystemAuditLog {
     @Column(name = "new_values", columnDefinition = "NVARCHAR(MAX)")
     private String newValues;
 
+
     @Column(name = "description", length = 500)
     private String description;
 

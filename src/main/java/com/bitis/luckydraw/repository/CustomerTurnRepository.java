@@ -28,4 +28,6 @@ public interface CustomerTurnRepository extends JpaRepository<CustomerTurn, Long
                               @Param("maChienDich") String maChienDich, 
                               @Param("soLuongCong") Integer soLuongCong, 
                               @Param("nguonThamChieu") String nguonThamChieu);
+
+    java.util.List<CustomerTurn> findByMaKhachHang(String maKhachHang);
 }

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Sử Trúng Thưởng</title>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background: linear-gradient(180deg, #4da6e8 0%, #7ec8f0 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 16px;
+        }
+
+        /* Nav */
+        nav {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 50;
+        }
+
+        nav a {
+            color: #fff;
+            background: rgba(30,74,138,0.7);
+            padding: 8px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: all 0.2s;
+        }
+
+        nav a:hover {
+            background: rgba(30,74,138,0.95);
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 1.8rem;
+            font-weight: 800;
+            text-align: center;
+            margin: 40px 0 24px;
+            text-shadow: 1px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Card chứa bảng */
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 600px;
+            overflow: hidden;
+            overflow-x: auto;
+        }
+
+        .card-header {
+            background: linear-gradient(to right, #2b5ea7, #1a3f7a);
+            color: #fff;
+            padding: 16px 24px;
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-header .count {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Bảng */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            background: #f0f6fc;
+            color: #1a3f7a;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 20px;
+            text-align: left;
+            border-bottom: 2px solid #d6ecfa;
+        }
+
+        thead th:first-child {
+            width: 60px;
+            text-align: center;
+        }
+
+        thead th:last-child {
+            text-align: right;
+        }
+
+        tbody tr {
+            transition: background 0.15s;
+        }
+
+        tbody tr:hover {
+            background: #f7fbff;
+        }
+
+        tbody tr:not(:last-child) td {
+            border-bottom: 1px solid #eef4fa;
+        }
+
+        tbody td {
+            padding: 14px 20px;
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        tbody td:first-child {
+            text-align: center;
+            font-weight: 800;
+            color: #2b5ea7;
+        }
+
+        tbody td:last-child {
+            text-align: right;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .prize-name-cell {
+            font-weight: 700;
+            color: #1a3f7a;
+        }
+
+        /* Badge thứ tự */
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .rank-1 { background: linear-gradient(135deg, #ffd700, #daa520); color: #5c3d00; }
+        .rank-2 { background: linear-gradient(135deg, #c0c0c0, #a0a0a0); color: #444; }
+        .rank-3 { background: linear-gradient(135deg, #cd7f32, #a0622e); color: #fff; }
+        .rank-default { background: #d6ecfa; color: #2b5ea7; }
+
+        /* Trống */
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+            color: #888;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin-bottom: 16px;
+        }
+
+        .empty-state a {
+            display: inline-block;
+            color: #fff;
+            background: linear-gradient(to bottom, #2b5ea7, #1a3f7a);
+            padding: 10px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border: 2px solid #ffd700;
+            transition: all 0.2s;
+        }
+
+        .empty-state a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+        }
+
+
+
+        @media (max-width: 500px) {
+            h1 { font-size: 1.3rem; }
+            thead th, tbody td { padding: 10px 14px; }
+            .card { border-radius: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="/customer/index">Quay thưởng</a>
+    </nav>
+
+    <h1>LỊCH SỬ TRÚNG THƯỞNG</h1>
+
+    <div class="card">
+        <div class="card-header">
+            <span>Danh sách giải thưởng đã nhận</span>
+            <span class="count" th:text="${#lists.size(history)} + ' giải'">0 giải</span>
+        </div>
+        <div id="tableContainer">
+            <div class="empty-state" th:if="${#lists.isEmpty(history)}">
+                <span class="icon">🎰</span>
+                <p>Chưa có lượt trúng thưởng nào</p>
+                <a href="/customer/index">Quay ngay để nhận thưởng</a>
+            </div>
+
+            <div class="table-responsive" th:unless="${#lists.isEmpty(history)}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Giải thưởng</th>
+                            <th>Thời gian</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="item, stat : ${history}" style="cursor:pointer;" th:data-code="${item.maVoucher}" onclick="window.location.href='/customer/prize-detail?code=' + this.getAttribute('data-code')" title="Nhấn để xem chi tiết">
+                            <td>
+                                <span class="rank-badge" th:classappend="${stat.index == 0 ? 'rank-1' : (stat.index == 1 ? 'rank-2' : (stat.index == 2 ? 'rank-3' : 'rank-default'))}" th:text="${stat.index + 1}"></span>
+                            </td>
+                            <td class="prize-name-cell" th:text="${item.tenGiai}"></td>
+                            <td th:text="${#temporals.format(item.thoiGianTao, 'dd/MM/yyyy HH:mm')}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

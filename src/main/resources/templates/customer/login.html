@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Tri Ân - Đăng Nhập</title>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background: linear-gradient(135deg, #f0f7fb 0%, #d6ecfa 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+        }
+
+        /* Khung Đăng Nhập */
+        .login-card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 400px;
+            overflow: hidden;
+            text-align: center;
+            position: relative;
+            animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding-bottom: 20px;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(40px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        /* Banner phía trên */
+        .card-banner {
+            background: linear-gradient(135deg, #2b5ea7, #1a3f7a);
+            height: 140px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            margin-bottom: 50px;
+        }
+
+        .card-banner h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 2;
+        }
+
+        /* Icon ở giữa */
+        .banner-icon {
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            font-size: 2.5rem;
+            z-index: 10;
+            border: 4px solid #f0f6fc;
+        }
+
+        .banner-icon::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #4da6e8;
+            opacity: 0.2;
+            z-index: -1;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+
+        /* Nội dung */
+        .card-body {
+            padding: 0 24px 20px;
+        }
+
+        .success-text {
+            color: #27ae60;
+            font-weight: 800;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .message {
+            color: #555;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .receipt-code {
+            display: inline-block;
+            background: #f0f6fc;
+            color: #1a3f7a;
+            font-weight: 800;
+            font-family: monospace;
+            font-size: 1.2rem;
+            padding: 6px 16px;
+            border-radius: 8px;
+            border: 1px dashed #2b5ea7;
+            margin-bottom: 24px;
+        }
+
+        /* Nút Zalo */
+        .btn-zalo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            background: #0068FF; 
+            color: #fff;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            box-shadow: 0 6px 15px rgba(0, 104, 255, 0.25);
+        }
+
+        .btn-zalo:hover {
+            background: #0056d6;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 104, 255, 0.35);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #aaa;
+            font-size: 0.85rem;
+            margin: 20px 0;
+        }
+        
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #eee;
+        }
+        .divider::before { margin-right: 10px; }
+        .divider::after { margin-left: 10px; }
+
+        .btn-secondary {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .btn-secondary:hover {
+            color: #1a3f7a;
+            text-decoration: underline;
+        }
+
+        /* Màn hình loading */
+        .loading-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f0f6fc;
+            border-top: 4px solid #2b5ea7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        .loading-text {
+            color: #1a3f7a;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="card-banner">
+            <h1 id="bannerTitle">Đăng Nhập</h1>
+            <div class="banner-icon" id="bannerIcon">👤</div>
+        </div>
+
+        <div class="card-body">
+            
+            <!-- Thông báo Alert -->
+            <div th:if="${successMessage}" style="background-color: #d1fae5; color: #065f46; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-weight: 600; font-size: 0.95rem; border: 1px solid #a7f3d0;" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" style="background-color: #fee2e2; color: #991b1b; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-weight: 600; font-size: 0.95rem; border: 1px solid #fecaca;" th:text="${errorMessage}"></div>
+
+            <!-- SECTION 1: HIỂN THỊ KHI QUÉT MÃ QR (CÓ RECEIPT) -->
+            <div id="receiptSection" style="display: none;">
+                <div class="success-text">
+                    ✓ Quét mã thành công
+                </div>
+                <p class="message">Bạn nhận được <strong>1 lượt quay</strong> từ hóa đơn mua hàng:</p>
+                <div class="receipt-code" id="receiptCodeDisplay"></div>
+                
+                <p class="message" style="font-size: 0.85rem; color: #666; margin-bottom: 20px;">
+                    Vui lòng đăng nhập bằng Zalo để hệ thống lưu trữ lượt quay và phần thưởng của bạn an toàn.
+                </p>
+            </div>
+
+            <!-- SECTION 2: HIỂN THỊ KHI ĐĂNG NHẬP BÌNH THƯỜNG -->
+            <div id="generalSection" style="display: none;">
+                <h2 style="font-size: 1.25rem; color: #1a3f7a; margin-bottom: 10px; font-weight: 800;">Chào mừng trở lại!</h2>
+                <p class="message" style="margin-bottom: 25px;">
+                    Đăng nhập cực nhanh bằng Zalo để tham gia các chương trình khuyến mãi, quay thưởng và nhận hàng ngàn phần quà giá trị.
+                </p>
+            </div>
+
+            <!-- Form Đăng Nhập Giả Lập -->
+            <form action="/customer/auth/mock-login" method="POST" id="loginForm">
+                
+                <!-- Hiển thị ô nhập mã nếu không có tham số URL (để test) -->
+                <div id="manualReceiptContainer" style="display: none; margin-bottom: 20px;">
+                    <label style="display:block; text-align:left; font-size: 0.9rem; font-weight:600; color:#1a3f7a; margin-bottom: 8px;">Nhập mã QR / Mã hóa đơn (Dành cho Test):</label>
+                    <input type="text" name="receipt" id="receiptInput" placeholder="Ví dụ: POS-2026-65597" style="width:100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-family: inherit; font-size: 1rem;">
+                </div>
+                <button type="submit" class="btn-zalo" id="loginZaloBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="24" height="24" rx="6" fill="#fff"/>
+                        <path d="M16.5 12.5C16.5 14.9853 14.4853 17 12 17C9.51472 17 7.5 14.9853 7.5 12.5C7.5 10.0147 9.51472 8 12 8C14.4853 8 16.5 10.0147 16.5 12.5Z" fill="#0068FF"/>
+                        <path d="M12 17V20" stroke="#0068FF" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Đăng nhập bằng Zalo (Mock)
+                </button>
+            </form>
+
+            <div class="divider">Hoặc</div>
+
+            <a href="/customer/index" class="btn-secondary">Quay lại trang chủ</a>
+        </div>
+
+        <!-- Màn hình loading -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <div class="loading-text">Đang xác thực Zalo...</div>
+        </div>
+    </div>
+
+    <script>
+        // Kiểm tra xem có mã receipt trên URL không
+        const params = new URLSearchParams(window.location.search);
+        const receiptCode = params.get('receipt');
+
+        const receiptSection = document.getElementById('receiptSection');
+        const generalSection = document.getElementById('generalSection');
+        const bannerTitle = document.getElementById('bannerTitle');
+        const bannerIcon = document.getElementById('bannerIcon');
+        const receiptInput = document.getElementById('receiptInput');
+
+        if (receiptCode) {
+            // Flow 1: Khách quét QR từ hóa đơn
+            receiptSection.style.display = 'block';
+            document.getElementById('receiptCodeDisplay').textContent = receiptCode;
+            receiptInput.value = receiptCode;
+            
+            bannerTitle.textContent = 'Vòng Quay May Mắn';
+            bannerIcon.textContent = '🧾';
+        } else {
+            // Flow 2: Khách truy cập từ Trang chủ (Không có mã hóa đơn)
+            generalSection.style.display = 'block';
+            document.getElementById('manualReceiptContainer').style.display = 'block';
+            
+            bannerTitle.textContent = 'Đăng Nhập';
+            bannerIcon.textContent = '👤';
+        }
+
+        // Xử lý nút bấm giả lập quá trình đăng nhập để hiện overlay trước khi POST
+        const loginForm = document.getElementById('loginForm');
+        const overlay = document.getElementById('loadingOverlay');
+
+        loginForm.addEventListener('submit', () => {
+            overlay.classList.add('active');
+            if (receiptCode) {
+                document.querySelector('.loading-text').textContent = 'Đang xử lý hóa đơn...';
+            } else {
+                document.querySelector('.loading-text').textContent = 'Đang đăng nhập...';
+            }
+        });
+    </script>
+</body>
+</html>

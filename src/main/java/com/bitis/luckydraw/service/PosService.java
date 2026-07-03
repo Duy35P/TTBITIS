@@ -23,11 +23,13 @@ public class PosService {
     private final CampaignRulePaymentRepository campaignRulePaymentRepository;
     private final CampaignRuleSkuRepository campaignRuleSkuRepository;
     private final CustomerTurnRepository customerTurnRepository;
+    private final GameAccessTokenRepository tokenRepo;
 
     public PosService(CustomerRepository customerRepository, InvoiceRepository invoiceRepository,
                       CampaignRepository campaignRepository, CampaignStoreRepository campaignStoreRepository,
                       CampaignRuleRepository campaignRuleRepository, CampaignRulePaymentRepository campaignRulePaymentRepository,
-                      CampaignRuleSkuRepository campaignRuleSkuRepository, CustomerTurnRepository customerTurnRepository) {
+                      CampaignRuleSkuRepository campaignRuleSkuRepository, CustomerTurnRepository customerTurnRepository,
+                      GameAccessTokenRepository tokenRepo) {
         this.customerRepository = customerRepository;
         this.invoiceRepository = invoiceRepository;
         this.campaignRepository = campaignRepository;
@@ -36,6 +38,7 @@ public class PosService {
         this.campaignRulePaymentRepository = campaignRulePaymentRepository;
         this.campaignRuleSkuRepository = campaignRuleSkuRepository;
         this.customerTurnRepository = customerTurnRepository;
+        this.tokenRepo = tokenRepo;
     }
 
     @Transactional
@@ -148,6 +151,16 @@ public class PosService {
         }
 
         if (totalTurnsEarned > 0) {
+            // Sinh GameAccessToken nếu có lượt thưởng
+            GameAccessToken token = new GameAccessToken();
+            token.setToken(request.getInvoiceCode());
+            token.setMaHoaDon(request.getInvoiceCode());
+            token.setSoLuongLuotThuong(totalTurnsEarned);
+            token.setDaSuDung(false); // Chưa sử dụng, chờ khách quét mã
+            token.setMaKhachHangKichHoat(customer.getMaKhachHang());
+            token.setHetHanLuc(LocalDateTime.now().plusDays(30));
+            tokenRepo.save(token);
+
             return PosSyncResponse.builder()
                 .status("SUCCESS")
                 .message("Đã cộng thành công " + totalTurnsEarned + " lượt!")

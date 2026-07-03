@@ -327,18 +327,25 @@ BEGIN
         p.loai_giai, 
         p.xac_suat
     FROM [dbo].[prize] p
-    JOIN [dbo].[store_prize_inventory] spi ON p.ma_giai_thuong = spi.ma_giai_thuong
-    WHERE spi.ma_store = @ma_store
-      AND p.ma_chien_dich = @ma_chien_dich
-      AND spi.ton_kho > 0             -- Điều kiện 1: Cửa hàng này phải còn hàng
-      AND p.ton_kho_toan_he_thong > 0 -- Điều kiện 2: Tổng kho của giải này trên hệ thống cũng phải còn
+    LEFT JOIN [dbo].[store_prize_inventory] spi ON p.ma_giai_thuong = spi.ma_giai_thuong AND spi.ma_store = @ma_store
+    WHERE p.ma_chien_dich = @ma_chien_dich
       AND (
-          p.gioi_han_trung_moi_customer IS NULL 
-          OR @ma_khach_hang IS NULL
-          OR p.gioi_han_trung_moi_customer > (
-              SELECT COUNT(*) 
-              FROM [dbo].[reward_voucher] rv WITH (NOLOCK)
-              WHERE rv.ma_giai_thuong = p.ma_giai_thuong AND rv.ma_khach_hang = @ma_khach_hang
+          p.la_giai_thuong = 0 -- Bỏ qua check kho nếu là giải giả
+          OR 
+          (
+              p.la_giai_thuong = 1 
+              AND spi.ma_store IS NOT NULL
+              AND spi.ton_kho > 0 
+              AND p.ton_kho_toan_he_thong > 0 
+              AND (
+                  p.gioi_han_trung_moi_customer IS NULL 
+                  OR @ma_khach_hang IS NULL
+                  OR p.gioi_han_trung_moi_customer > (
+                      SELECT COUNT(*) 
+                      FROM [dbo].[reward_voucher] rv WITH (NOLOCK)
+                      WHERE rv.ma_giai_thuong = p.ma_giai_thuong AND rv.ma_khach_hang = @ma_khach_hang
+                  )
+              )
           )
       )
 END
