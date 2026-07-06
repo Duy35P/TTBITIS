@@ -323,3 +323,5 @@ select * from vai_tro
   truncate table invoice
   truncate table turn_transaction
   truncate table reward_voucher
+  truncate table prize
+  truncate table store_prize_inventory

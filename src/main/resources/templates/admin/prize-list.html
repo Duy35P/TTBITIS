@@ -203,7 +203,9 @@
                   <th style="padding: 12px 8px;">Chiến Dịch</th>
                   <th style="padding: 12px 8px;">SL Phân bổ (Tổng cấp)</th>
                   <th style="padding: 12px 8px;">Đã trúng tại CH</th>
-                  <th style="padding: 12px 8px;">SL còn lại</th>
+                  <th style="padding: 12px 8px;">SL quay còn lại</th>
+                  <th style="padding: 12px 8px; border-left: 2px solid #eee;">Đã đổi thực tế</th>
+                  <th style="padding: 12px 8px;">Tồn kho vật lý</th>
                   <th style="padding: 12px 8px;">Thao tác</th>
                 </tr>
               </thead>
@@ -215,6 +217,8 @@
                   <td style="padding: 12px 8px;" th:text="${a.tongLuongCap}"></td>
                   <td style="padding: 12px 8px;" th:text="${a.daPhat}"></td>
                   <td style="padding: 12px 8px;"><strong th:text="${a.tonKho}" style="color: #e74c3c;"></strong></td>
+                  <td style="padding: 12px 8px; border-left: 2px solid #eee;" th:text="${a.daDoiThucTe != null ? a.daDoiThucTe : 0}"></td>
+                  <td style="padding: 12px 8px;"><strong th:text="${a.tonKhoThucTe != null ? a.tonKhoThucTe : a.tongLuongCap}" style="color: #27ae60;"></strong></td>
                   <td style="padding: 12px 8px;" class="action-links">
                     <a href="javascript:void(0)" 
                        th:data-store="${a.maStore}"

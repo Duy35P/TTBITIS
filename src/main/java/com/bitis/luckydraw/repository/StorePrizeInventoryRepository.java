@@ -18,6 +18,12 @@ public interface StorePrizeInventoryRepository extends JpaRepository<StorePrizeI
     List<StorePrizeInventory> findByMaGiaiThuong(String maGiaiThuong);
     Optional<StorePrizeInventory> findByMaStoreAndMaGiaiThuong(String maStore, String maGiaiThuong);
 
+    @Query(value = "SELECT COALESCE(SUM(da_phat), 0) FROM store_prize_inventory", nativeQuery = true)
+    Long sumDaPhat();
+
+    @Query(value = "SELECT COALESCE(SUM(ton_kho), 0) FROM store_prize_inventory", nativeQuery = true)
+    Long sumTonKho();
+
     @Query(value = "SELECT * FROM vw_store_prize_inventory " +
                    "WHERE (:maStore IS NULL OR maStore = :maStore) " +
                    "AND (:maChienDich IS NULL OR maChienDich = :maChienDich) " +
@@ -38,4 +44,8 @@ public interface StorePrizeInventoryRepository extends JpaRepository<StorePrizeI
     void updateStorePrizeInventory(@Param("maStore") String maStore, 
                                    @Param("maGiaiThuong") String maGiaiThuong, 
                                    @Param("newTongLuongCap") int newTongLuongCap);
+
+    @Modifying
+    @Query(value = "EXEC sp_RedeemStorePrize @MaStore = :maStore, @MaGiaiThuong = :maGiaiThuong", nativeQuery = true)
+    void redeemStorePrize(@Param("maStore") String maStore, @Param("maGiaiThuong") String maGiaiThuong);
 }

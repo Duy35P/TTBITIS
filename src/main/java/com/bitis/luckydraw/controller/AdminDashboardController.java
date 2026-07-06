@@ -26,6 +26,12 @@ public class AdminDashboardController {
     @Autowired
     private TurnTransactionRepository turnTransactionRepository;
 
+    @Autowired
+    private com.bitis.luckydraw.repository.RewardVoucherRepository rewardVoucherRepository;
+
+    @Autowired
+    private com.bitis.luckydraw.repository.StorePrizeInventoryRepository storePrizeInventoryRepository;
+
     @GetMapping
     public String index(Model model) {
         long totalCustomers = customerRepository.count();
@@ -37,6 +43,19 @@ public class AdminDashboardController {
         model.addAttribute("totalStores", totalStores);
         model.addAttribute("runningCampaigns", runningCampaigns);
         model.addAttribute("totalSpins", totalSpins);
+
+        // Chart 1: Lượt quay
+        java.util.List<Object[]> spinsData = turnTransactionRepository.getSpinsPerDay();
+        model.addAttribute("spinsData", spinsData);
+
+        // Chart 2: Tỷ lệ phát thưởng
+        Long daPhat = storePrizeInventoryRepository.sumDaPhat();
+        Long tonKho = storePrizeInventoryRepository.sumTonKho();
+        model.addAttribute("totalDaPhat", daPhat != null ? daPhat : 0);
+        model.addAttribute("totalTonKho", tonKho != null ? tonKho : 0);
+
+        // Table: Lịch sử trúng thưởng
+        model.addAttribute("recentWins", rewardVoucherRepository.getRecentWins());
 
         return "admin/index";
     }

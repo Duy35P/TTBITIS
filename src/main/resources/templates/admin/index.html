@@ -123,7 +123,6 @@
           <div class="chart-card">
             <div class="chart-header">
               <div class="chart-title"><span class="icon">📈</span> Tổng quan lượt quay (Tháng này)</div>
-              <div style="font-size: 24px; font-weight: 700;">3,210 <span class="stat-badge badge-green" style="font-size: 11px;">+12%</span></div>
             </div>
             <div style="flex: 1; width: 100%; position: relative;">
               <canvas id="spinsChart"></canvas>
@@ -137,12 +136,12 @@
               <div class="stat-badge badge-yellow">Sắp cạn kho</div>
             </div>
             <div style="text-align: center; margin-bottom: 10px;">
-              <span style="font-size: 13px; color: #666; background: #f4f4f4; padding: 4px 10px; border-radius: 20px; margin: 0 5px;">iPhone 16</span>
-              <span style="font-size: 13px; color: #666; background: #f4f4f4; padding: 4px 10px; border-radius: 20px; margin: 0 5px;">Voucher</span>
+              <span style="font-size: 13px; color: #666; background: #f4f4f4; padding: 4px 10px; border-radius: 20px; margin: 0 5px;" th:text="'Đã phát: ' + ${totalDaPhat}">Đã phát</span>
+              <span style="font-size: 13px; color: #666; background: #f4f4f4; padding: 4px 10px; border-radius: 20px; margin: 0 5px;" th:text="'Còn lại: ' + ${totalTonKho}">Còn lại</span>
             </div>
             <div class="donut-container">
               <canvas id="prizeDonut"></canvas>
-              <div style="position: absolute; font-size: 32px; font-weight: 700;">65%</div>
+              <div style="position: absolute; font-size: 32px; font-weight: 700;" th:text="${totalDaPhat + totalTonKho > 0 ? (#numbers.formatInteger(totalDaPhat * 100.0 / (totalDaPhat + totalTonKho), 0)) + '%' : '0%'}">65%</div>
             </div>
           </div>
         </div>
@@ -153,7 +152,7 @@
         <div class="col-12">
           <div class="table-card">
             <div class="table-header">
-              <div class="table-title"><span class="icon">🔄</span> Lịch sử trúng thưởng gần đây (Dữ liệu mẫu)</div>
+              <div class="table-title"><span class="icon">🔄</span> Lịch sử trúng thưởng gần đây</div>
               <button class="filter-btn">Lọc kết quả ▼</button>
             </div>
             <table>
@@ -167,26 +166,17 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td><strong>Nguyễn Văn A</strong><br><span style="font-size:12px; color:#777;">0909xxx123</span></td>
-                  <td>Voucher Giảm 500K</td>
-                  <td>TLC Showroom Hà Đông</td>
-                  <td>17/06/2026 08:30:15</td>
-                  <td><span class="status-badge">Đã trao</span></td>
+                <tr th:each="win : ${recentWins}">
+                  <td><strong th:text="${win.tenKhach}">Nguyễn Văn A</strong><br><span style="font-size:12px; color:#777;" th:text="${win.phone}">0909xxx123</span></td>
+                  <td th:text="${win.tenGiai}">Voucher Giảm 500K</td>
+                  <td th:text="${win.tenStorePhatHanh != null ? win.tenStorePhatHanh : win.maStorePhatHanh}">TLC Showroom Hà Đông</td>
+                  <td th:text="${win.thoiGianTao != null ? #temporals.format(win.thoiGianTao, 'dd/MM/yyyy HH:mm:ss') : ''}">17/06/2026 08:30:15</td>
+                  <td>
+                    <span class="status-badge" th:style="${win.trangThai == 1 ? 'background-color:#dcfce7; color:#166534;' : 'background-color:#fef3c7; color:#92400e;'}" th:text="${win.trangThai == 1 ? 'Đã đổi quà' : 'Chưa đổi'}">Đã trao</span>
+                  </td>
                 </tr>
-                <tr>
-                  <td><strong>Trần Thị B</strong><br><span style="font-size:12px; color:#777;">0988xxx456</span></td>
-                  <td>iPhone 16 Pro Max 256GB</td>
-                  <td>Đại lý Cấp 1 - Hưng Yên</td>
-                  <td>16/06/2026 14:20:00</td>
-                  <td><span class="status-badge" style="background-color:#fef3c7; color:#92400e;">Chờ liên hệ</span></td>
-                </tr>
-                <tr>
-                  <td><strong>Lê Văn C</strong><br><span style="font-size:12px; color:#777;">0912xxx789</span></td>
-                  <td>Tai nghe AirPods Pro</td>
-                  <td>Cửa hàng Vật Tư Điện Hùng Yến</td>
-                  <td>15/06/2026 09:15:22</td>
-                  <td><span class="status-badge">Đã trao</span></td>
+                <tr th:if="${#lists.isEmpty(recentWins)}">
+                  <td colspan="5" style="text-align: center; padding: 20px; color: #777;">Chưa có dữ liệu trúng thưởng</td>
                 </tr>
               </tbody>
             </table>
@@ -197,7 +187,25 @@
     </section>
   </div>
 
-  <script>
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    const totalDaPhat = /*[[${totalDaPhat}]]*/ 65;
+    const totalTonKho = /*[[${totalTonKho}]]*/ 35;
+    const spinsRaw = /*[[${spinsData}]]*/ [];
+    /*]]>*/
+
+    const spinLabels = [];
+    const spinValues = [];
+    if (spinsRaw && spinsRaw.length > 0) {
+        spinsRaw.forEach(item => {
+            // item[0] = date string, item[1] = count
+            // Lấy ngày/tháng từ YYYY-MM-DD
+            const dateStr = item[0] ? item[0].substring(5) : '';
+            spinLabels.push(dateStr);
+            spinValues.push(item[1]);
+        });
+    }
+
     // Initialize Area Chart (Lượt quay)
     const ctxArea = document.getElementById('spinsChart');
     if (ctxArea) {
@@ -209,10 +217,10 @@
       new Chart(ctx, {
         type: 'line',
         data: {
-          labels: ['1/8', '3/8', '5/8', '7/8', '9/8', '11/8', '13/8', '15/8', '17/8', '19/8', '21/8', '23/8', '25/8'],
+          labels: spinLabels,
           datasets: [{
             label: 'Lượt quay',
-            data: [50, 150, 120, 90, 180, 70, 100, 190, 80, 180, 90, 120, 250],
+            data: spinValues,
             borderColor: '#3c8dbc',
             backgroundColor: gradientArea,
             borderWidth: 2,
@@ -246,7 +254,7 @@
         data: {
           labels: ['Đã phát', 'Còn lại'],
           datasets: [{
-            data: [65, 35],
+            data: [totalDaPhat, totalTonKho],
             backgroundColor: ['#6b94ff', '#f3f4f6'],
             borderWidth: 0,
             borderRadius: 20,

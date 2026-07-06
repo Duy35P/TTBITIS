@@ -21,4 +21,13 @@ public interface RewardVoucherRepository extends JpaRepository<RewardVoucher, Lo
 
     @Query(value = "SELECT * FROM vw_reward_voucher_list WHERE maKhachHang = :maKhachHang ORDER BY thoiGianTao DESC", nativeQuery = true)
     List<RewardVoucherListDto> getRewardVoucherListByKhachHang(@org.springframework.data.repository.query.Param("maKhachHang") String maKhachHang);
+
+    @Query(value = "SELECT * FROM vw_reward_voucher_list WHERE maVoucher = :maVoucher", nativeQuery = true)
+    Optional<RewardVoucherListDto> getRewardVoucherDetail(@org.springframework.data.repository.query.Param("maVoucher") String maVoucher);
+
+    @Query(value = "SELECT * FROM vw_reward_voucher_list ORDER BY thoiGianTao DESC OFFSET 0 ROWS FETCH NEXT 5 ROWS ONLY", nativeQuery = true)
+    List<RewardVoucherListDto> getRecentWins();
+
+    @Query(value = "SELECT * FROM vw_reward_voucher_list WHERE trangThai = 1 ORDER BY thoiGianDoi DESC OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY", nativeQuery = true)
+    List<RewardVoucherListDto> getRecentRedemptions();
 }

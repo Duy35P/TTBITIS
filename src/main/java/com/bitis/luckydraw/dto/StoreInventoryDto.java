@@ -10,4 +10,6 @@ public interface StoreInventoryDto {
     Integer getTongLuongCap();
     Integer getDaPhat();
     Integer getTonKho();
+    Integer getDaDoiThucTe();
+    Integer getTonKhoThucTe();
 }

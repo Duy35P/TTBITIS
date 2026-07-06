@@ -133,6 +133,16 @@ public class PosService {
         }
 
         if (totalTurnsEarned > 0) {
+            int maxHanTokenNgay = 30;
+            if (appliedCampaigns != null && !appliedCampaigns.isEmpty()) {
+                for (String mc : appliedCampaigns) {
+                    Campaign c = campaignRepository.findByMaChienDich(mc).orElse(null);
+                    if (c != null && c.getHanTokenNgay() != null) {
+                        maxHanTokenNgay = Math.max(maxHanTokenNgay, c.getHanTokenNgay());
+                    }
+                }
+            }
+
             // Dùng token UUID do frontend sinh (đã in lên QR bill), không sinh mới
             String tokenValue = (request.getGameAccessToken() != null && !request.getGameAccessToken().isEmpty())
                     ? request.getGameAccessToken()
@@ -143,7 +153,7 @@ public class PosService {
             token.setSoLuongLuotThuong(totalTurnsEarned);
             token.setDaSuDung(false);
             token.setMaKhachHangKichHoat(null); // Sẽ được cập nhật khi Zalo User quét QR
-            token.setHetHanLuc(LocalDateTime.now().plusDays(30));
+            token.setHetHanLuc(LocalDateTime.now().plusDays(maxHanTokenNgay));
             tokenRepo.save(token);
 
             return PosSyncResponse.builder()

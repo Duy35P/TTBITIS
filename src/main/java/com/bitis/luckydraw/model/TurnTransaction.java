@@ -31,4 +31,7 @@ public class TurnTransaction {
 
     @Column(name = "nguon_tham_chieu", length = 255)
     private String nguonThamChieu;
+
+    @Column(name = "thoi_gian_tao", insertable = false, updatable = false)
+    private java.time.LocalDateTime thoiGianTao;
 }

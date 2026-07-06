@@ -18,16 +18,18 @@ public class TurnManagementService {
     private final CustomerRepository customerRepo;
     private final InvoiceRepository invoiceRepo;
     private final CampaignStoreRepository campaignStoreRepo;
+    private final CampaignRepository campaignRepo;
     private final DeltaRuleEngine ruleEngine;
     private final CustomerTurnRepository customerTurnRepo;
     private final TurnTransactionRepository turnTransactionRepo;
     private final GameAccessTokenRepository tokenRepo;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public TurnManagementService(CustomerRepository customerRepo, InvoiceRepository invoiceRepo, CampaignStoreRepository campaignStoreRepo, DeltaRuleEngine ruleEngine, CustomerTurnRepository customerTurnRepo, TurnTransactionRepository turnTransactionRepo, GameAccessTokenRepository tokenRepo) {
+    public TurnManagementService(CustomerRepository customerRepo, InvoiceRepository invoiceRepo, CampaignStoreRepository campaignStoreRepo, CampaignRepository campaignRepo, DeltaRuleEngine ruleEngine, CustomerTurnRepository customerTurnRepo, TurnTransactionRepository turnTransactionRepo, GameAccessTokenRepository tokenRepo) {
         this.customerRepo = customerRepo;
         this.invoiceRepo = invoiceRepo;
         this.campaignStoreRepo = campaignStoreRepo;
+        this.campaignRepo = campaignRepo;
         this.ruleEngine = ruleEngine;
         this.customerTurnRepo = customerTurnRepo;
         this.turnTransactionRepo = turnTransactionRepo;
@@ -91,13 +93,21 @@ public class TurnManagementService {
 
         // 5. Nếu được cấp ít nhất 1 lượt, sinh GameAccessToken
         if (totalTurnsGrantedAcrossCampaigns > 0) {
+            int maxHanTokenNgay = 30;
+            for (CampaignStore cs : campaigns) {
+                Campaign c = campaignRepo.findByMaChienDich(cs.getMaChienDich()).orElse(null);
+                if (c != null && c.getHanTokenNgay() != null) {
+                    maxHanTokenNgay = Math.max(maxHanTokenNgay, c.getHanTokenNgay());
+                }
+            }
+
             GameAccessToken token = new GameAccessToken();
             token.setToken(java.util.UUID.randomUUID().toString());
             token.setMaHoaDon(invoice.getMaHoaDon());
             token.setSoLuongLuotThuong(totalTurnsGrantedAcrossCampaigns);
             token.setDaSuDung(false);
             token.setMaKhachHangKichHoat(customer.getMaKhachHang());
-            token.setHetHanLuc(LocalDateTime.now().plusDays(30)); // 30 ngày hết hạn
+            token.setHetHanLuc(LocalDateTime.now().plusDays(maxHanTokenNgay));
             return tokenRepo.save(token);
         }
 

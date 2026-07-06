@@ -50,4 +50,7 @@ public class Campaign {
 
     @Column(name = "doc_quyen")
     private Boolean docQuyen;
+
+    @Column(name = "han_token_ngay", nullable = false)
+    private Integer hanTokenNgay = 30;
 }

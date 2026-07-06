@@ -78,6 +78,18 @@ public class AdminCampaignController {
         if (formCampaign.getNgayBatDau() != null && formCampaign.getNgayKetThuc() != null && formCampaign.getNgayBatDau().isAfter(formCampaign.getNgayKetThuc())) {
             throw new IllegalArgumentException("Lỗi: Ngày bắt đầu không thể diễn ra sau ngày kết thúc!");
         }
+        
+        if (formCampaign.getHanTokenNgay() != null) {
+            if (formCampaign.getHanTokenNgay() < 1) {
+                throw new IllegalArgumentException("Lỗi: Hạn sử dụng Token phải từ 1 ngày trở lên!");
+            }
+            if (formCampaign.getNgayBatDau() != null && formCampaign.getNgayKetThuc() != null) {
+                long durationDays = java.time.temporal.ChronoUnit.DAYS.between(formCampaign.getNgayBatDau().toLocalDate(), formCampaign.getNgayKetThuc().toLocalDate());
+                if (formCampaign.getHanTokenNgay() > durationDays) {
+                    throw new IllegalArgumentException("Lỗi: Hạn sử dụng Token (" + formCampaign.getHanTokenNgay() + " ngày) không được lớn hơn tổng số ngày hoạt động của chiến dịch (" + durationDays + " ngày)!");
+                }
+            }
+        }
 
         if (formCampaign.getId() != null && formCampaign.getNgayKetThuc() != null) {
             Campaign existingById = campaignRepository.findById(formCampaign.getId()).orElse(null);
@@ -128,6 +140,9 @@ public class AdminCampaignController {
                 campaign.setTrangThai(0);
             }
             campaign.setMoTa(formCampaign.getMoTa());
+            if (formCampaign.getHanTokenNgay() != null) {
+                campaign.setHanTokenNgay(formCampaign.getHanTokenNgay());
+            }
         } else {
             campaign = formCampaign;
             campaign.setTrangThai(0);
@@ -504,6 +519,10 @@ public class AdminCampaignController {
         Boolean newDocQuyen = newValues.getDocQuyen() != null ? newValues.getDocQuyen() : false;
         if (!java.util.Objects.equals(oldDocQuyen, newDocQuyen)) {
             changes.add("thiết lập độc quyền");
+        }
+        
+        if (!java.util.Objects.equals(existing.getHanTokenNgay(), newValues.getHanTokenNgay())) {
+            changes.add("hạn token");
         }
         
         if (changes.isEmpty()) {

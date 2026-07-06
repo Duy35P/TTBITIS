@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments/layout :: head('Lịch Sử Biến Động Lượt Quay')}">
+</head>
+<body>
+  <!-- Header -->
+  <header th:replace="~{admin/fragments/layout :: header}"></header>
+
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>Lịch sử Biến động Lượt Quay <small>Tra cứu nguồn gốc thêm/trừ lượt quay của khách hàng</small></h1>
+      <ul class="breadcrumb">
+        <li><a th:href="@{/admin/dashboard}">🏠 LuckyDraw</a></li>
+        <li>Biến động Lượt Quay</li>
+      </ul>
+    </section>
+    
+    <section class="content">
+      <div class="box">
+        <div class="box-header">
+          <h3 class="box-title">Sao kê Lượt quay (Turn Transactions)</h3>
+        </div>
+        <div class="box-body">
+          
+          <form class="filter-area" method="get" th:action="@{/admin/turns}">
+            <div class="filter-group">
+              <label>Số điện thoại Khách hàng</label>
+              <input type="text" name="phone" th:value="${phone}" class="form-control" placeholder="Nhập số điện thoại cần tra cứu...">
+            </div>
+            <div class="filter-group">
+              <label>Loại biến động</label>
+              <select name="loai" class="form-control">
+                <option value="all" th:selected="${loai == 'all'}">-- Tất cả --</option>
+                <option value="1" th:selected="${loai == '1'}">Được CỘNG (+) lượt quay</option>
+                <option value="0" th:selected="${loai == '0'}">Bị TRỪ (-) lượt quay</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Chiến dịch</label>
+              <select name="maChienDich" class="form-control">
+                <option value="all" th:selected="${maChienDich == 'all'}">-- Tất cả --</option>
+                <option th:each="c : ${campaigns}" th:value="${c.maChienDich}" th:text="${c.tenChienDich}" th:selected="${maChienDich == c.maChienDich}"></option>
+              </select>
+            </div>
+            <div class="filter-group" style="flex: 0; justify-content: flex-end;">
+              <button type="submit" class="btn-primary" style="height: 38px; white-space: nowrap;">Tra cứu</button>
+            </div>
+          </form>
+
+          <table class="table-striped">
+            <thead>
+              <tr>
+                <th>Thời gian</th>
+                <th>Khách Hàng (SĐT)</th>
+                <th>Chiến dịch</th>
+                <th>Biến Động</th>
+                <th>Phân loại</th>
+                <th>Nguồn tham chiếu (Ghi chú)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="tx : ${history}">
+                <td th:text="${tx.thoiGianTao != null ? #temporals.format(tx.thoiGianTao, 'dd/MM/yyyy HH:mm:ss') : '-'}"></td>
+                <td>
+                  <strong th:text="${tx.soDienThoai}"></strong><br>
+                  <small style="color:#777;" th:text="${tx.tenKhachHang}"></small>
+                </td>
+                <td th:text="${tx.tenChienDich}"></td>
+                <td>
+                  <span th:if="${tx.loai == 1}" class="text-success" th:text="'+ ' + ${tx.soLuong}"></span>
+                  <span th:if="${tx.loai == 0}" class="text-danger" th:text="'- ' + ${tx.soLuong}"></span>
+                </td>
+                <td>
+                  <span th:if="${tx.loai == 1}" class="badge bg-green">Được Cấp (Earn)</span>
+                  <span th:if="${tx.loai == 0}" class="badge bg-red">Tiêu Dùng (Play)</span>
+                </td>
+                <td th:text="${tx.nguonThamChieu}"></td>
+              </tr>
+              <tr th:if="${#lists.isEmpty(history)}">
+                <td colspan="6" style="text-align: center; padding: 20px;">Không tìm thấy lịch sử biến động nào.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
