@@ -43,21 +43,8 @@ public class PosService {
 
     @Transactional
     public PosSyncResponse processInvoice(PosSyncRequest request) {
-        // 1. Ensure Customer exists
-        String phone = request.getCustomerPhone();
-        if (phone == null || phone.trim().isEmpty()) {
-            return PosSyncResponse.builder().status("ERROR").message("Số điện thoại không được để trống").build();
-        }
-        
-        Customer customer = customerRepository.findByPhone(phone).orElseGet(() -> {
-            Customer newCustomer = new Customer();
-            newCustomer.setMaKhachHang("CUS-" + phone);
-            newCustomer.setPhone(phone);
-            newCustomer.setTenKhach("Khách hàng " + phone);
-            newCustomer.setTrangThai(1);
-            return customerRepository.save(newCustomer);
-        });
-
+        // 1. (Removed) We no longer create a Customer from the POS phone number.
+        // The phone number is just logged or ignored.
         // 2. Save Invoice
         if (request.getInvoiceCode() != null && !request.getInvoiceCode().isEmpty()) {
             if (request.getOriginalInvoiceCode() != null && !request.getOriginalInvoiceCode().isEmpty()) {
@@ -72,12 +59,12 @@ public class PosService {
             }
             Invoice invoice = new Invoice();
             invoice.setMaStore(request.getMaStore());
-            invoice.setMaKhachHang(customer.getMaKhachHang());
+            invoice.setMaKhachHang(null); // Sẽ được cập nhật khi Zalo User quét QR
             invoice.setMaHoaDon(request.getInvoiceCode());
             invoice.setMaHoaDonGoc(request.getOriginalInvoiceCode());
             invoice.setTongTien(request.getTotalAmount());
             invoice.setPhuongThucTt(request.getPaymentMethod());
-            invoice.setDaXuLy(true); // Mặc định hợp lệ
+            invoice.setDaXuLy(false); // Chưa cấp phát lượt quay
             
             try {
                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
@@ -136,12 +123,7 @@ public class PosService {
             }
             
             int turns = campaignTurns.get(campaign.getMaChienDich());
-            customerTurnRepository.addCustomerTurnsSafe(
-                customer.getMaKhachHang(),
-                campaign.getMaChienDich(),
-                turns,
-                request.getInvoiceCode() != null ? request.getInvoiceCode() : "POS-SYNC"
-            );
+            // KHÔNG CỘNG LƯỢT Ở ĐÂY NỮA. Lượt sẽ được cộng khi Zalo User kích hoạt Token.
             appliedCampaigns.add(campaign.getTenChienDich());
             totalTurnsEarned += turns;
             
@@ -151,13 +133,16 @@ public class PosService {
         }
 
         if (totalTurnsEarned > 0) {
-            // Sinh GameAccessToken nếu có lượt thưởng
+            // Dùng token UUID do frontend sinh (đã in lên QR bill), không sinh mới
+            String tokenValue = (request.getGameAccessToken() != null && !request.getGameAccessToken().isEmpty())
+                    ? request.getGameAccessToken()
+                    : java.util.UUID.randomUUID().toString(); // fallback nếu FE không gửi
             GameAccessToken token = new GameAccessToken();
-            token.setToken(request.getInvoiceCode());
+            token.setToken(tokenValue);
             token.setMaHoaDon(request.getInvoiceCode());
             token.setSoLuongLuotThuong(totalTurnsEarned);
-            token.setDaSuDung(false); // Chưa sử dụng, chờ khách quét mã
-            token.setMaKhachHangKichHoat(customer.getMaKhachHang());
+            token.setDaSuDung(false);
+            token.setMaKhachHangKichHoat(null); // Sẽ được cập nhật khi Zalo User quét QR
             token.setHetHanLuc(LocalDateTime.now().plusDays(30));
             tokenRepo.save(token);
 
@@ -166,6 +151,7 @@ public class PosService {
                 .message("Đã cộng thành công " + totalTurnsEarned + " lượt!")
                 .appliedCampaigns(appliedCampaigns)
                 .totalTurns(totalTurnsEarned)
+                .token(tokenValue)
                 .build();
         } else {
             return PosSyncResponse.builder()

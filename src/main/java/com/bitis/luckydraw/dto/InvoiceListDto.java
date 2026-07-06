@@ -19,4 +19,8 @@ public class InvoiceListDto {
     private LocalDateTime ngayTao;
     private String sanPhamJson;
     private List<String> chiTietCapLuot;
+    private String gameAccessToken;
+    private Boolean tokenDaSuDung;
+    private java.time.LocalDateTime tokenHetHan;
+    private java.time.LocalDateTime tokenNgaySuDung;
 }

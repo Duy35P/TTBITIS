@@ -25,6 +25,12 @@ public class CustomerAuthController {
     @Autowired
     private com.bitis.luckydraw.repository.InvoiceRepository invoiceRepository;
 
+    @Autowired
+    private com.bitis.luckydraw.repository.GameAccessTokenRepository gameAccessTokenRepository;
+
+    @Autowired
+    private com.bitis.luckydraw.service.ZaloAuthService zaloAuthService;
+
     @PostMapping("/mock-login")
     public String mockLogin(
             @RequestParam(name = "receipt", required = false) String receipt,
@@ -32,27 +38,33 @@ public class CustomerAuthController {
             RedirectAttributes redirectAttributes) {
 
         // 1. Tạo mock user
-        String mockPhone = "0999999999";
+        // String[] để lambda ifPresent có thể ghi vào
+        String[] mockPhone = {"0999999999"};
         
-        // Ponytail: Nếu có receipt, lấy SĐT của hóa đơn đó làm SĐT Zalo luôn để test cho tiện!
         if (receipt != null && !receipt.trim().isEmpty()) {
-            Optional<com.bitis.luckydraw.model.Invoice> optInvoice = invoiceRepository.findByMaHoaDon(receipt);
-            if (optInvoice.isPresent()) {
-                mockPhone = optInvoice.get().getMaKhachHang().replace("CUS-", "");
-                session.setAttribute("CURRENT_STORE", optInvoice.get().getMaStore());
-            }
+            gameAccessTokenRepository.findByToken(receipt).ifPresent(gat -> {
+                if (gat.getMaKhachHangKichHoat() != null) {
+                    mockPhone[0] = gat.getMaKhachHangKichHoat().replace("CUS-", "");
+                }
+                invoiceRepository.findByMaHoaDon(gat.getMaHoaDon())
+                        .ifPresent(inv -> session.setAttribute("CURRENT_STORE", inv.getMaStore()));
+            });
         }
 
-        final String finalPhone = mockPhone;
-        Customer customer = customerRepository.findByPhone(finalPhone).orElseGet(() -> {
+        final String finalPhone = mockPhone[0];
+        Customer customer = null;
+        Optional<Customer> optCustomer = customerRepository.findByPhone(finalPhone);
+        if (optCustomer.isPresent()) {
+            customer = optCustomer.get();
+        } else {
             Customer c = new Customer();
             c.setPhone(finalPhone);
             c.setTenKhach("Zalo User (Mock)");
             c.setZaloId("mock_zalo_id_123");
             c.setTrangThai(1);
             c.setMaKhachHang("CUS-" + finalPhone);
-            return customerRepository.save(c);
-        });
+            customer = customerRepository.save(c);
+        }
 
         // Kiểm tra tài khoản bị khóa
         if (customer.getTrangThai() != null && customer.getTrangThai() == 0) {
@@ -93,7 +105,6 @@ public class CustomerAuthController {
                     return "redirect:/customer/index";
                 }
             } catch (Exception e) {
-                // Ponytail: Nếu là lỗi "đã sử dụng", chuyển nó thành câu chào mừng thân thiện thay vì báo lỗi đỏ lòm
                 if (e.getMessage() != null && (e.getMessage().contains("đã được sử dụng") || e.getMessage().contains("đã được nhận lượt"))) {
                     redirectAttributes.addFlashAttribute("successMessage", "Chào mừng bạn quay lại! Hóa đơn này đã được xác nhận trước đó.");
                 } else {
@@ -105,6 +116,119 @@ public class CustomerAuthController {
 
         redirectAttributes.addFlashAttribute("successMessage", "Đăng nhập thành công!");
         return "redirect:/customer/index";
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/zalo/login")
+    public String zaloLogin(@RequestParam(name = "receipt", required = false) String receipt, HttpSession session) {
+        String codeVerifier = zaloAuthService.generateCodeVerifier();
+        String codeChallenge = zaloAuthService.generateCodeChallenge(codeVerifier);
+        session.setAttribute("ZALO_CODE_VERIFIER", codeVerifier); // PKCE require verifier in callback
+        
+        String state = receipt != null ? receipt : "";
+        return "redirect:" + zaloAuthService.getAuthorizationUrl(state, codeChallenge);
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/zalo/callback")
+    public String zaloCallback(
+            @RequestParam(name = "code", required = false) String code,
+            @RequestParam(name = "state", required = false) String state,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        
+        if (code == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không nhận được mã xác thực từ Zalo.");
+            return "redirect:/customer/login";
+        }
+
+        String codeVerifier = (String) session.getAttribute("ZALO_CODE_VERIFIER");
+        if (codeVerifier == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Phiên đăng nhập hết hạn. Vui lòng thử lại.");
+            return "redirect:/customer/login";
+        }
+
+        try {
+            // Lấy token và thông tin Zalo
+            String accessToken = zaloAuthService.getAccessToken(code, codeVerifier);
+            com.bitis.luckydraw.dto.zalo.ZaloUserInfo userInfo = zaloAuthService.getUserInfo(accessToken);
+
+            // Tìm hoặc tạo Customer
+            Customer customer;
+            Optional<Customer> optCustomer = customerRepository.findByZaloId(userInfo.getId());
+            if (optCustomer.isPresent()) {
+                customer = optCustomer.get();
+            } else {
+                customer = new Customer();
+                customer.setZaloId(userInfo.getId());
+                customer.setTenKhach(userInfo.getName());
+                // Khách từ Zalo nếu không có SDT thì dùng Zalo ID làm SDT giả để thỏa mãn logic hiện tại (laziest path)
+                String fakePhone = "ZALO" + userInfo.getId().substring(0, Math.min(6, userInfo.getId().length()));
+                customer.setPhone(fakePhone);
+                customer.setTrangThai(1);
+                customer.setMaKhachHang("CUS-ZALO-" + userInfo.getId());
+                customer = customerRepository.save(customer);
+            }
+
+            // Kiểm tra tài khoản bị khóa
+            if (customer.getTrangThai() != null && customer.getTrangThai() == 0) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ CSKH.");
+                return "redirect:/customer/login" + (state != null && !state.isEmpty() ? "?receipt=" + state : "");
+            }
+
+            // Set Store nếu có state (receipt)
+            String receipt = state;
+            if (receipt != null && !receipt.trim().isEmpty()) {
+                gameAccessTokenRepository.findByToken(receipt).ifPresent(gat -> {
+                    invoiceRepository.findByMaHoaDon(gat.getMaHoaDon())
+                            .ifPresent(inv -> session.setAttribute("CURRENT_STORE", inv.getMaStore()));
+                });
+            }
+
+            // Lưu Session
+            session.setAttribute("CUSTOMER_ID", customer.getId());
+            session.setAttribute("CUSTOMER_PHONE", customer.getPhone());
+            session.setAttribute("CUSTOMER_NAME", customer.getTenKhach());
+            session.setAttribute("CUSTOMER_MA", customer.getMaKhachHang());
+            if (userInfo.getPicture() != null && userInfo.getPicture().getData() != null) {
+                session.setAttribute("CUSTOMER_AVATAR", userInfo.getPicture().getData().getUrl());
+            }
+
+            // Smart Routing (giống hệt mockLogin)
+            if (receipt != null && !receipt.trim().isEmpty()) {
+                try {
+                    boolean tokenUsed = turnManagementService.useGameAccessToken(receipt, customer.getMaKhachHang());
+                    if (tokenUsed) {
+                        redirectAttributes.addFlashAttribute("successMessage", "Đăng nhập Zalo thành công! Bạn đã dùng mã QR vào game.");
+                        return "redirect:/customer/index";
+                    }
+                    java.util.List<String> campaigns = turnManagementService.claimInvoice(receipt, customer.getMaKhachHang());
+                    if (campaigns.size() == 1) {
+                        redirectAttributes.addFlashAttribute("successMessage", "Bạn nhận được lượt quay từ hóa đơn.");
+                        return "redirect:/customer/spin?campaign=" + campaigns.get(0);
+                    } else if (campaigns.size() > 1) {
+                        redirectAttributes.addFlashAttribute("successMessage", "Mã hóa đơn áp dụng cho " + campaigns.size() + " chương trình.");
+                        return "redirect:/customer/index";
+                    } else {
+                        redirectAttributes.addFlashAttribute("errorMessage", "Mã không thỏa điều kiện nhận lượt.");
+                        return "redirect:/customer/index";
+                    }
+                } catch (Exception e) {
+                    if (e.getMessage() != null && (e.getMessage().contains("đã được sử dụng") || e.getMessage().contains("đã được nhận lượt"))) {
+                        redirectAttributes.addFlashAttribute("successMessage", "Chào mừng bạn quay lại!");
+                    } else {
+                        redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+                    }
+                    return "redirect:/customer/index";
+                }
+            }
+
+            redirectAttributes.addFlashAttribute("successMessage", "Đăng nhập Zalo thành công!");
+            return "redirect:/customer/index";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi đăng nhập Zalo: " + e.getMessage());
+            return "redirect:/customer/login";
+        }
     }
 
     @RequestMapping("/logout")

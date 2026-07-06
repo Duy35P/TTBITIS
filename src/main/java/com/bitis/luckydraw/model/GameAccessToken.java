@@ -36,4 +36,7 @@ public class GameAccessToken {
 
     @Column(name = "het_han_luc", nullable = false)
     private LocalDateTime hetHanLuc;
+
+    @Column(name = "ngay_su_dung")
+    private LocalDateTime ngaySuDung;
 }

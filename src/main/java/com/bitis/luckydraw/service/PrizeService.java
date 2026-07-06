@@ -37,4 +37,9 @@ public class PrizeService {
     public void updateAllocation(String maStore, String maGiaiThuong, int newTongLuongCap) {
         storePrizeInventoryRepository.updateStorePrizeInventory(maStore, maGiaiThuong, newTongLuongCap);
     }
+
+    @Transactional
+    public void reclaimUnredeemedVouchers(String maChienDich) {
+        prizeRepository.reclaimUnredeemedVouchers(maChienDich);
+    }
 }

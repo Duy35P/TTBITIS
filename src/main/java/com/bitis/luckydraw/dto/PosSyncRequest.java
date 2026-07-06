@@ -7,6 +7,7 @@ import java.util.List;
 public class PosSyncRequest {
     private String maStore; // Mock field for UI selection
     private String invoiceCode;
+    private String gameAccessToken; // UUID sinh từ frontend, dùng làm token QR
     private String customerPhone;
     private String originalInvoiceCode;
     private Double totalAmount;

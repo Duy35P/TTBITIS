@@ -15,6 +15,7 @@ import com.bitis.luckydraw.dto.StoreInventoryDto;
 @Repository
 public interface StorePrizeInventoryRepository extends JpaRepository<StorePrizeInventory, Long> {
     List<StorePrizeInventory> findByMaStore(String maStore);
+    List<StorePrizeInventory> findByMaGiaiThuong(String maGiaiThuong);
     Optional<StorePrizeInventory> findByMaStoreAndMaGiaiThuong(String maStore, String maGiaiThuong);
 
     @Query(value = "SELECT * FROM vw_store_prize_inventory " +

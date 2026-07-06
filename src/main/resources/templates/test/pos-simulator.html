@@ -195,12 +195,13 @@
         <div class="r-barcode">
           <svg id="rBarcode" style="height: 60px; max-width: 100%;"></svg>
           <div id="rInvoiceCode" style="display: none;"></div>
+          <input type="hidden" id="rGameToken" value="">
         </div>
         
         <!-- Khu vực chứa QR Code -->
         <div style="text-align: center; margin-top: 20px;">
           <canvas id="rQrCode" style="width: 120px; height: 120px; display: none; margin: 0 auto;"></canvas>
-          <div style="font-size: 11px; color: #555; margin-top: 5px; font-weight: bold;">
+          <div id="rQrLabel" style="font-size: 11px; color: #555; margin-top: 5px; font-weight: bold; display: none;">
             Quét mã QR để tham gia Vòng Quay May Mắn
           </div>
         </div>
@@ -384,16 +385,14 @@
       
       
       
-      // Update QR code for Game Access Token using QRious
+      // Sinh UUID token ngay lúc thanh toán — dùng làm QR trên bill
+      const gameToken = crypto.randomUUID();
+      document.getElementById('rGameToken').value = gameToken;
       const qrCodeCanvas = document.getElementById('rQrCode');
-      const gameUrl = `${window.location.origin}/customer/login?receipt=${invoiceCode}`;
-      new QRious({
-        element: qrCodeCanvas,
-        value: gameUrl,
-        size: 150,
-        level: 'M'
-      });
+      const gameUrl = `${window.location.origin}/customer/login?receipt=${gameToken}`;
+      new QRious({ element: qrCodeCanvas, value: gameUrl, size: 150, level: 'M' });
       qrCodeCanvas.style.display = 'block';
+      document.getElementById('rQrLabel').style.display = 'block';
 
       document.getElementById('receiptModal').classList.add('active');
     }
@@ -405,33 +404,24 @@
 
     async function simulateWebhook() {
       const invoiceCode = document.getElementById('rInvoiceCode').innerText;
-      
-      // 1. In Hóa Đơn (Tải ảnh về máy)
+      const gameToken = document.getElementById('rGameToken').value;
+
+      // 1. In hóa đơn trước (QR đã có sẵn trên bill)
       const receiptPaper = document.querySelector('.receipt-paper');
       if (receiptPaper) {
           try {
-              // Tạm thời ẩn các nút/hiệu ứng shadow nếu có để ảnh in ra đẹp hơn
-              const canvas = await html2canvas(receiptPaper, { 
-                  scale: 2, 
-                  backgroundColor: '#ffffff',
-                  useCORS: true,
-                  allowTaint: true 
-              });
-              const imgData = canvas.toDataURL('image/png');
+              const canvas = await html2canvas(receiptPaper, { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: true });
               const link = document.createElement('a');
               link.download = `HoaDon_${invoiceCode}.png`;
-              link.href = imgData;
+              link.href = canvas.toDataURL('image/png');
               link.click();
-          } catch (e) {
-              console.error("Không thể in hóa đơn:", e);
-          }
+          } catch (e) { console.error("Không thể in hóa đơn:", e); }
       }
 
-      // 2. Đẩy Webhook API
+      // 2. Đẩy Webhook API kèm token UUID
       const toast = document.getElementById('apiToast');
       const msg = document.getElementById('toastMessage');
       const loader = document.getElementById('toastLoader');
-      
       toast.classList.add('show');
       loader.style.display = 'block';
       msg.innerHTML = 'Đang đẩy dữ liệu hóa đơn qua Webhook tới LuckyDraw...';
@@ -439,41 +429,23 @@
       const phone = document.getElementById('customerPhone').value;
       const originalInvoiceCode = document.getElementById('originalInvoiceCode').value;
       const storeId = document.getElementById('posStoreSelect').value;
-      
       let totalAmount = 0;
       const skus = [];
       cart.forEach(item => {
           totalAmount += item.price * item.qty;
-          skus.push({
-              skuCode: item.sku,
-              name: item.name,
-              quantity: item.qty,
-              amount: item.price * item.qty
-          });
+          skus.push({ skuCode: item.sku, name: item.name, quantity: item.qty, amount: item.price * item.qty });
       });
-
-      const payload = {
-          maStore: storeId,
-          invoiceCode: invoiceCode,
-          originalInvoiceCode: originalInvoiceCode,
-          totalAmount: totalAmount,
-          paymentMethod: currentPayment === 'Tiền mặt' ? 'CASH' : (currentPayment === 'Chuyển khoản' ? 'BANK_TRANSFER' : 'CARD'),
-          customerPhone: phone,
-          skus: skus
-      };
 
       try {
           const response = await fetch('/api/pos/sync', {
               method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(payload)
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ maStore: storeId, invoiceCode, originalInvoiceCode, totalAmount, gameAccessToken: gameToken,
+                  paymentMethod: currentPayment === 'Tiền mặt' ? 'CASH' : (currentPayment === 'Chuyển khoản' ? 'BANK_TRANSFER' : 'CARD'),
+                  customerPhone: phone, skus })
           });
-          
           const result = await response.json();
           loader.style.display = 'none';
-
           if (response.ok) {
               if (result.totalTurns > 0) {
                   msg.innerHTML = `✅ <strong>Thành công!</strong> Cửa hàng áp dụng: ${result.appliedCampaigns.join(', ')} <br> <span style="font-size: 14px; margin-top:5px; display:block;">Khách hàng được cộng <strong>${result.totalTurns}</strong> lượt quay.</span>`;
@@ -487,11 +459,7 @@
           loader.style.display = 'none';
           msg.innerHTML = `❌ <strong>Lỗi kết nối!</strong> Không thể gửi webhook. Hãy chắc chắn Spring Boot Server đang chạy.`;
       }
-
-      setTimeout(() => {
-          toast.classList.remove('show');
-          closeModal();
-      }, 6000);
+      setTimeout(() => { toast.classList.remove('show'); closeModal(); }, 6000);
     }
 
     function closeModal() {

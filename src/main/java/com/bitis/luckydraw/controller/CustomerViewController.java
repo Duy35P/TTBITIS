@@ -13,7 +13,6 @@ public class CustomerViewController {
 
     @GetMapping("/login")
     public String loginPage(@RequestParam(value = "receipt", required = false) String receipt, HttpSession session) {
-        // Ponytail: Nếu quét QR mới thì tự động logout tài khoản cũ cho dễ test!
         if (receipt != null && !receipt.trim().isEmpty()) {
             session.invalidate();
         } else if (session.getAttribute("CUSTOMER_ID") != null) {

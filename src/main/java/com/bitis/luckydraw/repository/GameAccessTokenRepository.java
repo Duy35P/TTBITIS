@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface GameAccessTokenRepository extends JpaRepository<GameAccessToken, Long> {
     Optional<GameAccessToken> findByToken(String token);
+    Optional<GameAccessToken> findByMaHoaDon(String maHoaDon);
 }

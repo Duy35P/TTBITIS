@@ -317,8 +317,9 @@ select * from customer_turn
 select * from store_prize_inventory
 select * from vai_tro
 
-delete store
-delete customer
-truncate table prize
-truncate table staff
-
+  truncate table customer
+  truncate table customer_turn
+  truncate table game_access_token
+  truncate table invoice
+  truncate table turn_transaction
+  truncate table reward_voucher

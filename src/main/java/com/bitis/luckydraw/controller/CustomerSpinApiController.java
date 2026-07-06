@@ -52,10 +52,13 @@ public class CustomerSpinApiController {
                 if (themePrizes != null) {
                     for (Map<String, Object> tp : themePrizes) {
                         String pCode = (String) tp.get("code");
-                        prizes.stream().filter(p -> p.getMaGiaiThuong().equals(pCode)).findFirst().ifPresent(p -> {
-                            tp.put("isPrize", p.getLaGiaiThuong());
-                            tp.put("id", p.getMaGiaiThuong());
-                        });
+                        for (Prize p : prizes) {
+                            if (p.getMaGiaiThuong().equals(pCode)) {
+                                tp.put("isPrize", p.getLaGiaiThuong());
+                                tp.put("id", p.getMaGiaiThuong());
+                                break;
+                            }
+                        }
                     }
                 }
                 return ResponseEntity.ok(config);
@@ -102,13 +105,37 @@ public class CustomerSpinApiController {
             
             Prize wonPrize = customerSpinService.playSpin(maKhachHang, maChienDich, maStore);
 
-            // Tìm Index của giải thưởng này trong danh sách để trả về cho FE quay
-            List<Prize> prizes = prizeRepository.findByMaChienDich(maChienDich);
+            // Lấy index từ cấu hình theme JSON để khớp với FE
             int prizeIndex = -1;
-            for (int i = 0; i < prizes.size(); i++) {
-                if (prizes.get(i).getMaGiaiThuong().equals(wonPrize.getMaGiaiThuong())) {
-                    prizeIndex = i;
-                    break;
+            com.bitis.luckydraw.model.Campaign campaign = campaignRepository.findByMaChienDich(maChienDich).orElse(null);
+            
+            if (campaign != null && campaign.getCauhinhThemeJson() != null && !campaign.getCauhinhThemeJson().trim().isEmpty()) {
+                try {
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    Map<String, Object> config = mapper.readValue(campaign.getCauhinhThemeJson(), new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>(){});
+                    List<Map<String, Object>> themePrizes = (List<Map<String, Object>>) config.get("prizes");
+                    if (themePrizes != null) {
+                        for (int i = 0; i < themePrizes.size(); i++) {
+                            String pCode = (String) themePrizes.get(i).get("code");
+                            if (wonPrize.getMaGiaiThuong().equals(pCode)) {
+                                prizeIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            // Fallback nếu không tìm thấy trong JSON
+            if (prizeIndex == -1) {
+                List<Prize> prizes = prizeRepository.findByMaChienDich(maChienDich);
+                for (int i = 0; i < prizes.size(); i++) {
+                    if (prizes.get(i).getMaGiaiThuong().equals(wonPrize.getMaGiaiThuong())) {
+                        prizeIndex = i;
+                        break;
+                    }
                 }
             }
 

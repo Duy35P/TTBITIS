@@ -20,10 +20,13 @@ public class GameViewController {
             return "redirect:/customer/login";
         }
 
-        com.bitis.luckydraw.model.Campaign campaign = campaignRepository.findAll().stream()
-                .filter(c -> slug.equals(c.getDuongDanSlug()))
-                .findFirst()
-                .orElse(null);
+        com.bitis.luckydraw.model.Campaign campaign = null;
+        for (com.bitis.luckydraw.model.Campaign c : campaignRepository.findAll()) {
+            if (slug.equals(c.getDuongDanSlug())) {
+                campaign = c;
+                break;
+            }
+        }
 
         if (campaign == null) {
             return "redirect:/customer/index";

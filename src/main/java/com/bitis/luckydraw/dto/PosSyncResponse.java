@@ -11,4 +11,5 @@ public class PosSyncResponse {
     private String message;
     private List<String> appliedCampaigns;
     private int totalTurns;
+    private String token;
 }

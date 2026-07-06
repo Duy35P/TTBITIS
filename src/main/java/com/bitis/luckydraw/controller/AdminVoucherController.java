@@ -30,7 +30,6 @@ public class AdminVoucherController {
                         @RequestParam(name = "status", required = false) String statusStr) {
         
         List<PrizeListDto> allPrizes = prizeRepository.getPrizeList();
-        // Ponytail: Chỉ hiển thị các giải thật trên bộ lọc thả xuống
         List<PrizeListDto> prizes = allPrizes.stream()
                 .filter(p -> Boolean.TRUE.equals(p.getLaGiaiThuong()))
                 .collect(Collectors.toList());

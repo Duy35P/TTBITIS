@@ -250,7 +250,7 @@
                 <div class="success-text">
                     ✓ Quét mã thành công
                 </div>
-                <p class="message">Bạn nhận được <strong>1 lượt quay</strong> từ hóa đơn mua hàng:</p>
+                <p class="message">Bạn nhận được <strong>lượt quay</strong> từ hóa đơn mua hàng:</p>
                 <div class="receipt-code" id="receiptCodeDisplay"></div>
                 
                 <p class="message" style="font-size: 0.85rem; color: #666; margin-bottom: 20px;">
@@ -266,13 +266,13 @@
                 </p>
             </div>
 
-            <!-- Form Đăng Nhập Giả Lập -->
-            <form action="/customer/auth/mock-login" method="POST" id="loginForm">
+            <!-- Form Đăng Nhập -->
+            <form action="/customer/auth/zalo/login" method="GET" id="loginForm">
                 
                 <!-- Hiển thị ô nhập mã nếu không có tham số URL (để test) -->
                 <div id="manualReceiptContainer" style="display: none; margin-bottom: 20px;">
                     <label style="display:block; text-align:left; font-size: 0.9rem; font-weight:600; color:#1a3f7a; margin-bottom: 8px;">Nhập mã QR / Mã hóa đơn (Dành cho Test):</label>
-                    <input type="text" name="receipt" id="receiptInput" placeholder="Ví dụ: POS-2026-65597" style="width:100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-family: inherit; font-size: 1rem;">
+                    <input type="text" name="receipt" id="receiptInput" placeholder="Ví dụ: a07d40dc-d0d4-46c9-992d-..." style="width:100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-family: inherit; font-size: 1rem;">
                 </div>
                 <button type="submit" class="btn-zalo" id="loginZaloBtn">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -280,7 +280,7 @@
                         <path d="M16.5 12.5C16.5 14.9853 14.4853 17 12 17C9.51472 17 7.5 14.9853 7.5 12.5C7.5 10.0147 9.51472 8 12 8C14.4853 8 16.5 10.0147 16.5 12.5Z" fill="#0068FF"/>
                         <path d="M12 17V20" stroke="#0068FF" stroke-width="2" stroke-linecap="round"/>
                     </svg>
-                    Đăng nhập bằng Zalo (Mock)
+                    Đăng nhập bằng Zalo
                 </button>
             </form>
 

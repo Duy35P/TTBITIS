@@ -3,11 +3,13 @@ package com.bitis.luckydraw.controller;
 import com.bitis.luckydraw.dto.InvoiceListDto;
 import com.bitis.luckydraw.model.Campaign;
 import com.bitis.luckydraw.model.Customer;
+import com.bitis.luckydraw.model.GameAccessToken;
 import com.bitis.luckydraw.model.Invoice;
 import com.bitis.luckydraw.model.Store;
 import com.bitis.luckydraw.model.TurnTransaction;
 import com.bitis.luckydraw.repository.CampaignRepository;
 import com.bitis.luckydraw.repository.CustomerRepository;
+import com.bitis.luckydraw.repository.GameAccessTokenRepository;
 import com.bitis.luckydraw.repository.InvoiceRepository;
 import com.bitis.luckydraw.repository.StoreRepository;
 import com.bitis.luckydraw.repository.TurnTransactionRepository;
@@ -41,6 +43,9 @@ public class AdminInvoiceController {
 
     @Autowired
     private CampaignRepository campaignRepository;
+
+    @Autowired
+    private GameAccessTokenRepository gameAccessTokenRepository;
 
     @GetMapping
     public String index(Model model,
@@ -123,6 +128,13 @@ public class AdminInvoiceController {
                     chiTietCapLuot.add(campName + " (" + entry.getValue() + " lượt)");
                 }
                 dto.setChiTietCapLuot(chiTietCapLuot);
+                gameAccessTokenRepository.findByMaHoaDon(inv.getMaHoaDon())
+                        .ifPresent(gat -> {
+                            dto.setGameAccessToken(gat.getToken());
+                            dto.setTokenDaSuDung(gat.getDaSuDung());
+                            dto.setTokenHetHan(gat.getHetHanLuc());
+                            dto.setTokenNgaySuDung(gat.getNgaySuDung());
+                        });
                 
                 dtos.add(dto);
             }
@@ -145,7 +157,7 @@ public class AdminInvoiceController {
             this.index(model, keyword, status);
             List<InvoiceListDto> dtos = (List<InvoiceListDto>) model.getAttribute("invoices");
             
-            String[] headers = {"Mã Hóa Đơn", "Cửa Hàng", "SĐT Khách Hàng", "Ngày Tạo", "Tổng Tiền", "Đã Xử Lý Cấp Lượt", "Chi Tiết Cấp Lượt"};
+            String[] headers = {"Mã Hóa Đơn", "Cửa Hàng", "SĐT Khách Hàng", "Ngày Tạo", "Tổng Tiền", "Đã Xử Lý Cấp Lượt", "Chi Tiết Cấp Lượt", "Mã Vào Game"};
             List<String[]> data = dtos.stream().map(dto -> new String[]{
                 dto.getMaHoaDon(),
                 dto.getTenCuaHang(),
@@ -153,7 +165,8 @@ public class AdminInvoiceController {
                 dto.getNgayTao() != null ? dto.getNgayTao().toString() : "",
                 dto.getTongTien() != null ? dto.getTongTien().toString() : "0",
                 dto.getDaXuLy() != null && dto.getDaXuLy() ? "Đã xử lý" : "Chưa xử lý",
-                String.join(", ", dto.getChiTietCapLuot())
+                String.join(", ", dto.getChiTietCapLuot()),
+                dto.getGameAccessToken() != null ? dto.getGameAccessToken() : ""
             }).collect(Collectors.toList());
             
             com.bitis.luckydraw.util.ExcelExportUtil.exportDataToExcel(response, "DanhSachHoaDon", headers, data);

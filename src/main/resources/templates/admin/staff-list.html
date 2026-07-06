@@ -29,8 +29,6 @@
         <div class="box-header">
           <h3 class="box-title">Danh sách tài khoản</h3>
           <div class="box-tools">
-            <input type="text" class="search-box" name="keyword" th:value="${selectedKeyword}" placeholder="Tìm username, tên..." style="width: 200px;">
-            <button type="submit" class="btn-primary" style="background-color: #3c8dbc; border-color: #367fa9;">Lọc</button>
             <button type="button" class="btn-primary" style="background-color: #f39c12; border-color: #e08e0b;" onclick="document.getElementById('importStaffExcel').click()">Nhập Excel</button>
             <a th:href="@{/admin/staffs/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
             <button type="button" class="btn-primary" onclick="openModal('staffModal', 'Thêm Nhân Viên Mới')">+ Thêm Nhân Viên</button>

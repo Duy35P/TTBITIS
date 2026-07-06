@@ -92,7 +92,7 @@ public class TurnManagementService {
         // 5. Nếu được cấp ít nhất 1 lượt, sinh GameAccessToken
         if (totalTurnsGrantedAcrossCampaigns > 0) {
             GameAccessToken token = new GameAccessToken();
-            token.setToken(invoice.getMaHoaDon()); // Dùng mã hóa đơn làm mã QR
+            token.setToken(java.util.UUID.randomUUID().toString());
             token.setMaHoaDon(invoice.getMaHoaDon());
             token.setSoLuongLuotThuong(totalTurnsGrantedAcrossCampaigns);
             token.setDaSuDung(false);
@@ -160,7 +160,7 @@ public class TurnManagementService {
                 int turns = ruleEngine.calculateTurns(maChienDich, deltaAmount, invoice.getPhuongThucTt(), skuList);
 
                 if (turns > 0) {
-                    customerTurnRepo.addCustomerTurnsSafe(maKhachHang, maChienDich, turns, "INVOICE:" + maHoaDon);
+                    customerTurnRepo.addCustomerTurnsSafe(maKhachHang, maChienDich, turns, maHoaDon);
                     awardedCampaigns.add(maChienDich);
                     totalTurnsGranted += turns;
                 }
@@ -171,18 +171,6 @@ public class TurnManagementService {
         invoice.setDaXuLy(true);
         invoiceRepo.save(invoice);
         
-        // Sinh GameAccessToken nếu có lượt thưởng
-        if (totalTurnsGranted > 0) {
-            GameAccessToken token = new GameAccessToken();
-            token.setToken(invoice.getMaHoaDon());
-            token.setMaHoaDon(invoice.getMaHoaDon());
-            token.setSoLuongLuotThuong(totalTurnsGranted);
-            token.setDaSuDung(true); // Đã dùng để vào game luôn
-            token.setMaKhachHangKichHoat(maKhachHang);
-            token.setHetHanLuc(LocalDateTime.now().plusDays(30));
-            tokenRepo.save(token);
-        }
-
         return awardedCampaigns; // Trả về danh sách các campaign đã được cộng lượt
     }
 
@@ -194,7 +182,12 @@ public class TurnManagementService {
             if (Boolean.TRUE.equals(token.getDaSuDung())) {
                 throw new Exception("Mã QR (Hóa đơn) này đã được sử dụng để vào game.");
             }
+
+            // --- PONYTAIL APPROACH (MỚI): GỌI CLAIM INVOICE ĐỂ CẤP PHÁT LƯỢT TRỰC TIẾP ---
+            claimInvoice(token.getMaHoaDon(), maKhachHang);
+            
             token.setDaSuDung(true);
+            token.setNgaySuDung(LocalDateTime.now());
             token.setMaKhachHangKichHoat(maKhachHang);
             tokenRepo.save(token);
             return true; // Đã xử lý token thành công

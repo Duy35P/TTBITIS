@@ -142,6 +142,17 @@ public class AdminPrizeController {
         return "redirect:/admin/prizes?tab=allocations";
     }
 
+    @PostMapping("/allocations/reclaim-unredeemed")
+    public String reclaimUnredeemed(@RequestParam(required = false) String maChienDich, RedirectAttributes redirectAttributes) {
+        try {
+            prizeService.reclaimUnredeemedVouchers(maChienDich);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã thu hồi thành công các quà chưa đổi thuộc chiến dịch hết hạn.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi thu hồi: " + e.getMessage());
+        }
+        return "redirect:/admin/prizes?tab=allocations";
+    }
+
     @PostMapping("/import")
     public String importPrizes(@RequestParam("file") org.springframework.web.multipart.MultipartFile file, RedirectAttributes redirectAttributes) {
         if (file.isEmpty()) {
