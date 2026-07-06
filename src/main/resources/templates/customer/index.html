@@ -231,10 +231,11 @@
     <div class="container">
         
         <a th:each="camp : ${campaigns}" th:href="${camp.duongDanSlug != null && !camp.duongDanSlug.empty} ? @{'/game/' + ${camp.duongDanSlug}} : @{'/customer/spin?campaign=' + ${camp.maChienDich}}" class="card">
-            <div class="card-img" th:classappend="${camp.turns > 0 ? 'bg-blue' : 'bg-gray'}">
+            <div class="card-img" th:classappend="${camp.turns > 0 ? 'bg-blue' : 'bg-gray'}"
+                 th:style="${camp.hinhAnhUrl != null and !camp.hinhAnhUrl.empty ? 'background-image: url(' + camp.hinhAnhUrl + '); background-size: cover; background-position: center;' : ''}">
                 <span class="status-badge" th:classappend="${camp.turns > 0 ? 'status-active' : 'status-ended'}"
                       th:text="${camp.turns > 0 ? 'Đang có ' + camp.turns + ' lượt' : 'Hết lượt'}">Đang có lượt</span>
-                🎡
+                <span th:if="${camp.hinhAnhUrl == null or camp.hinhAnhUrl.empty}">🎡</span>
             </div>
             <div class="card-body">
                 <h2 class="card-title" th:text="${camp.tenChienDich}">Tên Chiến Dịch</h2>

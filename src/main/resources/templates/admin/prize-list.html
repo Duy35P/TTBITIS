@@ -89,6 +89,9 @@
                     <span style="font-weight: bold; font-size: 15px; color: #00a65a;" th:text="${p.tonKhoToanHeThong}"></span>
                   </td>
                   <td style="padding: 12px 8px;" class="action-links">
+                    <a th:if="${p.isPreGeneratedCode != null and p.isPreGeneratedCode}" href="javascript:void(0)" 
+                       th:data-ma="${p.maGiaiThuong}"
+                       onclick="openImportCodesModal(this)" style="color: #00a65a; font-weight: 600; margin-right: 8px;">Nạp mã (<span th:text="${codeCountMap[p.maGiaiThuong] != null ? codeCountMap[p.maGiaiThuong] : 0}">0</span>)</a>
                     <a href="javascript:void(0)" 
                        th:data-ma="${p.maGiaiThuong}"
                        th:data-ten="${p.tenGiai}"
@@ -98,6 +101,7 @@
                        th:data-limit="${p.gioiHanTrungMoiCustomer}"
                        th:data-xac="${p.xacSuat}"
                        th:data-is-real="${p.laGiaiThuong}"
+                       th:data-is-pre="${p.isPreGeneratedCode}"
                        onclick="openEditModal(this)" style="color: #3c8dbc; font-weight: 600;">Sửa</a> 
                     <span style="color: #ccc; margin: 0 5px;">|</span> 
                     <a href="javascript:void(0)" 
@@ -284,6 +288,14 @@
                  <span style="font-weight: 600; font-size: 14px; color: #555;">Đây là giải thưởng thật</span>
              </label>
           </div>
+
+          <div style="margin-bottom: 15px;" id="preGeneratedCodeWrapper">
+             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                 <input type="checkbox" name="isPreGeneratedCode" id="prizeIsPreGeneratedCode" value="true">
+                 <span style="font-weight: 600; font-size: 14px; color: #555;">Sử dụng mã nạp sẵn (Voucher code nhập từ hệ thống khác)</span>
+             </label>
+             <small style="display:block; margin-top:5px; color:#777; font-size:11px;">Khi được bật, kho thưởng sẽ bốc 1 mã nạp sẵn để trao cho khách thay vì tự động sinh mã ngẫu nhiên.</small>
+          </div>
           
           <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Thuộc chiến dịch *</label>
@@ -352,6 +364,31 @@
   <form id="deleteForm" th:action="@{/admin/prizes/delete}" method="post" style="display: none;">
       <input type="hidden" name="maGiaiThuong" id="deleteMaGiaiThuong">
   </form>
+
+  <!-- Modal Nạp Mã Nạp Sẵn -->
+  <div id="importCodesModal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div style="background-color: #fff; padding: 20px; border-radius: 4px; width: 100%; max-width: 600px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+      <form th:action="@{/admin/prizes/import-codes}" method="post">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f4f4f4; padding-bottom: 15px; margin-bottom: 15px;">
+            <div style="font-size: 18px; font-weight: 600;">Nạp mã vào kho: <span id="importCodesPrizeName" style="color:#00a65a;"></span></div>
+            <button type="button" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #888;" onclick="closeModal('importCodesModal')">&times;</button>
+          </div>
+          
+          <input type="hidden" name="maGiaiThuong" id="importCodesMaGiaiThuong">
+
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Kho đang có: <span id="importCodesCount" style="color: #f39c12; font-size: 16px;">0</span> mã chưa sử dụng</label>
+            <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Dán danh sách mã vào khung bên dưới. Mỗi mã nằm trên 1 dòng hoặc cách nhau bởi dấu phẩy. Các mã trùng lặp sẽ tự động bị bỏ qua.</p>
+            <textarea name="codesText" required style="width: 100%; height: 200px; padding: 10px; font-family: monospace; font-size: 14px; border: 1px solid #ccc; border-radius: 3px; outline: none;" placeholder="Mã 1&#10;Mã 2&#10;Mã 3..."></textarea>
+          </div>
+          
+          <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f4f4f4; padding-top: 15px; margin-top: 15px;">
+            <button type="button" style="background-color: #f4f4f4; color: #444; padding: 6px 12px; border-radius: 3px; border: 1px solid #ddd; cursor: pointer; font-weight: 600;" onclick="closeModal('importCodesModal')">Hủy</button>
+            <button type="submit" style="background-color: #00a65a; color: #fff; padding: 6px 12px; border-radius: 3px; border: none; font-weight: 600; cursor: pointer;">Thực hiện nạp mã</button>
+          </div>
+      </form>
+    </div>
+  </div>
 
   <script th:inline="javascript">
     /*<![CDATA[*/
@@ -452,7 +489,8 @@
       var limit = btn.getAttribute('data-limit');
       var xac = btn.getAttribute('data-xac');
       var isReal = btn.getAttribute('data-is-real');
-      openModal('prizeModal', 'Sửa Giải Thưởng', ma, ten, loai, limit, chien, ton, xac, isReal);
+      var isPre = btn.getAttribute('data-is-pre');
+      openModal('prizeModal', 'Sửa Giải Thưởng', ma, ten, loai, limit, chien, ton, xac, isReal, isPre);
     }
     
     function confirmDeletePrize(btn) {
@@ -460,7 +498,18 @@
       deletePrize(ma);
     }
 
-    function openModal(modalId, title, pMa, pTen, pLoai, pLimit, pChienDich, pTotal, pProb, pIsReal) {
+    function openImportCodesModal(btn) {
+      var ma = btn.getAttribute('data-ma');
+      var ten = btn.getAttribute('data-ten');
+      var count = btn.getAttribute('data-count');
+      
+      document.getElementById('importCodesMaGiaiThuong').value = ma;
+      document.getElementById('importCodesPrizeName').textContent = ten;
+      document.getElementById('importCodesCount').textContent = count;
+      document.getElementById('importCodesModal').style.display = 'flex';
+    }
+
+    function openModal(modalId, title, pMa, pTen, pLoai, pLimit, pChienDich, pTotal, pProb, pIsReal, pIsPre) {
       var modal = document.getElementById(modalId);
       modal.style.display = 'flex';
       if(title && document.getElementById('prizeModalTitle')) {
@@ -483,6 +532,11 @@
            } else {
                document.getElementById('prizeIsReal').checked = true;
            }
+           if (pIsPre !== undefined && pIsPre !== null) {
+               document.getElementById('prizeIsPreGeneratedCode').checked = (pIsPre === 'true' || pIsPre === true);
+           } else {
+               document.getElementById('prizeIsPreGeneratedCode').checked = false;
+           }
         } else {
            document.getElementById('savePrizeBtn').style.backgroundColor = '#3c8dbc';
            document.getElementById('savePrizeBtn').textContent = 'Lưu Giải Thưởng';
@@ -495,6 +549,7 @@
            document.getElementById('prizeTotal').value = '';
            document.getElementById('prizeProb').value = '';
            document.getElementById('prizeIsReal').checked = true;
+           document.getElementById('prizeIsPreGeneratedCode').checked = false;
         }
         
         // Cập nhật lại UI dựa trên trạng thái checkbox
@@ -521,6 +576,10 @@
             totalInput.value = -1;
             totalInput.readOnly = true;
             totalInput.style.backgroundColor = '#e9ecef';
+            
+            // Ẩn chức năng mã nạp sẵn
+            document.getElementById('preGeneratedCodeWrapper').style.display = 'none';
+            document.getElementById('prizeIsPreGeneratedCode').checked = false;
 
             // Tính xác suất còn lại
             var selectedCampaign = campaignSelect.value;
@@ -551,6 +610,9 @@
             totalInput.readOnly = false;
             totalInput.style.backgroundColor = '';
             if(totalInput.value == -1) totalInput.value = '';
+            
+            // Hiện chức năng mã nạp sẵn
+            document.getElementById('preGeneratedCodeWrapper').style.display = 'block';
             
             probInput.readOnly = false;
             probInput.style.backgroundColor = '';

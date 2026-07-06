@@ -33,6 +33,8 @@ public class PosApiController {
                         .message(e.getMessage())
                         .build());
         }
+    }
+
     @GetMapping("/voucher/check")
     public ResponseEntity<?> checkVoucher(@RequestParam("code") String code) {
         java.util.Optional<com.bitis.luckydraw.dto.RewardVoucherListDto> opt = rewardVoucherRepository.getRewardVoucherDetail(code);

@@ -43,4 +43,7 @@ public class Prize {
 
     @Column(name = "gioi_han_trung_moi_customer")
     private Integer gioiHanTrungMoiCustomer;
+
+    @Column(name = "is_pre_generated_code")
+    private Boolean isPreGeneratedCode = false;
 }

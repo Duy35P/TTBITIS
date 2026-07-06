@@ -133,6 +133,15 @@
         </div>
 
         <div class="form-group">
+          <label>Banner Chương Trình (Ảnh bìa)</label>
+          <input type="file" class="form-control" id="uploadBanner" accept="image/*" onchange="handleBannerUpload(event)">
+          <input type="hidden" id="bannerBase64" th:value="${campaign.hinhAnhUrl != null ? campaign.hinhAnhUrl : ''}">
+          <div style="margin-top: 10px;">
+            <img id="bannerPreview" th:src="${campaign.hinhAnhUrl != null ? campaign.hinhAnhUrl : ''}" th:style="${campaign.hinhAnhUrl != null and !campaign.hinhAnhUrl.isEmpty() ? 'max-width: 100%; border-radius: 6px; display: block;' : 'max-width: 100%; border-radius: 6px; display: none;'}">
+          </div>
+        </div>
+
+        <div class="form-group">
           <label>Màu Nền Trên (Background Top)</label>
           <div class="color-picker-row">
             <input type="color" class="color-input" id="setBgTop" value="#4da6e8" onchange="updatePreview()">
@@ -439,6 +448,21 @@
       slug = slug.replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
     }
 
+    function handleBannerUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                document.getElementById('bannerBase64').value = base64;
+                const preview = document.getElementById('bannerPreview');
+                preview.src = base64;
+                preview.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
     async function saveDesign() {
       const slugValue = document.getElementById('setSlug').value.trim();
       if (!slugValue) {
@@ -469,7 +493,8 @@
       const payload = {
           campaignId: campaignId,
           slug: slugValue,
-          configJson: JSON.stringify(cleanConfig)
+          configJson: JSON.stringify(cleanConfig),
+          bannerUrl: document.getElementById('bannerBase64').value
       };
 
       try {

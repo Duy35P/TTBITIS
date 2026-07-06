@@ -34,6 +34,7 @@ public class AdminPrizeController {
     private final PrizeService prizeService;
     private final CampaignStoreRepository campaignStoreRepository;
     private final PrizeExcelService prizeExcelService;
+    private final com.bitis.luckydraw.repository.PrizeCodeRepository prizeCodeRepository;
 
     public AdminPrizeController(CampaignRepository campaignRepository,
                                 PrizeRepository prizeRepository,
@@ -41,7 +42,8 @@ public class AdminPrizeController {
                                 StorePrizeInventoryRepository storePrizeInventoryRepository,
                                 PrizeService prizeService,
                                 CampaignStoreRepository campaignStoreRepository,
-                                PrizeExcelService prizeExcelService) {
+                                PrizeExcelService prizeExcelService,
+                                com.bitis.luckydraw.repository.PrizeCodeRepository prizeCodeRepository) {
         this.campaignRepository = campaignRepository;
         this.prizeRepository = prizeRepository;
         this.storeRepository = storeRepository;
@@ -49,6 +51,7 @@ public class AdminPrizeController {
         this.prizeService = prizeService;
         this.campaignStoreRepository = campaignStoreRepository;
         this.prizeExcelService = prizeExcelService;
+        this.prizeCodeRepository = prizeCodeRepository;
     }
 
     @GetMapping
@@ -80,11 +83,19 @@ public class AdminPrizeController {
         List<StoreInventoryDto> allocations = storePrizeInventoryRepository.getStoreInventory(maStore, maChienDich, maGiaiThuong);
         List<CampaignStore> campaignStores = campaignStoreRepository.findAll();
 
+        // Calculate unused code count
+        java.util.Map<String, Long> codeCountMap = new java.util.HashMap<>();
+        for (PrizeListDto p : prizes) {
+            long c = prizeCodeRepository.countByMaGiaiThuongAndIsUsed(p.getMaGiaiThuong(), false);
+            codeCountMap.put(p.getMaGiaiThuong(), c);
+        }
+
         model.addAttribute("prizes", prizes);
         model.addAttribute("campaigns", campaigns);
         model.addAttribute("stores", stores);
         model.addAttribute("allocations", allocations);
         model.addAttribute("campaignStores", campaignStores);
+        model.addAttribute("codeCountMap", codeCountMap);
         model.addAttribute("activeTab", tab);
         
         // Return filter selections back to view
@@ -203,6 +214,45 @@ public class AdminPrizeController {
         return "redirect:/admin/prizes";
     }
 
+    @PostMapping("/import-codes")
+    public String importCodes(@RequestParam("maGiaiThuong") String maGiaiThuong, 
+                              @RequestParam("codesText") String codesText, 
+                              RedirectAttributes redirectAttributes) {
+        try {
+            if (codesText == null || codesText.trim().isEmpty()) {
+                throw new IllegalArgumentException("Danh sách mã trống!");
+            }
+            // Parse by newline or comma
+            String[] codes = codesText.split("[\r\n,]+");
+            int successCount = 0;
+            int duplicateCount = 0;
+            for (String code : codes) {
+                code = code.trim();
+                if (code.isEmpty()) continue;
+                
+                if (prizeCodeRepository.existsByCode(code)) {
+                    duplicateCount++;
+                    continue;
+                }
+                com.bitis.luckydraw.model.PrizeCode prizeCode = new com.bitis.luckydraw.model.PrizeCode();
+                prizeCode.setMaGiaiThuong(maGiaiThuong);
+                prizeCode.setCode(code);
+                prizeCode.setIsUsed(false);
+                prizeCodeRepository.save(prizeCode);
+                successCount++;
+            }
+            
+            String msg = "Đã nạp " + successCount + " mã thành công.";
+            if (duplicateCount > 0) {
+                msg += " Đã bỏ qua " + duplicateCount + " mã trùng lặp.";
+            }
+            redirectAttributes.addFlashAttribute("successMessage", msg);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi nạp mã: " + e.getMessage());
+        }
+        return "redirect:/admin/prizes";
+    }
+
     @GetMapping("/export-excel")
     public void exportExcel(jakarta.servlet.http.HttpServletResponse response) {
         try {
@@ -282,11 +332,13 @@ public class AdminPrizeController {
                 existing.setTonKhoToanHeThong(prize.getTonKhoToanHeThong());
                 existing.setXacSuat(prize.getXacSuat());
                 existing.setLaGiaiThuong(laGiaiThuong);
+                existing.setIsPreGeneratedCode(prize.getIsPreGeneratedCode() != null ? prize.getIsPreGeneratedCode() : false);
                 prizeRepository.save(existing);
                 redirectAttributes.addFlashAttribute("successMessage", "Cập nhật giải thưởng thành công. Giải trượt đã được tự động cập nhật!");
             } else {
                 // Create
                 prize.setLaGiaiThuong(laGiaiThuong);
+                if (prize.getIsPreGeneratedCode() == null) prize.setIsPreGeneratedCode(false);
                 prizeRepository.save(prize);
                 redirectAttributes.addFlashAttribute("successMessage", "Thêm giải thưởng mới thành công. Giải trượt đã được tự động cập nhật!");
             }

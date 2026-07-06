@@ -67,6 +67,7 @@ public class CustomerViewController {
             cData.put("tenChienDich", camp.getTenChienDich());
             cData.put("moTa", camp.getMoTa());
             cData.put("duongDanSlug", camp.getDuongDanSlug());
+            cData.put("hinhAnhUrl", camp.getHinhAnhUrl());
             int turns = turnMap.getOrDefault(camp.getMaChienDich(), 0);
             cData.put("turns", turns);
             

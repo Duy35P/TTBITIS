@@ -60,8 +60,9 @@
                   <span th:text="${turnsMap[customer.maKhachHang] != null ? turnsMap[customer.maKhachHang] : '0 lượt'}">0 lượt</span>
                 </td>
                 <td>
-                  <!-- Chưa kết nối thống kê quà, hiển thị tĩnh tạm thời -->
-                  <span style="color:#777; font-style:italic; font-size:12px;">Đang tải...</span>
+                  <span th:text="${prizesMap[customer.maKhachHang] != null ? prizesMap[customer.maKhachHang] : 'Chưa trúng giải'}" 
+                        th:style="${prizesMap[customer.maKhachHang] != null ? 'color: #0369a1; font-weight: 500;' : 'color: #9ca3af; font-style: italic;'}">
+                  </span>
                 </td>
                 <td>
                   <span class="badge bg-green" th:if="${customer.trangThai == 1}">Active</span>

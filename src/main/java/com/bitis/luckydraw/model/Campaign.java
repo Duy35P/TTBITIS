@@ -39,7 +39,7 @@ public class Campaign {
     @Column(name = "duong_dan_slug", length = 255, unique = true)
     private String duongDanSlug;
 
-    @Column(name = "hinh_anh_url", length = 500)
+    @Column(name = "hinh_anh_url", columnDefinition = "VARCHAR(MAX)")
     private String hinhAnhUrl;
 
     @Column(name = "cauhinh_theme_json", columnDefinition = "NVARCHAR(MAX)")

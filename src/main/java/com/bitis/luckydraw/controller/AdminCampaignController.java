@@ -474,12 +474,16 @@ public class AdminCampaignController {
             Long campaignId = Long.parseLong(payload.get("campaignId"));
             String slug = payload.get("slug");
             String configJson = payload.get("configJson");
+            String bannerUrl = payload.get("bannerUrl");
             
             Campaign campaign = campaignRepository.findById(campaignId)
                     .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chiến dịch"));
             
             campaign.setDuongDanSlug(slug);
             campaign.setCauhinhThemeJson(configJson);
+            if (bannerUrl != null && !bannerUrl.isEmpty()) {
+                campaign.setHinhAnhUrl(bannerUrl);
+            }
             
             campaignRepository.save(campaign);
             

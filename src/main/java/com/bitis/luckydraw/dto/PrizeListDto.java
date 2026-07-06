@@ -11,4 +11,5 @@ public interface PrizeListDto {
     Integer getTonKhoToanHeThong();
     Integer getGioiHanTrungMoiCustomer();
     Boolean getLaGiaiThuong();
+    Boolean getIsPreGeneratedCode();
 }
