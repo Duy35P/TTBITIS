@@ -9,6 +9,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Controller
 @RequestMapping({"/admin", "/admin/"})
@@ -34,6 +36,14 @@ public class AdminDashboardController {
 
     @GetMapping
     public String index(Model model) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_GAME_MAKER"))) {
+                return "redirect:/admin/campaigns";
+            }
+            return "redirect:/admin/customers";
+        }
+
         long totalCustomers = customerRepository.count();
         long totalStores = storeRepository.count();
         long runningCampaigns = campaignRepository.countByTrangThai(1);

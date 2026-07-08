@@ -58,12 +58,33 @@ public class AdminInvoiceController {
         Map<String, String> storeNames = storeRepository.findAll().stream()
                 .collect(Collectors.toMap(Store::getMaStore, Store::getTenCuaHang));
                 
+        // LÀM ĐƠN GIẢN: Filter based on User Details
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        List<Invoice> invoices = rawInvoices;
+        
+        if (auth != null && auth.getPrincipal() instanceof com.bitis.luckydraw.security.CustomUserDetails) {
+            com.bitis.luckydraw.security.CustomUserDetails userDetails = (com.bitis.luckydraw.security.CustomUserDetails) auth.getPrincipal();
+            boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            
+            if (!isAdmin) {
+                if (userDetails.getAssignedStores() != null && !userDetails.getAssignedStores().isEmpty()) {
+                    invoices = rawInvoices.stream()
+                        .filter(inv -> userDetails.getAssignedStores().contains(inv.getMaStore()))
+                        .collect(Collectors.toList());
+                } else if (userDetails.getMaStore() != null) {
+                    invoices = rawInvoices.stream()
+                        .filter(inv -> userDetails.getMaStore().equals(inv.getMaStore()))
+                        .collect(Collectors.toList());
+                }
+            }
+        }
+        
         Map<String, String> campaignNames = campaignRepository.findAll().stream()
                 .collect(Collectors.toMap(Campaign::getMaChienDich, Campaign::getTenChienDich));
 
         List<InvoiceListDto> dtos = new ArrayList<>();
 
-        for (Invoice inv : rawInvoices) {
+        for (Invoice inv : invoices) {
             String customerPhone = "N/A";
             if (inv.getMaKhachHang() != null && !inv.getMaKhachHang().isEmpty()) {
                 Customer c = customerRepository.findByMaKhachHang(inv.getMaKhachHang()).orElse(null);

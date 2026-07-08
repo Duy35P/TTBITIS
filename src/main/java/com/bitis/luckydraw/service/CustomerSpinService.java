@@ -68,8 +68,6 @@ public class CustomerSpinService {
         }
 
         // 4. Gọi Stored Procedure để thực thi An toàn
-        String voucherCode = "VOU-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("sp_Main_QuayThuong")
                 .declareParameters(
@@ -78,7 +76,6 @@ public class CustomerSpinService {
                         new SqlParameter("ma_store", Types.VARCHAR),
                         new SqlParameter("ma_giai_thuong_du_kien", Types.VARCHAR),
                         new SqlParameter("ma_giai_truot", Types.VARCHAR),
-                        new SqlParameter("ma_voucher_random", Types.VARCHAR),
                         new SqlOutParameter("ket_qua_giai_thuong", Types.VARCHAR)
                 );
 
@@ -88,7 +85,6 @@ public class CustomerSpinService {
         in.addValue("ma_store", maStore != null ? maStore : "STORE_ONLINE");
         in.addValue("ma_giai_thuong_du_kien", selectedPrize.getMaGiaiThuong());
         in.addValue("ma_giai_truot", fallbackPrize.getMaGiaiThuong());
-        in.addValue("ma_voucher_random", voucherCode);
 
         Map<String, Object> out = jdbcCall.execute(in);
         

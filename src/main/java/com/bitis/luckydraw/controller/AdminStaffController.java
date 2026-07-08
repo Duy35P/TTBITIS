@@ -44,7 +44,13 @@ public class AdminStaffController {
     private PhanQuyenRepository phanQuyenRepository;
 
     @Autowired
+    private com.bitis.luckydraw.repository.ManagerStoreAssignmentRepository managerStoreAssignmentRepository;
+
+    @Autowired
     private com.bitis.luckydraw.service.StaffExcelService staffExcelService;
+
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @GetMapping
     public String index(Model model,
@@ -57,6 +63,7 @@ public class AdminStaffController {
         List<VaiTro> roles = vaiTroRepository.findAll();
         List<ChucNang> chucNangs = chucNangRepository.findAll();
         List<PhanQuyen> phanQuyens = phanQuyenRepository.findAll();
+        List<com.bitis.luckydraw.model.ManagerStoreAssignment> managerStoreAssignments = managerStoreAssignmentRepository.findAll();
 
         // Apply filters
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -82,6 +89,7 @@ public class AdminStaffController {
         model.addAttribute("roles", roles);
         model.addAttribute("chucNangs", chucNangs);
         model.addAttribute("phanQuyens", phanQuyens);
+        model.addAttribute("managerStoreAssignments", managerStoreAssignments);
         model.addAttribute("selectedKeyword", keyword != null ? keyword : "");
         model.addAttribute("selectedRole", role != null ? role : "all");
         model.addAttribute("selectedStore", storeMa != null ? storeMa : "all");
@@ -99,6 +107,7 @@ public class AdminStaffController {
     public String saveRole(@RequestParam("roleId") String roleId,
                            @RequestParam("roleName") String roleName,
                            @RequestParam(value = "moTa", required = false) String moTa,
+                           @RequestParam(value = "loaiPhanBo", required = false, defaultValue = "0") Integer loaiPhanBo,
                            @RequestParam(value = "chucNangIds", required = false) List<String> chucNangIds,
                            RedirectAttributes redirectAttributes) {
         try {
@@ -106,6 +115,7 @@ public class AdminStaffController {
             vaiTro.setRoleId(roleId);
             vaiTro.setRoleName(roleName);
             vaiTro.setMoTa(moTa);
+            vaiTro.setLoaiPhanBo(loaiPhanBo);
             vaiTroRepository.save(vaiTro);
 
             phanQuyenRepository.deleteByIdRoleId(roleId);
@@ -128,11 +138,13 @@ public class AdminStaffController {
     }
 
     @PostMapping("/save")
+    @Transactional
     public String saveStaff(@RequestParam("username") String username,
                             @RequestParam(value = "password", required = false) String password,
                             @RequestParam("tenNhanVien") String tenNhanVien,
                             @RequestParam("roleId") String roleId,
                             @RequestParam(value = "maStore", required = false) String maStore,
+                            @RequestParam(value = "multiStore", required = false) List<String> multiStore,
                             @RequestParam("trangThai") Integer trangThai,
                             RedirectAttributes redirectAttributes) {
 
@@ -141,31 +153,40 @@ public class AdminStaffController {
         if (opt.isPresent()) {
             staff = opt.get();
             if (password != null && !password.trim().isEmpty()) {
-                staff.setPassword(password); // Note: should encode password in real app
+                staff.setPassword(passwordEncoder.encode(password));
             }
         } else {
             staff = new Staff();
             staff.setMaNhanVien("NV" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
             staff.setUsername(username);
             if (password != null && !password.trim().isEmpty()) {
-                staff.setPassword(password);
+                staff.setPassword(passwordEncoder.encode(password));
             } else {
-                staff.setPassword("123456"); // default
+                staff.setPassword(passwordEncoder.encode("123456")); // default
             }
         }
 
         staff.setTenNhanVien(tenNhanVien);
         staff.setRoleId(roleId);
         
-        if ("ADMIN".equals(roleId)) {
-            staff.setMaStore(null);
-        } else {
+        VaiTro role = vaiTroRepository.findById(roleId).orElse(null);
+        int loaiPhanBo = role != null && role.getLoaiPhanBo() != null ? role.getLoaiPhanBo() : 0;
+        
+        if (loaiPhanBo == 1) {
             staff.setMaStore(maStore);
+        } else {
+            staff.setMaStore(null);
         }
         
         staff.setTrangThai(trangThai);
-
         staffRepository.save(staff);
+
+        managerStoreAssignmentRepository.deleteByUsername(username);
+        if (loaiPhanBo == 2 && multiStore != null && !multiStore.isEmpty()) {
+            for (String s : multiStore) {
+                managerStoreAssignmentRepository.save(new com.bitis.luckydraw.model.ManagerStoreAssignment(username, s));
+            }
+        }
         redirectAttributes.addFlashAttribute("success", "Lưu nhân viên thành công!");
         return "redirect:/admin/staffs";
     }

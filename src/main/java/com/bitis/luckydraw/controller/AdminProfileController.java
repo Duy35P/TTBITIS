@@ -23,14 +23,15 @@ public class AdminProfileController {
     
     @Autowired
     private StoreRepository storeRepository;
-
-    // Giả lập tài khoản đang đăng nhập là ID = 1 (Admin)
-    private static final Long MOCK_CURRENT_USER_ID = 1L;
+    
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @GetMapping
     public String index(Model model) {
-        // Lấy thông tin user hiện tại
-        Staff staff = staffRepository.findById(MOCK_CURRENT_USER_ID).orElse(null);
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        Staff staff = staffRepository.findByUsername(username).orElse(null);
         if (staff == null) {
             return "redirect:/admin"; // Fallback nếu không có dữ liệu
         }
@@ -61,7 +62,9 @@ public class AdminProfileController {
         }
 
         try {
-            Staff staff = staffRepository.findById(MOCK_CURRENT_USER_ID).orElse(null);
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            String username = auth.getName();
+            Staff staff = staffRepository.findByUsername(username).orElse(null);
             if (staff != null) {
                 staff.setTenNhanVien(tenNhanVien.trim());
                 staffRepository.save(staff);
@@ -92,16 +95,17 @@ public class AdminProfileController {
         }
 
         try {
-            Staff staff = staffRepository.findById(MOCK_CURRENT_USER_ID).orElse(null);
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            String username = auth.getName();
+            Staff staff = staffRepository.findByUsername(username).orElse(null);
             if (staff != null) {
-                // Kiểm tra mật khẩu cũ (Vì đang làm mock nên so sánh plain text, nếu có Spring Security/Bcrypt thì phải dùng encoder.matches)
-                if (!staff.getPassword().equals(oldPassword)) {
+                if (!passwordEncoder.matches(oldPassword, staff.getPassword())) {
                     response.put("success", false);
                     response.put("message", "Mật khẩu hiện tại không đúng!");
                     return response;
                 }
                 
-                staff.setPassword(newPassword);
+                staff.setPassword(passwordEncoder.encode(newPassword));
                 staffRepository.save(staff);
                 response.put("success", true);
             } else {

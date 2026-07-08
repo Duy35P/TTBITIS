@@ -21,4 +21,7 @@ public class VaiTro {
 
     @Column(name = "mo_ta", length = 500)
     private String moTa;
+
+    @Column(name = "loai_phan_bo", nullable = false)
+    private Integer loaiPhanBo = 0;
 }

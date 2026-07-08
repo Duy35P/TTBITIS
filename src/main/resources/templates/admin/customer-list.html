@@ -69,7 +69,7 @@
                   <span class="badge bg-red" th:if="${customer.trangThai != 1}">Banned</span>
                 </td>
                 <td class="action-links">
-                  <form th:action="@{/admin/customers/toggle-status}" method="post" style="display:inline;">
+                  <form sec:authorize="hasRole('ADMIN')" th:action="@{/admin/customers/toggle-status}" method="post" style="display:inline;">
                     <input type="hidden" name="customerId" th:value="${customer.id}" />
                     <input type="hidden" name="status" th:value="${customer.trangThai == 1 ? 0 : 1}" />
                     <button type="submit" 

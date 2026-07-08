@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/fragments/layout :: head('Lucky Draw - Quản lý Mã Nạp Sẵn')}">
+</head>
+<body>
+  <!-- Header -->
+  <header th:replace="~{admin/fragments/layout :: header}"></header>
+
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+
+  <!-- Content -->
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>
+        Quản Lý Mã Nạp Sẵn
+        <small th:text="${prizeName}"></small>
+      </h1>
+      <ul class="breadcrumb">
+        <li><a href="/admin">🏠 LuckyDraw</a></li>
+        <li><a href="/admin/prizes">Kho giải thưởng</a></li>
+        <li>Danh sách mã</li>
+      </ul>
+    </section>
+    
+    <div th:if="${successMessage}" style="padding: 15px; margin: 15px; background-color: #dff0d8; color: #3c763d; border: 1px solid #d6e9c6; border-radius: 4px;">
+        <strong>Thành công!</strong> <span th:text="${successMessage}"></span>
+    </div>
+    
+    <section class="content">
+      <div class="box">
+        <div class="box-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 class="box-title">Danh sách mã (Giải: <span th:text="${prizeName}" style="color: #00a65a; font-weight: bold;"></span>)</h3>
+          <div>
+
+            <a href="/admin/prizes" class="btn-default" style="background-color: #f4f4f4; padding: 6px 12px; border-radius: 3px; border: 1px solid #ddd; text-decoration: none; color: #333; margin-left: 10px;">Quay lại</a>
+          </div>
+        </div>
+        <div class="box-body">
+          <table class="table-striped" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="border-bottom: 1px solid #f4f4f4;">
+                <th style="padding: 12px 8px;">Mã Code</th>
+                <th style="padding: 12px 8px;">Ngày tạo</th>
+                <th style="padding: 12px 8px;">Trạng thái</th>
+
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="code : ${codesPage.content}">
+                <td style="padding: 12px 8px;"><strong th:text="${code.code}"></strong></td>
+                <td style="padding: 12px 8px;" th:text="${#temporals.format(code.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                <td style="padding: 12px 8px;">
+                    <span th:if="${code.isUsed}" style="background-color: #f39c12; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 12px;">Đã phát</span>
+                    <span th:unless="${code.isUsed}" style="background-color: #00a65a; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 12px;">Chưa sử dụng</span>
+                </td>
+
+              </tr>
+              <tr th:if="${codesPage.content.isEmpty()}">
+                  <td colspan="4" style="text-align: center; padding: 20px; color: #777;">Chưa có mã nào được nạp</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <div th:if="${codesPage.totalPages > 1}" style="margin-top: 20px; text-align: right;">
+             <span style="margin-right: 15px; color: #666;">Trang <span th:text="${codesPage.number + 1}"></span> / <span th:text="${codesPage.totalPages}"></span></span>
+             <a th:if="${codesPage.hasPrevious()}" th:href="@{/admin/prizes/codes/{ma}(ma=${maGiaiThuong}, page=${codesPage.number - 1})}" style="padding: 5px 10px; border: 1px solid #ccc; text-decoration: none; border-radius: 3px; color: #333;">&laquo; Trước</a>
+             <a th:if="${codesPage.hasNext()}" th:href="@{/admin/prizes/codes/{ma}(ma=${maGiaiThuong}, page=${codesPage.number + 1})}" style="padding: 5px 10px; border: 1px solid #ccc; text-decoration: none; border-radius: 3px; color: #333; margin-left: 5px;">Sau &raquo;</a>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

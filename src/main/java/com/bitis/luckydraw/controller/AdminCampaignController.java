@@ -57,7 +57,7 @@ public class AdminCampaignController {
     }
 
     @GetMapping
-    public String listCampaigns(Model model) {
+    public String listCampaigns(Model model, org.springframework.security.core.Authentication auth) {
         model.addAttribute("campaigns", campaignRepository.findAll());
         return "admin/campaign-list";
     }
@@ -71,6 +71,8 @@ public class AdminCampaignController {
     }
 
     private void processCampaignSave(Campaign formCampaign, org.springframework.validation.BindingResult bindingResult) throws IllegalArgumentException {
+        boolean isNew = formCampaign.getId() == null;
+
         if (bindingResult.hasErrors()) {
             throw new IllegalArgumentException("Dữ liệu nhập vào không hợp lệ. Vui lòng kiểm tra lại định dạng ngày giờ (chuẩn: dd/MM/yyyy HH:mm) hoặc các trường bắt buộc!");
         }
@@ -102,7 +104,6 @@ public class AdminCampaignController {
             }
         }
         
-        boolean isNew = formCampaign.getId() == null;
         String maChienDich = formCampaign.getMaChienDich();
         if (maChienDich != null && !maChienDich.trim().isEmpty()) {
             Campaign existingById = isNew ? null : campaignRepository.findById(formCampaign.getId()).orElse(null);
@@ -236,7 +237,6 @@ public class AdminCampaignController {
         });
         return "redirect:/admin/campaigns";
     }
-    
     @GetMapping("/{campaignId}/history")
     public String getCampaignHistoryModal(@PathVariable Long campaignId, Model model) {
         Campaign campaign = campaignRepository.findById(campaignId).orElseThrow();

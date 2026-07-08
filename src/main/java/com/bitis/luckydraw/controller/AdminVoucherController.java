@@ -30,6 +30,7 @@ public class AdminVoucherController {
                         @RequestParam(name = "status", required = false) String statusStr) {
         
         List<PrizeListDto> allPrizes = prizeRepository.getPrizeList();
+        
         List<PrizeListDto> prizes = allPrizes.stream()
                 .filter(p -> Boolean.TRUE.equals(p.getLaGiaiThuong()))
                 .collect(Collectors.toList());

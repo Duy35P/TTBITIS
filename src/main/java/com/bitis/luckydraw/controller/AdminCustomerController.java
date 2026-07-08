@@ -56,6 +56,7 @@ public class AdminCustomerController {
         return "admin/customer-list";
     }
 
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or hasAuthority('QL_KHACHHANG')")
     @PostMapping("/toggle-status")
     public String toggleStatus(@RequestParam Long customerId, @RequestParam Integer status) {
         customerRepository.findById(customerId).ifPresent(customer -> {

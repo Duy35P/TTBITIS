@@ -84,7 +84,7 @@ public class PrizeExcelService {
                         case 6: // Là Quà Tặng?
                             if (currentCell.getCellType() == CellType.STRING) {
                                 String val = currentCell.getStringCellValue().trim();
-                                prize.setLaGiaiThuong(val.equalsIgnoreCase("Có") || val.equalsIgnoreCase("Yes") || val.equalsIgnoreCase("1") || val.equalsIgnoreCase("true"));
+                                prize.setLaGiaiThuong(val.equalsIgnoreCase("Có") || val.equalsIgnoreCase("Co") || val.equalsIgnoreCase("Yes") || val.equalsIgnoreCase("1") || val.equalsIgnoreCase("true"));
                             } else if (currentCell.getCellType() == CellType.BOOLEAN) {
                                 prize.setLaGiaiThuong(currentCell.getBooleanCellValue());
                             } else if (currentCell.getCellType() == CellType.NUMERIC) {

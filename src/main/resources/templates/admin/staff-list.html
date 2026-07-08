@@ -39,8 +39,8 @@
         </form>
         <div class="box-body">
           
-          <div class="nav-tabs" style="display: flex; border-bottom: 1px solid #ddd; margin-bottom: 15px;">
-            <button th:class="${activeTab == 'staffs' ? 'active' : ''}" onclick="switchTab('staffs', this)" style="background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; color: #666; border-bottom: 3px solid transparent;">Danh Sách Nhân Viên</button>
+          <div class="nav-tabs" style="display: flex; gap: 10px; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
+            <button th:class="${activeTab != 'roles' ? 'active' : ''}" onclick="switchTab('staffs', this)" style="background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; color: #3c8dbc; border-bottom: 3px solid #3c8dbc;">Danh Sách Tài Khoản</button>
             <button th:class="${activeTab == 'roles' ? 'active' : ''}" onclick="switchTab('roles', this)" style="background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; color: #666; border-bottom: 3px solid transparent;">Quản Lý Vai Trò</button>
           </div>
 
@@ -93,6 +93,7 @@
                   <span th:if="${st.roleId == 'ADMIN'}" class="badge" style="background-color: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">ADMIN</span>
                   <span th:if="${st.roleId == 'MANAGER'}" class="badge" style="background-color: #fef08a; color: #854d0e; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">MANAGER</span>
                   <span th:if="${st.roleId == 'STORE_STAFF'}" class="badge" style="background-color: #f3f4f6; color: #374151; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">STORE_STAFF</span>
+                  <span th:if="${st.roleId != 'ADMIN' and st.roleId != 'MANAGER' and st.roleId != 'STORE_STAFF'}" class="badge" style="background-color: #e0e7ff; color: #3730a3; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;" th:text="${st.roleId}"></span>
                 </td>
                 <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;">
                   <th:block th:if="${st.maStore != null}">
@@ -139,6 +140,7 @@
                 <tr>
                   <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Mã Vai Trò</th>
                   <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Tên Vai Trò</th>
+                  <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Loại Phân Bổ</th>
                   <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Mô tả</th>
                   <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 700; color: #333; background-color: #f9fafb; border-bottom: 2px solid #ddd;">Thao tác</th>
                 </tr>
@@ -147,12 +149,18 @@
                 <tr th:each="r, iterStat : ${roles}" th:style="${iterStat.odd ? 'background-color: #fcfcfc;' : ''}">
                   <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;"><strong th:text="${r.roleId}"></strong></td>
                   <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;" th:text="${r.roleName}"></td>
+                  <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;">
+                      <span th:if="${r.loaiPhanBo == 0}">Không phân bổ</span>
+                      <span th:if="${r.loaiPhanBo == 1}">Một cửa hàng</span>
+                      <span th:if="${r.loaiPhanBo == 2}">Nhiều cửa hàng / Tuyến</span>
+                  </td>
                   <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;" th:text="${r.moTa}"></td>
                   <td style="padding: 12px 15px; border-bottom: 1px solid #f4f4f4;" class="action-links">
                     <a style="color: #3c8dbc; cursor: pointer; font-weight: 600;" 
                        th:data-id="${r.roleId}" 
                        th:data-name="${r.roleName}"
                        th:data-desc="${r.moTa}"
+                       th:data-loai="${r.loaiPhanBo}"
                        onclick="openEditRoleModal(this)">Sửa / Phân Quyền</a>
                   </td>
                 </tr>
@@ -192,7 +200,7 @@
           <div class="form-group" style="flex: 1; margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555;">Vai trò (Role) *</label>
             <select class="form-control" name="roleId" id="staffRole" onchange="toggleStoreSelect()" required style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
-              <option th:each="r : ${roles}" th:value="${r.roleId}" th:text="${r.roleName + ' (' + r.roleId + ')'}"></option>
+              <option th:each="r : ${roles}" th:value="${r.roleId}" th:data-loai="${r.loaiPhanBo}" th:text="${r.roleName + ' (' + r.roleId + ')'}"></option>
             </select>
           </div>
           <div class="form-group" style="flex: 1; margin-bottom: 15px;" id="storeSelectGroup">
@@ -201,6 +209,15 @@
               <option value="">-- Chọn Cửa hàng --</option>
               <option th:each="s : ${stores}" th:value="${s.maStore}" th:text="${s.tenCuaHang}"></option>
             </select>
+          </div>
+          <div class="form-group" style="flex: 1; margin-bottom: 15px; display: none;" id="multiStoreSelectGroup">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555;">Các cửa hàng phụ trách *</label>
+            <div style="max-height: 150px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px; padding: 10px;">
+                <label th:each="s : ${stores}" style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px; cursor: pointer;">
+                    <input type="checkbox" name="multiStore" th:value="${s.maStore}" class="multi-store-checkbox" style="width: 14px; height: 14px;">
+                    <span th:text="${s.tenCuaHang}" style="font-size: 13px;"></span>
+                </label>
+            </div>
           </div>
         </div>
         
@@ -243,6 +260,14 @@
           <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555;">Mô tả</label>
           <textarea class="form-control" name="moTa" id="modalRoleDesc" rows="2" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;"></textarea>
         </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 13px; color: #555;">Loại Phân Bổ (Multi-Store)</label>
+          <select class="form-control" name="loaiPhanBo" id="modalRoleLoaiPhanBo" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+            <option value="0">Không phân bổ (0)</option>
+            <option value="1">Một cửa hàng (1)</option>
+            <option value="2">Nhiều cửa hàng / Tuyến (2)</option>
+          </select>
+        </div>
         
         <div class="form-group" style="margin-bottom: 15px;">
           <label style="display: block; margin-bottom: 10px; font-weight: 600; font-size: 13px; color: #555; border-bottom: 1px solid #eee; padding-bottom: 5px;">Phân Quyền Chức Năng</label>
@@ -265,6 +290,7 @@
   <script th:inline="javascript">
     /*<![CDATA[*/
     var phanQuyens = /*[[${phanQuyens}]]*/ [];
+    var managerStoreAssignments = /*[[${managerStoreAssignments}]]*/ [];
     /*]]>*/
     
     function switchTab(tabId, element) {
@@ -277,15 +303,26 @@
       element.style.borderBottomColor = '#3c8dbc';
     }
     function toggleStoreSelect() {
-      const role = document.getElementById('staffRole').value;
+      const roleSelect = document.getElementById('staffRole');
+      const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+      const loaiPhanBo = selectedOption ? selectedOption.getAttribute('data-loai') : '0';
+      
       const storeGroup = document.getElementById('storeSelectGroup');
+      const multiStoreGroup = document.getElementById('multiStoreSelectGroup');
       const storeSelect = document.getElementById('staffStore');
-      if(role === 'ADMIN') {
+      
+      if(loaiPhanBo === '1') {
+        storeGroup.style.display = 'block';
+        multiStoreGroup.style.display = 'none';
+        storeSelect.setAttribute('required', 'required');
+      } else if (loaiPhanBo === '2') {
         storeGroup.style.display = 'none';
+        multiStoreGroup.style.display = 'block';
         storeSelect.removeAttribute('required');
       } else {
-        storeGroup.style.display = 'block';
-        storeSelect.setAttribute('required', 'required');
+        storeGroup.style.display = 'none';
+        multiStoreGroup.style.display = 'none';
+        storeSelect.removeAttribute('required');
       }
     }
 
@@ -310,6 +347,8 @@
       document.getElementById('staffRole').value = 'STORE_STAFF';
       document.getElementById('staffStore').value = '';
       document.getElementById('staffStatus').value = '1';
+      
+      document.querySelectorAll('.multi-store-checkbox').forEach(cb => cb.checked = false);
       
       toggleStoreSelect();
     }
@@ -339,6 +378,18 @@
       document.getElementById('staffStore').value = store || '';
       document.getElementById('staffStatus').value = status;
       
+      document.querySelectorAll('.multi-store-checkbox').forEach(cb => {
+         cb.checked = false;
+         if (managerStoreAssignments && managerStoreAssignments.length > 0) {
+             for(var i=0; i<managerStoreAssignments.length; i++) {
+                 if(managerStoreAssignments[i].username === username && managerStoreAssignments[i].maStore === cb.value) {
+                     cb.checked = true;
+                     break;
+                 }
+             }
+         }
+      });
+      
       toggleStoreSelect();
     }
     
@@ -358,6 +409,7 @@
       document.getElementById('modalRoleId').style.backgroundColor = '';
       document.getElementById('modalRoleName').value = '';
       document.getElementById('modalRoleDesc').value = '';
+      document.getElementById('modalRoleLoaiPhanBo').value = '0';
       
       document.querySelectorAll('.permission-checkbox').forEach(cb => cb.checked = false);
     }
@@ -380,6 +432,8 @@
       document.getElementById('modalRoleId').style.backgroundColor = '#e9ecef';
       document.getElementById('modalRoleName').value = name;
       document.getElementById('modalRoleDesc').value = desc || '';
+      var loai = btn.getAttribute('data-loai');
+      document.getElementById('modalRoleLoaiPhanBo').value = loai || '0';
       
       // Load permissions
       document.querySelectorAll('.permission-checkbox').forEach(cb => {

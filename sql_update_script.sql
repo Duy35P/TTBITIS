@@ -11,9 +11,9 @@ BEGIN
 END
 
 -- 2. Alter Tables
-IF COL_LENGTH('dbo.prize', 'is_pre_generated_code') IS NULL
+IF COL_LENGTH('dbo.prize', 'is_pre_generated_code') IS NOT NULL
 BEGIN
-    ALTER TABLE prize ADD is_pre_generated_code BIT DEFAULT 0;
+    ALTER TABLE prize DROP COLUMN is_pre_generated_code;
 END
 IF COL_LENGTH('dbo.campaign', 'hinh_anh_url') IS NOT NULL
 BEGIN
@@ -31,10 +31,19 @@ SELECT
     c.ten_chien_dich AS tenChienDich,
     p.loai_giai AS loaiGiai,
     p.xac_suat AS xacSuat,
-    p.ton_kho_toan_he_thong AS tonKhoToanHeThong,
+    p.ton_kho_toan_he_thong AS tonKhoToanHeThongGoc,
+    CASE WHEN p.la_giai_thuong = 1 THEN 
+        (SELECT COUNT(*) FROM prize_code pc WHERE pc.ma_giai_thuong = p.ma_giai_thuong AND pc.is_used = 0) 
+        - ISNULL((SELECT SUM(ton_kho) FROM store_prize_inventory spi WHERE spi.ma_giai_thuong = p.ma_giai_thuong), 0)
+    ELSE -1 END AS tonKhoToanHeThong,
+    CASE WHEN p.la_giai_thuong = 1 THEN 
+        (SELECT COUNT(*) FROM prize_code pc WHERE pc.ma_giai_thuong = p.ma_giai_thuong AND pc.is_used = 0)
+    ELSE -1 END AS tonKhoThucTe,
+    CASE WHEN p.la_giai_thuong = 1 THEN 
+        (SELECT COUNT(*) FROM prize_code pc WHERE pc.ma_giai_thuong = p.ma_giai_thuong)
+    ELSE -1 END AS tongMaNap,
     p.gioi_han_trung_moi_customer AS gioiHanTrungMoiCustomer,
-    p.la_giai_thuong AS laGiaiThuong,
-    p.is_pre_generated_code AS isPreGeneratedCode
+    p.la_giai_thuong AS laGiaiThuong
 FROM prize p
 LEFT JOIN campaign c ON p.ma_chien_dich = c.ma_chien_dich;
 GO
@@ -63,13 +72,11 @@ CREATE OR ALTER PROCEDURE [dbo].[sp_TraoQuaVaTruKho]
     @ma_store VARCHAR(50),
     @ma_giai_thuong_du_kien VARCHAR(255),
     @ma_giai_truot VARCHAR(255),
-    @ma_voucher_random VARCHAR(100),
     @ket_qua_giai_thuong VARCHAR(255) OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
     DECLARE @la_giai_thuong BIT = 0;
-    DECLARE @is_pre_generated_code BIT = 0;
     DECLARE @ton_kho_hien_tai INT = 0;
     DECLARE @gioi_han_trung_moi_user INT;
     DECLARE @so_lan_da_trung INT = 0;
@@ -78,8 +85,7 @@ BEGIN
 
     SELECT 
         @la_giai_thuong = la_giai_thuong,
-        @gioi_han_trung_moi_user = gioi_han_trung_moi_customer,
-        @is_pre_generated_code = ISNULL(is_pre_generated_code, 0)
+        @gioi_han_trung_moi_user = gioi_han_trung_moi_customer
     FROM [dbo].[prize] 
     WHERE ma_giai_thuong = @ma_giai_thuong_du_kien;
 
@@ -93,21 +99,14 @@ BEGIN
         IF @gioi_han_trung_moi_user IS NULL OR @so_lan_da_trung < @gioi_han_trung_moi_user
         BEGIN
             DECLARE @fetched_code VARCHAR(255) = NULL;
-            IF @is_pre_generated_code = 1
-            BEGIN
-                SELECT TOP 1 @fetched_code = code 
-                FROM [dbo].[prize_code] WITH (UPDLOCK, ROWLOCK)
-                WHERE ma_giai_thuong = @ma_giai_thuong_du_kien AND is_used = 0;
+            SELECT TOP 1 @fetched_code = code 
+            FROM [dbo].[prize_code] WITH (UPDLOCK, ROWLOCK)
+            WHERE ma_giai_thuong = @ma_giai_thuong_du_kien AND is_used = 0;
 
-                IF @fetched_code IS NOT NULL
-                BEGIN
-                    SET @ma_voucher_random = @fetched_code;
-                END
-                ELSE
-                BEGIN
-                    SET @ket_qua_giai_thuong = @ma_giai_truot;
-                    RETURN;
-                END
+            IF @fetched_code IS NULL
+            BEGIN
+                SET @ket_qua_giai_thuong = @ma_giai_truot;
+                RETURN;
             END
 
             SELECT @ton_kho_hien_tai = ton_kho_toan_he_thong
@@ -145,15 +144,12 @@ BEGIN
                         WHERE ma_store = @ma_store AND ma_giai_thuong = @ma_giai_thuong_du_kien;
                     END
 
-                    IF @is_pre_generated_code = 1 AND @fetched_code IS NOT NULL
-                    BEGIN
-                        UPDATE [dbo].[prize_code] 
-                        SET is_used = 1 
-                        WHERE code = @fetched_code;
-                    END
+                    UPDATE [dbo].[prize_code] 
+                    SET is_used = 1 
+                    WHERE code = @fetched_code;
 
                     INSERT INTO [dbo].[reward_voucher] (ma_giai_thuong, ma_khach_hang, ma_voucher, trang_thai, ma_store_phat_hanh)
-                    VALUES (@ma_giai_thuong_du_kien, @ma_khach_hang, @ma_voucher_random, 0, @ma_store);
+                    VALUES (@ma_giai_thuong_du_kien, @ma_khach_hang, @fetched_code, 0, @ma_store);
                 END
                 ELSE
                 BEGIN

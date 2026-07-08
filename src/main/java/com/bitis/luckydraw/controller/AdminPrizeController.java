@@ -23,6 +23,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
+import com.bitis.luckydraw.security.CustomUserDetails;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 @Controller
 @RequestMapping("/admin/prizes")
 public class AdminPrizeController {
@@ -32,9 +36,9 @@ public class AdminPrizeController {
     private final StoreRepository storeRepository;
     private final StorePrizeInventoryRepository storePrizeInventoryRepository;
     private final PrizeService prizeService;
-    private final CampaignStoreRepository campaignStoreRepository;
     private final PrizeExcelService prizeExcelService;
     private final com.bitis.luckydraw.repository.PrizeCodeRepository prizeCodeRepository;
+    private final CampaignStoreRepository campaignStoreRepository;
 
     public AdminPrizeController(CampaignRepository campaignRepository,
                                 PrizeRepository prizeRepository,
@@ -60,9 +64,21 @@ public class AdminPrizeController {
             @RequestParam(name = "store", required = false) String store,
             @RequestParam(name = "campaign", required = false) String campaign,
             @RequestParam(name = "prize", required = false) String prizeParam,
-            Model model) {
+            Model model,
+            org.springframework.security.core.Authentication auth) {
             
+        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boolean isManager = !isAdmin; // LÀM ĐƠN GIẢN: Nếu không phải Admin thì coi như là Manager/Store (chỉ xem phân bổ)
+        
         String maStore = (store != null && !store.equals("all") && !store.trim().isEmpty()) ? store : null;
+        
+        if (isManager && "prizes".equals(tab)) {
+            tab = "allocations";
+        }
+        
+        model.addAttribute("isAdmin", isAdmin);
+        model.addAttribute("isManager", isManager);
+        
         String maChienDich = (campaign != null && !campaign.equals("all") && !campaign.trim().isEmpty()) ? campaign : null;
         String maGiaiThuong = (prizeParam != null && !prizeParam.equals("all") && !prizeParam.trim().isEmpty()) ? prizeParam : null;
 
@@ -79,23 +95,35 @@ public class AdminPrizeController {
                 .collect(java.util.stream.Collectors.toList());
 
         List<Campaign> campaigns = campaignRepository.findAll();
-        List<Store> stores = storeRepository.findAll();
-        List<StoreInventoryDto> allocations = storePrizeInventoryRepository.getStoreInventory(maStore, maChienDich, maGiaiThuong);
-        List<CampaignStore> campaignStores = campaignStoreRepository.findAll();
+        List<StoreInventoryDto> rawAllocations = storePrizeInventoryRepository.getStoreInventory(maStore, maChienDich, maGiaiThuong);
+        List<StoreInventoryDto> allocations = rawAllocations;
 
-        // Calculate unused code count
-        java.util.Map<String, Long> codeCountMap = new java.util.HashMap<>();
-        for (PrizeListDto p : prizes) {
-            long c = prizeCodeRepository.countByMaGiaiThuongAndIsUsed(p.getMaGiaiThuong(), false);
-            codeCountMap.put(p.getMaGiaiThuong(), c);
+        // LÀM ĐƠN GIẢN: Filter allocations based on user details
+        if (!isAdmin && auth.getPrincipal() instanceof com.bitis.luckydraw.security.CustomUserDetails) {
+            com.bitis.luckydraw.security.CustomUserDetails userDetails = (com.bitis.luckydraw.security.CustomUserDetails) auth.getPrincipal();
+            if (userDetails.getAssignedStores() != null && !userDetails.getAssignedStores().isEmpty()) {
+                allocations = rawAllocations.stream()
+                    .filter(a -> userDetails.getAssignedStores().contains(a.getMaStore()))
+                    .collect(java.util.stream.Collectors.toList());
+            } else if (userDetails.getMaStore() != null) {
+                allocations = rawAllocations.stream()
+                    .filter(a -> userDetails.getMaStore().equals(a.getMaStore()))
+                    .collect(java.util.stream.Collectors.toList());
+            }
         }
+
+        if (!isAdmin) {
+            java.util.Set<String> validCampaigns = allocations.stream().map(StoreInventoryDto::getMaChienDich).collect(java.util.stream.Collectors.toSet());
+            prizes = prizes.stream().filter(p -> validCampaigns.contains(p.getMaChienDich())).collect(java.util.stream.Collectors.toList());
+        }
+        List<Store> stores = storeRepository.findAll();
+        List<CampaignStore> campaignStores = campaignStoreRepository.findAll();
 
         model.addAttribute("prizes", prizes);
         model.addAttribute("campaigns", campaigns);
         model.addAttribute("stores", stores);
         model.addAttribute("allocations", allocations);
         model.addAttribute("campaignStores", campaignStores);
-        model.addAttribute("codeCountMap", codeCountMap);
         model.addAttribute("activeTab", tab);
         
         // Return filter selections back to view
@@ -191,6 +219,8 @@ public class AdminPrizeController {
                     throw new RuntimeException("Giải thưởng '" + p.getMaGiaiThuong() + "' là quà tặng thật nên không thể có số lượng vô hạn (-1). Vui lòng nhập số lượng >= 0.");
                 }
                 
+                System.out.println("[DEBUG IMPORT] Prize: " + p.getMaGiaiThuong() + " | laGiaiThuong=" + p.getLaGiaiThuong() + " | tonKho=" + p.getTonKhoToanHeThong());
+                
                 java.util.Optional<com.bitis.luckydraw.model.Prize> existingOpt = prizeRepository.findByMaGiaiThuong(p.getMaGiaiThuong());
                 if (existingOpt.isPresent()) {
                     com.bitis.luckydraw.model.Prize existing = existingOpt.get();
@@ -214,43 +244,89 @@ public class AdminPrizeController {
         return "redirect:/admin/prizes";
     }
 
-    @PostMapping("/import-codes")
-    public String importCodes(@RequestParam("maGiaiThuong") String maGiaiThuong, 
-                              @RequestParam("codesText") String codesText, 
-                              RedirectAttributes redirectAttributes) {
+    @PostMapping("/import-codes-excel")
+    public String importCodesExcel(@RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+                                   RedirectAttributes redirectAttributes) {
         try {
-            if (codesText == null || codesText.trim().isEmpty()) {
-                throw new IllegalArgumentException("Danh sách mã trống!");
+            if (file.isEmpty()) {
+                throw new IllegalArgumentException("Vui lòng chọn file Excel!");
             }
-            // Parse by newline or comma
-            String[] codes = codesText.split("[\r\n,]+");
             int successCount = 0;
             int duplicateCount = 0;
-            for (String code : codes) {
-                code = code.trim();
-                if (code.isEmpty()) continue;
-                
-                if (prizeCodeRepository.existsByCode(code)) {
-                    duplicateCount++;
-                    continue;
+            java.util.Set<String> affectedPrizes = new java.util.HashSet<>();
+            try (org.apache.poi.ss.usermodel.Workbook workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create(file.getInputStream())) {
+                org.apache.poi.ss.usermodel.Sheet sheet = workbook.getSheetAt(0);
+                for (org.apache.poi.ss.usermodel.Row row : sheet) {
+                    if (row.getRowNum() == 0) continue; // Skip header
+                    
+                    org.apache.poi.ss.usermodel.Cell cellMaGiai = row.getCell(0);
+                    org.apache.poi.ss.usermodel.Cell cellCode = row.getCell(1);
+                    
+                    if (cellMaGiai == null || cellCode == null) continue;
+                    
+                    String maGiaiThuong = getCellValueAsString(cellMaGiai).trim();
+                    String code = getCellValueAsString(cellCode).trim();
+                    
+                    if (maGiaiThuong.isEmpty() || code.isEmpty()) continue;
+                    
+                    if (prizeCodeRepository.existsByCode(code)) {
+                        duplicateCount++;
+                        continue;
+                    }
+                    com.bitis.luckydraw.model.PrizeCode prizeCode = new com.bitis.luckydraw.model.PrizeCode();
+                    prizeCode.setMaGiaiThuong(maGiaiThuong);
+                    prizeCode.setCode(code);
+                    prizeCode.setIsUsed(false);
+                    prizeCodeRepository.save(prizeCode);
+                    affectedPrizes.add(maGiaiThuong);
+                    successCount++;
                 }
-                com.bitis.luckydraw.model.PrizeCode prizeCode = new com.bitis.luckydraw.model.PrizeCode();
-                prizeCode.setMaGiaiThuong(maGiaiThuong);
-                prizeCode.setCode(code);
-                prizeCode.setIsUsed(false);
-                prizeCodeRepository.save(prizeCode);
-                successCount++;
             }
             
-            String msg = "Đã nạp " + successCount + " mã thành công.";
+            for (String maGiai : affectedPrizes) {
+                syncPrizeInventory(maGiai);
+            }
+            
+            String msg = "Đã nạp " + successCount + " mã thành công từ file Excel.";
             if (duplicateCount > 0) {
                 msg += " Đã bỏ qua " + duplicateCount + " mã trùng lặp.";
             }
             redirectAttributes.addFlashAttribute("successMessage", msg);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi nạp mã: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi import: " + e.getMessage());
         }
         return "redirect:/admin/prizes";
+    }
+
+    private String getCellValueAsString(org.apache.poi.ss.usermodel.Cell cell) {
+        if (cell.getCellType() == org.apache.poi.ss.usermodel.CellType.STRING) {
+            return cell.getStringCellValue();
+        } else if (cell.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
+            return String.valueOf((long)cell.getNumericCellValue());
+        }
+        return "";
+    }
+    
+    @GetMapping("/codes/{maGiaiThuong}")
+    public String viewCodes(@org.springframework.web.bind.annotation.PathVariable String maGiaiThuong, org.springframework.ui.Model model, @RequestParam(defaultValue = "0") int page) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, 50, org.springframework.data.domain.Sort.by("id").descending());
+        org.springframework.data.domain.Page<com.bitis.luckydraw.model.PrizeCode> codesPage = prizeCodeRepository.findByMaGiaiThuong(maGiaiThuong, pageable);
+        model.addAttribute("codesPage", codesPage);
+        model.addAttribute("maGiaiThuong", maGiaiThuong);
+        prizeRepository.findByMaGiaiThuong(maGiaiThuong).ifPresent(p -> model.addAttribute("prizeName", p.getTenGiai()));
+        return "admin/prize-code-list";
+    }
+
+
+
+    private void syncPrizeInventory(String maGiaiThuong) {
+        prizeRepository.findByMaGiaiThuong(maGiaiThuong).ifPresent(p -> {
+            if (Boolean.TRUE.equals(p.getLaGiaiThuong())) {
+                long count = prizeCodeRepository.countByMaGiaiThuongAndIsUsed(maGiaiThuong, false);
+                p.setTonKhoToanHeThong((int) count);
+                prizeRepository.save(p);
+            }
+        });
     }
 
     @GetMapping("/export-excel")
@@ -363,6 +439,7 @@ public class AdminPrizeController {
                 return "redirect:/admin/prizes?tab=prizes";
             }
             Prize prizeToDelete = prizeOpt.get();
+            
             // Simple constraint check
             java.util.Optional<com.bitis.luckydraw.model.StorePrizeInventory> invOpt = 
                 storePrizeInventoryRepository.findAll().stream()
