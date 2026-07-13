@@ -29,18 +29,13 @@ public class CustomerViewController {
 
     @GetMapping("/index")
     public String indexPage(HttpSession session, Model model, jakarta.servlet.http.HttpServletResponse response) {
-        // Chống cache để khi user nhấn Back từ màn hình quay, trang index sẽ tự tải lại số lượt quay mới nhất!
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response.setHeader("Pragma", "no-cache");
         response.setHeader("Expires", "0");
 
-        if (session.getAttribute("CUSTOMER_ID") == null) {
-            return "redirect:/customer/login";
-        }
-        
         String maKhachHang = (String) session.getAttribute("CUSTOMER_MA");
+        boolean isLoggedIn = session.getAttribute("CUSTOMER_ID") != null;
         
-        // 1. Lấy danh sách Campaign đang active (trạng thái = 1)
         java.util.List<com.bitis.luckydraw.model.Campaign> allCampaigns = campaignRepository.findAll();
         java.util.List<com.bitis.luckydraw.model.Campaign> activeCampaigns = new java.util.ArrayList<>();
         for (com.bitis.luckydraw.model.Campaign c : allCampaigns) {
@@ -49,11 +44,12 @@ public class CustomerViewController {
             }
         }
         
-        // 2. Lấy số lượt quay của user
-        java.util.List<com.bitis.luckydraw.model.CustomerTurn> userTurns = customerTurnRepository.findByMaKhachHang(maKhachHang);
         java.util.Map<String, Integer> turnMap = new java.util.HashMap<>();
-        for (com.bitis.luckydraw.model.CustomerTurn ct : userTurns) {
-            turnMap.put(ct.getMaChienDich(), ct.getLuotConLai() != null ? ct.getLuotConLai() : 0);
+        if (isLoggedIn && maKhachHang != null) {
+            java.util.List<com.bitis.luckydraw.model.CustomerTurn> userTurns = customerTurnRepository.findByMaKhachHang(maKhachHang);
+            for (com.bitis.luckydraw.model.CustomerTurn ct : userTurns) {
+                turnMap.put(ct.getMaChienDich(), ct.getLuotConLai() != null ? ct.getLuotConLai() : 0);
+            }
         }
 
         // 3. Chuẩn bị data hiển thị (Sắp xếp campaign có lượt lên đầu)
@@ -81,7 +77,12 @@ public class CustomerViewController {
         // Gộp lại: có lượt lên trước
         displayCampaigns.addAll(otherCampaigns);
         
-        model.addAttribute("campaigns", displayCampaigns);
+        model.addAttribute("campaigns", activeCampaigns);
+        model.addAttribute("turnMap", turnMap);
+        model.addAttribute("displayCampaigns", displayCampaigns);
+        model.addAttribute("otherCampaigns", otherCampaigns);
+        model.addAttribute("isLoggedIn", isLoggedIn);
+        
         return "customer/index";
     }
 
@@ -89,9 +90,22 @@ public class CustomerViewController {
 
     // Các URL tạm để render html, sau này sẽ có data thật
     @GetMapping("/spin")
-    public String spinPage(@RequestParam(value = "campaign", required = false) String campaign, HttpSession session, Model model) {
+    public String spinPage(@RequestParam(value = "campaign", required = false) String campaign, 
+                           @RequestParam(value = "preview", required = false) String preview,
+                           HttpSession session, Model model) {
         if (session.getAttribute("CUSTOMER_ID") == null) {
-            return "redirect:/customer/login";
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if ("true".equals(preview) && auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
+                session.setAttribute("CUSTOMER_ID", "PREVIEW");
+                model.addAttribute("isPreview", true);
+            } else {
+                return "redirect:/customer/login";
+            }
+        }
+        
+        String phone = (String) session.getAttribute("CUSTOMER_PHONE");
+        if (phone != null && phone.startsWith("ZALO") && !"PREVIEW".equals(session.getAttribute("CUSTOMER_ID"))) {
+            return "redirect:/customer/update-phone";
         }
         
         if (campaign == null || campaign.trim().isEmpty()) {
@@ -153,5 +167,33 @@ public class CustomerViewController {
         
         model.addAttribute("voucher", dto); // Truyền DTO vì nó có tenGiai
         return "customer/prize-detail";
+    }
+
+    @GetMapping("/update-phone")
+    public String updatePhonePage(HttpSession session) {
+        if (session.getAttribute("CUSTOMER_ID") == null) return "redirect:/customer/login";
+        String phone = (String) session.getAttribute("CUSTOMER_PHONE");
+        if (phone == null || !phone.startsWith("ZALO")) return "redirect:/customer/index";
+        return "customer/update-phone";
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/update-phone")
+    public String updatePhoneSubmit(@RequestParam("phone") String newPhone, HttpSession session, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("CUSTOMER_ID") == null) return "redirect:/customer/login";
+        
+        if (newPhone == null || newPhone.trim().isEmpty() || newPhone.length() < 9 || newPhone.length() > 15) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Số điện thoại không hợp lệ.");
+            return "redirect:/customer/update-phone";
+        }
+        
+        String maKhachHang = (String) session.getAttribute("CUSTOMER_MA");
+        customerRepository.findByMaKhachHang(maKhachHang).ifPresent(c -> {
+            c.setPhone(newPhone);
+            customerRepository.save(c);
+            session.setAttribute("CUSTOMER_PHONE", newPhone);
+        });
+        
+        redirectAttributes.addFlashAttribute("successMessage", "Cập nhật thông tin thành công!");
+        return "redirect:/customer/index";
     }
 }

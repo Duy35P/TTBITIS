@@ -54,8 +54,16 @@ public class ZaloAuthService {
 
     // 3. Tạo URL chuyển hướng đăng nhập
     public String getAuthorizationUrl(String state, String codeChallenge) {
+        return getAuthorizationUrl(state, codeChallenge, this.redirectUri);
+    }
+    
+    public String getAuthorizationUrl(String state, String codeChallenge, String customRedirectUri) {
+        String uri = customRedirectUri != null && !customRedirectUri.isEmpty() ? customRedirectUri : this.redirectUri;
+        try {
+            uri = java.net.URLEncoder.encode(uri, "UTF-8");
+        } catch (Exception e) {}
         return String.format("https://oauth.zaloapp.com/v4/permission?app_id=%s&redirect_uri=%s&state=%s&code_challenge=%s",
-                appId, redirectUri, state, codeChallenge);
+                appId, uri, state, codeChallenge);
     }
 
     // 4. Lấy Access Token từ authorization_code

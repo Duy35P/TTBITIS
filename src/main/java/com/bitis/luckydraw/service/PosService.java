@@ -164,6 +164,12 @@ public class PosService {
                 .token(tokenValue)
                 .build();
         } else {
+            if (request.getInvoiceCode() != null) {
+                invoiceRepository.findByMaHoaDon(request.getInvoiceCode()).ifPresent(inv -> {
+                    inv.setDaXuLy(true);
+                    invoiceRepository.save(inv);
+                });
+            }
             return PosSyncResponse.builder()
                 .status("SUCCESS")
                 .message("Hóa đơn hợp lệ nhưng không đủ điều kiện nhận lượt từ chiến dịch nào.")

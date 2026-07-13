@@ -107,16 +107,18 @@ public class AdminInvoiceController {
             List<TurnTransaction> turns = null;
             
             if (status != null && !status.isEmpty() && !status.equals("all")) {
+                boolean hasToken = gameAccessTokenRepository.findByMaHoaDon(inv.getMaHoaDon()).isPresent();
+                
                 if (status.equals("0")) {
-                    matchStatus = Boolean.FALSE.equals(inv.getDaXuLy());
+                    matchStatus = Boolean.FALSE.equals(inv.getDaXuLy()) && hasToken;
                 } else if (status.equals("1")) {
-                    matchStatus = Boolean.TRUE.equals(inv.getDaXuLy());
+                    matchStatus = Boolean.TRUE.equals(inv.getDaXuLy()) || hasToken;
                     if (matchStatus) {
                         turns = turnTransactionRepository.findByNguonThamChieu(inv.getMaHoaDon());
                         matchStatus = turns.stream().mapToLong(TurnTransaction::getSoLuong).sum() > 0;
                     }
                 } else if (status.equals("2")) {
-                    matchStatus = Boolean.TRUE.equals(inv.getDaXuLy());
+                    matchStatus = Boolean.TRUE.equals(inv.getDaXuLy()) || (!hasToken && Boolean.FALSE.equals(inv.getDaXuLy()));
                     if (matchStatus) {
                         turns = turnTransactionRepository.findByNguonThamChieu(inv.getMaHoaDon());
                         matchStatus = turns.stream().mapToLong(TurnTransaction::getSoLuong).sum() == 0;

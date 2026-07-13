@@ -37,11 +37,15 @@ public class AdminDashboardController {
     @GetMapping
     public String index(Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-            if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_GAME_MAKER"))) {
+        if (auth != null && auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("QL_TONGQUAN"))) {
+            // Không có quyền xem tổng quan -> redirect trang khác
+            if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("QL_CHIENDICH") || a.getAuthority().equals("ROLE_GAME_MAKER"))) {
                 return "redirect:/admin/campaigns";
             }
-            return "redirect:/admin/customers";
+            if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("QL_CUAHANG"))) {
+                return "redirect:/admin/stores";
+            }
+            return "redirect:/admin/profile"; // Trang cá nhân/cài đặt (luôn có)
         }
 
         long totalCustomers = customerRepository.count();

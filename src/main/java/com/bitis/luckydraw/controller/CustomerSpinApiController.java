@@ -103,11 +103,17 @@ public class CustomerSpinApiController {
                 maStore = "STORE_ONLINE"; 
             }
             
+            com.bitis.luckydraw.model.Campaign campaign = campaignRepository.findByMaChienDich(maChienDich).orElse(null);
+            if (campaign == null || campaign.getTrangThai() != 1 || 
+                campaign.getNgayBatDau().isAfter(java.time.LocalDateTime.now()) || 
+                campaign.getNgayKetThuc().isBefore(java.time.LocalDateTime.now())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Chiến dịch đã kết thúc hoặc không khả dụng."));
+            }
+            
             Prize wonPrize = customerSpinService.playSpin(maKhachHang, maChienDich, maStore);
 
             // Lấy index từ cấu hình theme JSON để khớp với FE
             int prizeIndex = -1;
-            com.bitis.luckydraw.model.Campaign campaign = campaignRepository.findByMaChienDich(maChienDich).orElse(null);
             
             if (campaign != null && campaign.getCauhinhThemeJson() != null && !campaign.getCauhinhThemeJson().trim().isEmpty()) {
                 try {

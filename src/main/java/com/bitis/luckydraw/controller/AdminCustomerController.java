@@ -1,15 +1,26 @@
 package com.bitis.luckydraw.controller;
+import org.springframework.security.access.prepost.PreAuthorize;
+
 
 import com.bitis.luckydraw.model.Customer;
+
 import com.bitis.luckydraw.model.CustomerTurn;
+
 import com.bitis.luckydraw.repository.CustomerRepository;
+
 import com.bitis.luckydraw.repository.CustomerTurnRepository;
+
 import org.springframework.stereotype.Controller;
+
 import org.springframework.ui.Model;
+
 import org.springframework.web.bind.annotation.*;
 
+
 import java.util.List;
+
 import java.util.Map;
+
 import java.util.stream.Collectors;
 
 @Controller
@@ -56,8 +67,8 @@ public class AdminCustomerController {
         return "admin/customer-list";
     }
 
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN') or hasAuthority('QL_KHACHHANG')")
     @PostMapping("/toggle-status")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_KHACHHANG_EDIT')")
     public String toggleStatus(@RequestParam Long customerId, @RequestParam Integer status) {
         customerRepository.findById(customerId).ifPresent(customer -> {
             customer.setTrangThai(status);
@@ -67,6 +78,7 @@ public class AdminCustomerController {
     }
 
     @GetMapping("/export-excel")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_KHACHHANG_EXPORT')")
     public void exportExcel(jakarta.servlet.http.HttpServletResponse response) {
         try {
             List<Customer> customers = customerRepository.findAll();
@@ -107,3 +119,4 @@ public class AdminCustomerController {
         }
     }
 }
+

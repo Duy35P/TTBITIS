@@ -37,12 +37,12 @@
         <div class="box-body">
           
           <div class="nav-tabs" style="display: flex; border-bottom: 1px solid #ddd; margin-bottom: 15px;">
-            <button th:if="${!isManager}" th:class="${activeTab == 'prizes' ? 'active' : ''}" onclick="switchTab('prizes', this)" style="background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; color: #666; border-bottom: 3px solid transparent;">Danh Sách Giải Thưởng</button>
-            <button th:class="${activeTab == 'allocations' ? 'active' : ''}" onclick="switchTab('allocations', this)" style="background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; color: #666; border-bottom: 3px solid transparent;">Phân Bổ Cửa Hàng</button>
+            <button sec:authorize="hasRole('ADMIN') or hasAuthority('QL_GIAITHUONG')" th:class="${activeTab == 'prizes' ? 'active' : ''}" onclick="switchTab('prizes', this)" style="background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; color: #666; border-bottom: 3px solid transparent;">Danh Sách Giải Thưởng</button>
+            <button sec:authorize="hasRole('ADMIN') or hasAuthority('QL_PHANBO')" th:class="${activeTab == 'allocations' ? 'active' : ''}" onclick="switchTab('allocations', this)" style="background: none; border: none; padding: 10px 20px; font-size: 15px; font-weight: 600; cursor: pointer; color: #666; border-bottom: 3px solid transparent;">Phân Bổ Cửa Hàng</button>
           </div>
 
           <!-- Tab 1: Danh Sách Giải Thưởng -->
-          <div th:if="${!isManager}" id="prizes" class="tab-content" th:style="${activeTab == 'prizes' ? 'display:block;' : 'display:none;'}">
+          <div sec:authorize="hasRole('ADMIN') or hasAuthority('QL_GIAITHUONG')" id="prizes" class="tab-content" th:style="${activeTab == 'prizes' ? 'display:block;' : 'display:none;'}">
             <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
               <!-- Lọc chiến dịch -->
               <form method="get" th:action="@{/admin/prizes}" style="display: flex; gap: 10px; align-items: center; margin: 0;">
@@ -54,18 +54,18 @@
                 </select>
               </form>
               
-              <div style="display: flex; gap: 10px;" th:if="${!isManager}">
-                <form th:action="@{/admin/prizes/import-codes-excel}" method="post" enctype="multipart/form-data" style="margin: 0;">
+              <div style="display: flex; gap: 10px;">
+                <form sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_IMPORT')" th:action="@{/admin/prizes/import-codes-excel}" method="post" enctype="multipart/form-data" style="margin: 0;">
                   <input type="file" name="file" accept=".xlsx, .xls" style="display:none;" id="excelCodeInput" onchange="this.form.submit()">
                   <button type="button" onclick="document.getElementById('excelCodeInput').click()" style="background-color: #39cccc; border: none; color: white; padding: 6px 12px; border-radius: 3px; cursor: pointer; font-weight: 600;"><i class="fa fa-upload"></i> Nạp mã Hàng loạt</button>
                 </form>
                 
-                <a th:href="@{/admin/prizes/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
-                <form th:action="@{/admin/prizes/import}" method="post" enctype="multipart/form-data" style="margin: 0;">
+                <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_EXPORT')" th:href="@{/admin/prizes/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
+                <form sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_IMPORT')" th:action="@{/admin/prizes/import}" method="post" enctype="multipart/form-data" style="margin: 0;">
                   <input type="file" name="file" accept=".xlsx, .xls" style="display:none;" id="excelPrizeInput" onchange="this.form.submit()">
-                  <button type="button" onclick="document.getElementById('excelPrizeInput').click()" style="background-color: #f39c12; border: none; color: white; padding: 6px 12px; border-radius: 3px; cursor: pointer;"><i class="fa fa-upload"></i> Import Excel Giải Thưởng</button>
+                  <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_IMPORT')" type="button" onclick="document.getElementById('excelPrizeInput').click()" style="background-color: #f39c12; border: none; color: white; padding: 6px 12px; border-radius: 3px; cursor: pointer;"><i class="fa fa-upload"></i> Import Excel Giải Thưởng</button>
                 </form>
-                <button type="button" onclick="openModal('prizeModal', 'Thêm Giải Thưởng Mới')" style="background-color: #3c8dbc; color: #fff; padding: 6px 12px; border: none; border-radius: 3px; cursor: pointer;">Thêm Giải Thưởng</button>
+                <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_ADD')" type="button" onclick="openModal('prizeModal', 'Thêm Giải Thưởng Mới')" style="background-color: #3c8dbc; color: #fff; padding: 6px 12px; border: none; border-radius: 3px; cursor: pointer;">Thêm Giải Thưởng</button>
               </div>
             </div>
             <table class="table-striped" style="width: 100%; border-collapse: collapse;">
@@ -108,8 +108,8 @@
                     <div th:if="${p.laGiaiThuong}" style="margin-bottom: 5px;">
                        <a th:href="@{/admin/prizes/codes/{ma}(ma=${p.maGiaiThuong})}" style="color: #f39c12; font-weight: 600; font-size: 13px;"><i class="fa fa-list"></i> Xem mã (<span th:text="${p.tonKhoThucTe}">0</span>)</a>
                     </div>
-                    <span th:if="${!isManager}">
-                        <a href="javascript:void(0)" 
+                    <span>
+                        <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_EDIT')" href="javascript:void(0)" 
                            th:data-ma="${p.maGiaiThuong}"
                            th:data-ten="${p.tenGiai}"
                            th:data-loai="${p.loaiGiai}"
@@ -119,8 +119,8 @@
                            th:data-xac="${p.xacSuat}"
                            th:data-is-real="${p.laGiaiThuong}"
                            onclick="openEditModal(this)" style="color: #3c8dbc; font-weight: 600;">Sửa</a> 
-                        <span style="color: #ccc; margin: 0 5px;">|</span> 
-                        <a href="javascript:void(0)" 
+                        <span sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_EDIT')" style="color: #ccc; margin: 0 5px;">|</span> 
+                        <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_EDIT')" href="javascript:void(0)" 
                            th:data-ma="${p.maGiaiThuong}"
                            onclick="confirmDeletePrize(this)" style="color: #dd4b39; font-weight: 600;">Xóa</a>
                     </span>
@@ -134,16 +134,14 @@
           </div>
 
           <!-- Tab 2: Phân Bổ Đại Lý -->
-          <div id="allocations" class="tab-content" th:style="${activeTab == 'allocations' ? 'display:block;' : 'display:none;'}">
+          <div sec:authorize="hasRole('ADMIN') or hasAuthority('QL_PHANBO')" id="allocations" class="tab-content" th:style="${activeTab == 'allocations' ? 'display:block;' : 'display:none;'}">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
               <h4 style="margin: 0; font-weight: 600; font-size: 15px;">Phân bổ giải thưởng cho cửa hàng</h4>
               
-              <form th:if="${!isManager}" method="post" th:action="@{/admin/prizes/allocations/reclaim-unredeemed}" style="margin: 0;" onsubmit="return confirm('Thu hồi TOÀN BỘ quà chưa đổi của các chiến dịch đã hết hạn? Kho sẽ được tự động cộng lại.');">
-                <button type="submit" class="btn-danger" style="background-color: #d9534f; color: #fff; padding: 7px 15px; border-radius: 3px; font-weight: 600; border: none; cursor: pointer;"><i class="fa fa-recycle"></i> Thu hồi quà tồn (Hết hạn)</button>
-              </form>
+              
             </div>
             
-            <div th:if="${!isManager}" style="margin-bottom: 15px; background: #f9f9f9; padding: 15px; border-radius: 4px; border: 1px solid #ddd;">
+            <div sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_PHANBO_ADD')" style="margin-bottom: 15px; background: #f9f9f9; padding: 15px; border-radius: 4px; border: 1px solid #ddd;">
               <h4 style="margin-bottom: 10px; font-weight: 600; font-size: 15px;">Thêm Phân bổ Mới</h4>
               
               <form th:action="@{/admin/prizes/allocate}" method="post" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
@@ -180,7 +178,7 @@
                   <input type="number" name="soLuongCap" required min="-1" style="padding: 6px; width: 100px; border: 1px solid #ccc; border-radius: 3px;" value="1" title="Nhập -1 nếu không giới hạn">
                 </div>
                 <div style="margin-bottom: 2px;">
-                  <button type="submit" class="btn-warning" style="background-color: #f39c12; color: #fff; padding: 7px 15px; border-radius: 3px; font-weight: 600; border: none; cursor: pointer;">Ghi nhận Phân Bổ</button>
+                  <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_PHANBO_ADD')" type="submit" class="btn-warning" style="background-color: #f39c12; color: #fff; padding: 7px 15px; border-radius: 3px; font-weight: 600; border: none; cursor: pointer;">Ghi nhận Phân Bổ</button>
                 </div>
               </form>
             </div>
@@ -211,7 +209,7 @@
                 </div>
                 <div class="filter-group" style="flex: 0; justify-content: flex-end; display: flex; gap: 10px;">
                   <button type="submit" class="btn-primary" style="height: 38px; white-space: nowrap; background-color: #3c8dbc; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px;">Lọc dữ liệu</button>
-                  <a th:href="@{/admin/prizes/allocations/export-excel(store=${selectedStore}, campaign=${selectedCampaign}, prize=${selectedPrize})}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 9px 20px; display: inline-block; height: 38px; white-space: nowrap; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; ">Xuất Excel</a>
+                  <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_PHANBO_EXPORT')" th:href="@{/admin/prizes/allocations/export-excel(store=${selectedStore}, campaign=${selectedCampaign}, prize=${selectedPrize})}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 9px 20px; display: inline-block; height: 38px; white-space: nowrap; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; ">Xuất Excel</a>
                 </div>
               </div>
             </form>
@@ -241,22 +239,20 @@
                   <td style="padding: 12px 8px; border-left: 2px solid #eee;" th:text="${a.daDoiThucTe != null ? a.daDoiThucTe : 0}"></td>
                   <td style="padding: 12px 8px;"><strong th:text="${a.tonKhoThucTe != null ? a.tonKhoThucTe : a.tongLuongCap}" style="color: #27ae60;"></strong></td>
                   <td style="padding: 12px 8px;" class="action-links">
-                    <span th:if="${!isManager}">
+                    <span>
                         <a href="javascript:void(0)" 
                            th:data-store="${a.maStore}"
                            th:data-prize="${a.maGiaiThuong}"
                            th:data-total="${a.tongLuongCap}"
                            th:data-da-phat="${a.daPhat}"
-                           onclick="openEditAllocationModal(this)" style="color:#3c8dbc; font-weight: 600;">Chỉnh sửa SL</a> 
+                           onclick="openEditAllocationModal(this)" style="color:#3c8dbc; font-weight: 600;" sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_PHANBO_EDIT')">Chỉnh sửa SL</a> 
                         <span style="color:#ccc; margin: 0 5px;">|</span> 
                         <a href="javascript:void(0)" 
                            th:data-store="${a.maStore}"
                            th:data-prize="${a.maGiaiThuong}"
-                           onclick="confirmRevokeAllocation(this)" style="color:#dd4b39; font-weight: 600;">Thu hồi</a>
+                           onclick="confirmRevokeAllocation(this)" style="color:#dd4b39; font-weight: 600;" sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_PHANBO_REVOKE')">Thu hồi</a>
                     </span>
-                    <span th:if="${isManager}">
-                        <a href="javascript:void(0)" onclick="alert('Vui lòng liên hệ Admin hoặc Quản lý chiến dịch để yêu cầu bổ sung số lượng giải thưởng này.');" style="color:#f39c12; font-weight: 600;"><i class="fa fa-envelope"></i> Yêu cầu bổ sung</a>
-                    </span>
+                    
                   </td>
                 </tr>
                 <tr th:if="${allocations == null or allocations.isEmpty()}">

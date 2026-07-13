@@ -26,6 +26,7 @@ import java.util.List;
 import com.bitis.luckydraw.security.CustomUserDetails;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Controller
 @RequestMapping("/admin/prizes")
@@ -68,11 +69,12 @@ public class AdminPrizeController {
             org.springframework.security.core.Authentication auth) {
             
         boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        boolean isManager = !isAdmin; // LÀM ĐƠN GIẢN: Nếu không phải Admin thì coi như là Manager/Store (chỉ xem phân bổ)
+        boolean isManager = false;
+        boolean hasQlGiaiThuong = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("QL_GIAITHUONG"));
         
         String maStore = (store != null && !store.equals("all") && !store.trim().isEmpty()) ? store : null;
         
-        if (isManager && "prizes".equals(tab)) {
+        if (!hasQlGiaiThuong && !isAdmin && "prizes".equals(tab)) {
             tab = "allocations";
         }
         
@@ -117,6 +119,18 @@ public class AdminPrizeController {
             prizes = prizes.stream().filter(p -> validCampaigns.contains(p.getMaChienDich())).collect(java.util.stream.Collectors.toList());
         }
         List<Store> stores = storeRepository.findAll();
+        if (!isAdmin && auth.getPrincipal() instanceof com.bitis.luckydraw.security.CustomUserDetails) {
+            com.bitis.luckydraw.security.CustomUserDetails userDetails = (com.bitis.luckydraw.security.CustomUserDetails) auth.getPrincipal();
+            if (userDetails.getAssignedStores() != null && !userDetails.getAssignedStores().isEmpty()) {
+                stores = stores.stream()
+                    .filter(s -> userDetails.getAssignedStores().contains(s.getMaStore()))
+                    .collect(java.util.stream.Collectors.toList());
+            } else if (userDetails.getMaStore() != null) {
+                stores = stores.stream()
+                    .filter(s -> userDetails.getMaStore().equals(s.getMaStore()))
+                    .collect(java.util.stream.Collectors.toList());
+            }
+        }
         List<CampaignStore> campaignStores = campaignStoreRepository.findAll();
 
         model.addAttribute("prizes", prizes);
@@ -134,6 +148,7 @@ public class AdminPrizeController {
         return "admin/prize-list";
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_PHANBO_ADD')")
     @PostMapping("/allocate")
     public String allocatePrize(@RequestParam List<String> storeMas,
                                 @RequestParam String maGiaiThuong,
@@ -153,6 +168,8 @@ public class AdminPrizeController {
         return "redirect:/admin/prizes?tab=allocations";
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_PHANBO_EDIT')")
+
     @PostMapping("/allocations/update")
     public String updateAllocation(@RequestParam String maStore,
                                    @RequestParam String maGiaiThuong,
@@ -166,6 +183,8 @@ public class AdminPrizeController {
         }
         return "redirect:/admin/prizes?tab=allocations";
     }
+
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_PHANBO_REVOKE')")
 
     @PostMapping("/allocations/revoke")
     public String revokeAllocation(@RequestParam String maStore,
@@ -181,6 +200,7 @@ public class AdminPrizeController {
         return "redirect:/admin/prizes?tab=allocations";
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_PHANBO_CANCEL')")
     @PostMapping("/allocations/reclaim-unredeemed")
     public String reclaimUnredeemed(@RequestParam(required = false) String maChienDich, RedirectAttributes redirectAttributes) {
         try {
@@ -191,6 +211,8 @@ public class AdminPrizeController {
         }
         return "redirect:/admin/prizes?tab=allocations";
     }
+
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_IMPORT')")
 
     @PostMapping("/import")
     public String importPrizes(@RequestParam("file") org.springframework.web.multipart.MultipartFile file, RedirectAttributes redirectAttributes) {
@@ -329,6 +351,8 @@ public class AdminPrizeController {
         });
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_EXPORT')")
+
     @GetMapping("/export-excel")
     public void exportExcel(jakarta.servlet.http.HttpServletResponse response) {
         try {
@@ -351,6 +375,8 @@ public class AdminPrizeController {
             e.printStackTrace();
         }
     }
+
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_ADD') or hasAuthority('ACT_GIAITHUONG_EDIT')")
 
     @PostMapping("/save")
     public String savePrize(Prize prize, RedirectAttributes redirectAttributes) {
@@ -464,6 +490,7 @@ public class AdminPrizeController {
         return "redirect:/admin/prizes?tab=prizes";
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_PHANBO_EXPORT')")
     @GetMapping("/allocations/export-excel")
     public void exportAllocationsExcel(
             @RequestParam(name = "store", required = false) String store,
@@ -476,6 +503,23 @@ public class AdminPrizeController {
                     (campaign != null && !campaign.isEmpty()) ? campaign : null,
                     (prizeParam != null && !prizeParam.isEmpty()) ? prizeParam : null
             );
+            
+            boolean isAdmin = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+            Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            
+            if (!isAdmin && principal instanceof com.bitis.luckydraw.security.CustomUserDetails) {
+                com.bitis.luckydraw.security.CustomUserDetails userDetails = (com.bitis.luckydraw.security.CustomUserDetails) principal;
+                if (userDetails.getAssignedStores() != null && !userDetails.getAssignedStores().isEmpty()) {
+                    allocations = allocations.stream()
+                        .filter(a -> userDetails.getAssignedStores().contains(a.getMaStore()))
+                        .collect(java.util.stream.Collectors.toList());
+                } else if (userDetails.getMaStore() != null) {
+                    allocations = allocations.stream()
+                        .filter(a -> userDetails.getMaStore().equals(a.getMaStore()))
+                        .collect(java.util.stream.Collectors.toList());
+                }
+            }
+
             
             String[] headers = {"Mã Cửa Hàng", "Tên Cửa Hàng", "Mã Quà", "Tên Quà", "Mã Chiến Dịch", "Tên Chiến Dịch", "Tổng Cấp", "Đã Phát", "Tồn Kho"};
             List<String[]> data = allocations.stream().map(a -> new String[]{

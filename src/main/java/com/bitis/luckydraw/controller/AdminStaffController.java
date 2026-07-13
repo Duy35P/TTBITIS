@@ -60,6 +60,28 @@ public class AdminStaffController {
 
         List<StaffListDto> staffs = staffRepository.getStaffList();
         List<Store> stores = storeRepository.findAll();
+        
+        boolean isAdmin = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        
+        if (!isAdmin && principal instanceof com.bitis.luckydraw.security.CustomUserDetails) {
+            com.bitis.luckydraw.security.CustomUserDetails userDetails = (com.bitis.luckydraw.security.CustomUserDetails) principal;
+            if (userDetails.getAssignedStores() != null && !userDetails.getAssignedStores().isEmpty()) {
+                staffs = staffs.stream()
+                    .filter(s -> userDetails.getAssignedStores().contains(s.getMaStore()))
+                    .collect(java.util.stream.Collectors.toList());
+                stores = stores.stream()
+                    .filter(s -> userDetails.getAssignedStores().contains(s.getMaStore()))
+                    .collect(java.util.stream.Collectors.toList());
+            } else if (userDetails.getMaStore() != null) {
+                staffs = staffs.stream()
+                    .filter(s -> userDetails.getMaStore().equals(s.getMaStore()))
+                    .collect(java.util.stream.Collectors.toList());
+                stores = stores.stream()
+                    .filter(s -> userDetails.getMaStore().equals(s.getMaStore()))
+                    .collect(java.util.stream.Collectors.toList());
+            }
+        }
         List<VaiTro> roles = vaiTroRepository.findAll();
         List<ChucNang> chucNangs = chucNangRepository.findAll();
         List<PhanQuyen> phanQuyens = phanQuyenRepository.findAll();

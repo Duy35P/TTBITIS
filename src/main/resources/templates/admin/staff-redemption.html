@@ -22,7 +22,7 @@
         <h2 style="font-size: 20px; margin-bottom: 20px; color: #444; font-weight: 400;">Nhập hoặc Quét mã Voucher của khách hàng</h2>
         <div class="search-container" style="display: flex; max-width: 600px; margin: 0 auto; gap: 10px;">
           <input type="text" class="form-control" style="flex: 1; padding: 15px 20px; font-size: 18px; border: 2px solid #ddd; border-radius: 4px; outline: none; font-family: monospace; text-transform: uppercase; letter-spacing: 2px;" id="voucherCodeInput" placeholder="VD: VCH-8A9X-214P" autocomplete="off" onkeypress="handleEnter(event)">
-          <button class="btn btn-success" style="padding: 0 30px; font-size: 16px; font-weight: 600; border-radius: 4px; cursor: pointer; transition: 0.2s;" onclick="checkVoucher()">Kiểm tra mã</button>
+          <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_DOIQUA_SCAN')" class="btn btn-success" style="padding: 0 30px; font-size: 16px; font-weight: 600; border-radius: 4px; cursor: pointer; transition: 0.2s;" onclick="checkVoucher()">Kiểm tra mã</button>
         </div>       
       </div>
 
@@ -61,7 +61,7 @@
         
         <div class="result-footer" style="padding: 20px; background-color: #f9fafb; border-top: 1px solid #eee; text-align: right;">
           <button class="btn btn-default" style="margin-right: 10px; padding: 12px 20px; border-radius: 4px;" onclick="resetScanner()">Hủy / Quét mã khác</button>
-          <button class="btn btn-warning" id="btnRedeem" style="color: #fff; padding: 12px 30px; font-size: 16px; font-weight: 700; border-radius: 4px; cursor: pointer; transition: 0.2s;" onclick="confirmRedemption()">Tiến Hành Đổi Quà (Gạch Mã)</button>
+          <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_DOIQUA_REDEEM')" class="btn btn-warning" id="btnRedeem" style="color: #fff; padding: 12px 30px; font-size: 16px; font-weight: 700; border-radius: 4px; cursor: pointer; transition: 0.2s;" onclick="confirmRedemption()">Tiến Hành Đổi Quà (Gạch Mã)</button>
         </div>
       </div>
 

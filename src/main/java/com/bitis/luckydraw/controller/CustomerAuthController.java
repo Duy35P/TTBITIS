@@ -119,13 +119,27 @@ public class CustomerAuthController {
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/zalo/login")
-    public String zaloLogin(@RequestParam(name = "receipt", required = false) String receipt, HttpSession session) {
+    public String zaloLogin(@RequestParam(name = "receipt", required = false) String receipt, HttpSession session, jakarta.servlet.http.HttpServletRequest request) {
         String codeVerifier = zaloAuthService.generateCodeVerifier();
         String codeChallenge = zaloAuthService.generateCodeChallenge(codeVerifier);
         session.setAttribute("ZALO_CODE_VERIFIER", codeVerifier); // PKCE require verifier in callback
         
-        String state = receipt != null ? receipt : "";
-        return "redirect:" + zaloAuthService.getAuthorizationUrl(state, codeChallenge);
+        String state = receipt != null && !receipt.trim().isEmpty() ? receipt : "GENERAL_LOGIN";
+        
+        // Dynamically build redirect URI based on current request origin
+        String scheme = request.getHeader("X-Forwarded-Proto");
+        if (scheme == null) scheme = request.getScheme();
+        String host = request.getHeader("X-Forwarded-Host");
+        if (host == null) {
+            host = request.getServerName();
+            int port = request.getServerPort();
+            if (port != 80 && port != 443) {
+                host += ":" + port;
+            }
+        }
+        String dynamicRedirectUri = scheme + "://" + host + "/customer/auth/zalo/callback";
+        
+        return "redirect:" + zaloAuthService.getAuthorizationUrl(state, codeChallenge, dynamicRedirectUri);
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/zalo/callback")
@@ -176,6 +190,9 @@ public class CustomerAuthController {
 
             // Set Store nếu có state (receipt)
             String receipt = state;
+            if ("GENERAL_LOGIN".equals(receipt)) {
+                receipt = null;
+            }
             if (receipt != null && !receipt.trim().isEmpty()) {
                 gameAccessTokenRepository.findByToken(receipt).ifPresent(gat -> {
                     invoiceRepository.findByMaHoaDon(gat.getMaHoaDon())

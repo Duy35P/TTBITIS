@@ -21,14 +21,16 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/admin/login", "/css/**", "/js/**", "/plugins/**").permitAll()
                 // Phân quyền theo yêu cầu
-                .requestMatchers("/admin/campaigns/**").hasAnyRole("ADMIN", "GAME_MAKER")
-                .requestMatchers("/admin/vouchers/**").hasAnyRole("ADMIN", "GAME_MAKER")
-                .requestMatchers("/admin/prizes/**").hasAnyRole("ADMIN", "GAME_MAKER", "MANAGER")
-                .requestMatchers("/admin/invoices/**").hasAnyRole("ADMIN", "STORE_STAFF", "MANAGER")
-                .requestMatchers("/admin/redemption/**").hasAnyRole("ADMIN", "STORE_STAFF", "MANAGER")
+                .requestMatchers("/admin/campaigns/**").hasAnyAuthority("ROLE_ADMIN", "QL_CHIENDICH")
+                .requestMatchers("/admin/vouchers/**").hasAnyAuthority("ROLE_ADMIN", "QL_VOUCHER")
+                .requestMatchers("/admin/prizes/**").hasAnyAuthority("ROLE_ADMIN", "QL_GIAITHUONG", "QL_PHANBO")
+                .requestMatchers("/admin/invoices/**").hasAnyAuthority("ROLE_ADMIN", "QL_HOADON")
+                .requestMatchers("/admin/redemption/**").hasAnyAuthority("ROLE_ADMIN", "QL_DOIQUA")
                 .requestMatchers("/admin/profile/**").authenticated()
-                .requestMatchers("/admin/customers/toggle-status").hasRole("ADMIN")
-                .requestMatchers("/admin/customers/**").hasAnyRole("ADMIN", "STORE_STAFF", "MANAGER")
+                .requestMatchers("/admin/customers/**").hasAnyAuthority("ROLE_ADMIN", "QL_KHACHHANG")
+                .requestMatchers("/admin/staffs/**").hasAnyAuthority("ROLE_ADMIN", "QL_NHANVIEN")
+                .requestMatchers("/admin/stores/**").hasAnyAuthority("ROLE_ADMIN", "QL_CUAHANG")
+                .requestMatchers("/admin/turns/**").hasAnyAuthority("ROLE_ADMIN", "QL_LUOTQUAY")
                 .requestMatchers("/admin", "/admin/").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().permitAll() // Allow customer-facing endpoints

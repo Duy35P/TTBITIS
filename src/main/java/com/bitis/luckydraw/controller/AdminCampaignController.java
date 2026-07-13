@@ -1,31 +1,56 @@
 package com.bitis.luckydraw.controller;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.bitis.luckydraw.model.Campaign;
+
 import com.bitis.luckydraw.repository.CampaignRepository;
+
 import org.springframework.stereotype.Controller;
+
 import org.springframework.ui.Model;
+
 import org.springframework.web.bind.annotation.*;
 
+
 import com.bitis.luckydraw.model.Store;
+
 import com.bitis.luckydraw.model.CampaignStore;
+
 import com.bitis.luckydraw.model.CampaignRule;
+
 import com.bitis.luckydraw.model.CampaignRulePayment;
+
 import com.bitis.luckydraw.model.CampaignRuleSku;
+
 import com.bitis.luckydraw.model.Prize;
+
 import com.bitis.luckydraw.repository.StoreRepository;
+
 import com.bitis.luckydraw.repository.CampaignStoreRepository;
+
 import com.bitis.luckydraw.repository.CampaignRuleRepository;
+
 import com.bitis.luckydraw.repository.CampaignRulePaymentRepository;
+
 import com.bitis.luckydraw.repository.CampaignRuleSkuRepository;
+
 import com.bitis.luckydraw.repository.PrizeRepository;
+
 import com.bitis.luckydraw.repository.SystemAuditLogRepository;
+
 import com.bitis.luckydraw.model.SystemAuditLog;
+
 import com.bitis.luckydraw.dto.CampaignRuleForm;
+
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import java.util.List;
+
 import java.util.stream.Collectors;
 
+
 import org.springframework.jdbc.core.JdbcTemplate;
+
 import org.springframework.transaction.annotation.Transactional;
 
 @Controller
@@ -168,6 +193,7 @@ public class AdminCampaignController {
     }
 
     @PostMapping("/save")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CHIENDICH_ADD') or hasAuthority('ACT_CHIENDICH_EDIT')")
     @Transactional
     public String saveCampaign(@ModelAttribute Campaign formCampaign, org.springframework.validation.BindingResult bindingResult, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         try {
@@ -183,6 +209,7 @@ public class AdminCampaignController {
 
     @PostMapping("/save-ajax")
     @ResponseBody
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CHIENDICH_ADD') or hasAuthority('ACT_CHIENDICH_EDIT')")
     @Transactional
     public java.util.Map<String, Object> saveCampaignAjax(@ModelAttribute Campaign formCampaign, org.springframework.validation.BindingResult bindingResult) {
         java.util.Map<String, Object> response = new java.util.HashMap<>();
@@ -201,6 +228,7 @@ public class AdminCampaignController {
     }
 
     @PostMapping("/toggle-status")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CHIENDICH_EDIT')")
     public String toggleStatus(@RequestParam Long campaignId, @RequestParam Integer status, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         campaignRepository.findById(campaignId).ifPresent(campaign -> {
             if (status == 1) { // Đang yêu cầu Kích hoạt
@@ -269,6 +297,7 @@ public class AdminCampaignController {
     }
     
     @PostMapping("/{campaignId}/stores/save")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CHIENDICH_EDIT')")
     public String saveStoreAllocation(@PathVariable Long campaignId, @RequestParam(required = false) List<String> storeMas, RedirectAttributes redirectAttributes) {
         Campaign campaign = campaignRepository.findById(campaignId).orElseThrow();
         String maChienDich = campaign.getMaChienDich();
@@ -342,6 +371,7 @@ public class AdminCampaignController {
     }
 
     @PostMapping("/{campaignId}/rules/save")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CHIENDICH_EDIT')")
     public String saveCampaignRules(@PathVariable Long campaignId, @ModelAttribute CampaignRuleForm form, RedirectAttributes redirectAttributes) {
         try {
             Campaign campaign = campaignRepository.findById(campaignId).orElseThrow();
@@ -469,6 +499,7 @@ public class AdminCampaignController {
 
     @PostMapping("/design/save")
     @ResponseBody
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CHIENDICH_EDIT')")
     public org.springframework.http.ResponseEntity<?> saveDesign(@RequestBody java.util.Map<String, String> payload) {
         try {
             Long campaignId = Long.parseLong(payload.get("campaignId"));
@@ -545,6 +576,7 @@ public class AdminCampaignController {
     }
 
     @GetMapping("/export-excel")
+    @PreAuthorize("hasRole('ADMIN')")
     public void exportExcel(jakarta.servlet.http.HttpServletResponse response) {
         try {
             List<Campaign> campaigns = campaignRepository.findAll();

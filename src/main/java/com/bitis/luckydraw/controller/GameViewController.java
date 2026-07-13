@@ -15,9 +15,22 @@ public class GameViewController {
 
     // Cung cấp URL Slug thân thiện SEO
     @GetMapping("/game/{slug}")
-    public String spinPageBySlug(@PathVariable("slug") String slug, HttpSession session, Model model) {
+    public String spinPageBySlug(@PathVariable("slug") String slug, 
+                                 @org.springframework.web.bind.annotation.RequestParam(value = "preview", required = false) String preview,
+                                 HttpSession session, Model model) {
         if (session.getAttribute("CUSTOMER_ID") == null) {
-            return "redirect:/customer/login";
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if ("true".equals(preview) && auth != null && auth.isAuthenticated() && !auth.getPrincipal().equals("anonymousUser")) {
+                session.setAttribute("CUSTOMER_ID", "PREVIEW");
+                model.addAttribute("isPreview", true);
+            } else {
+                return "redirect:/customer/login";
+            }
+        }
+        
+        String phone = (String) session.getAttribute("CUSTOMER_PHONE");
+        if (phone != null && phone.startsWith("ZALO") && !"PREVIEW".equals(session.getAttribute("CUSTOMER_ID"))) {
+            return "redirect:/customer/update-phone";
         }
 
         com.bitis.luckydraw.model.Campaign campaign = null;

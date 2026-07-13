@@ -65,8 +65,11 @@
                   <span class="badge bg-gray" th:if="${campaign.trangThai == 2}" style="background-color: #999; color: white;">Đã kết thúc</span>
                 </td>
                 <td>
-                  <a th:if="${campaign.duongDanSlug != null && !campaign.duongDanSlug.empty}" th:href="@{/game/{slug}(slug=${campaign.duongDanSlug})}" target="_blank">Link</a>
-                  <a th:if="${campaign.duongDanSlug == null || campaign.duongDanSlug.empty}" th:href="@{/customer/spin(campaign=${campaign.maChienDich})}" target="_blank">Link</a>
+                  <a href="javascript:void(0)" 
+                     th:data-slug="${campaign.duongDanSlug}" 
+                     th:data-machien="${campaign.maChienDich}"
+                     onclick="openLinkManagerModal(this)" 
+                     style="color: #3c8dbc; font-weight: bold;">Link</a>
                 </td>
                 <td class="action-links">
                   <!-- Actions -->
@@ -248,6 +251,43 @@
     
     function closeModal(modalId) {
       document.getElementById(modalId).classList.remove('active');
+    }
+    
+    function openLinkManagerModal(btn) {
+      const slug = btn.getAttribute('data-slug');
+      const maChienDich = btn.getAttribute('data-machien');
+      const modal = document.getElementById('linkManagerModal');
+      const origin = window.location.origin;
+      
+      let linkUrl = '';
+      let previewUrl = '';
+      
+      if (slug && slug !== 'null') {
+        linkUrl = origin + '/game/' + slug;
+        previewUrl = linkUrl + '?preview=true';
+      } else {
+        linkUrl = origin + '/customer/spin?campaign=' + maChienDich;
+        previewUrl = linkUrl + '&preview=true';
+      }
+      
+      document.getElementById('publicLinkInput').value = linkUrl;
+      document.getElementById('qrCodeImage').src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(linkUrl);
+      document.getElementById('downloadQrBtn').href = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=' + encodeURIComponent(linkUrl);
+      document.getElementById('previewLinkBtn').href = previewUrl;
+      
+      modal.classList.add('active');
+    }
+    
+    function copyPublicLink() {
+      const input = document.getElementById('publicLinkInput');
+      input.select();
+      input.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(input.value).then(() => {
+          alert('Đã copy link!');
+      }).catch(() => {
+          document.execCommand('copy');
+          alert('Đã copy link!');
+      });
     }
 
     // Xử lý submit form bằng AJAX
@@ -517,6 +557,37 @@
         <button class="close-btn" onclick="closeModal('historyModal')">&times;</button>
       </div>
       <div id="historyModalContent">
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal Quản Lý Link Game -->
+  <div id="linkManagerModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title" id="linkManagerModalTitle">Quản Lý Link Game</div>
+        <button class="close-btn" onclick="closeModal('linkManagerModal')">&times;</button>
+      </div>
+      <div style="padding: 20px;">
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-weight: bold; margin-bottom: 5px;">Đường link chính thức (Public Link):</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="publicLinkInput" class="form-control" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" readonly>
+            <button class="btn-primary" onclick="copyPublicLink()" style="padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">Copy</button>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 20px; text-align: center;">
+          <label style="display: block; font-weight: bold; margin-bottom: 10px; text-align: left;">Mã QR Code:</label>
+          <img id="qrCodeImage" src="" alt="QR Code" style="width: 200px; height: 200px; border: 1px solid #eee; border-radius: 8px; padding: 10px;">
+          <div style="margin-top: 10px;">
+            <a id="downloadQrBtn" href="#" target="_blank" class="btn-default" style="display: inline-block; padding: 8px 15px; text-decoration: none; border: 1px solid #ccc; border-radius: 4px; color: #333; cursor: pointer;" download="qrcode.png">Tải ảnh QR</a>
+          </div>
+        </div>
+        
+        <div style="text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
+          <a id="previewLinkBtn" href="#" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #f39c12; color: white; font-weight: bold; text-decoration: none; border-radius: 4px;">Xem trước / Chơi thử (Preview Mode)</a>
+        </div>
       </div>
     </div>
   </div>

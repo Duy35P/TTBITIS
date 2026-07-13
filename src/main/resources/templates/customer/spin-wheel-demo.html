@@ -250,6 +250,9 @@
     </style>
 </head>
 <body>
+      <div th:if="${isPreview}" style="background: #ff9800; color: white; text-align: center; padding: 10px; position: fixed; top: 0; width: 100%; z-index: 1000; font-weight: bold; font-family: sans-serif; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+          🚧 ĐANG Ở CHẾ ĐỘ XEM TRƯỚC (PREVIEW MODE) - QUAY THỬ KHÔNG LÀM TRỪ KHO GIẢI THƯỞNG 🚧
+      </div>
 
     <nav style="position: fixed; top: 16px; left: 16px; z-index: 50; display: flex; gap: 10px; flex-wrap: wrap;">
         <a href="/customer/index" 
@@ -303,6 +306,7 @@ style="color:#fff;background:rgba(30,74,138,0.7);padding:8px 16px;border-radius:
     <script th:inline="javascript">
         /*<![CDATA[*/
         const campaignId = /*[[${campaignId}]]*/ 'default';
+        const isPreview = /*[[${isPreview != null ? isPreview : false}]]*/ false;
         /*]]>*/
 
         let wheelConfig = {};
@@ -416,28 +420,32 @@ style="color:#fff;background:rgba(30,74,138,0.7);padding:8px 16px;border-radius:
             
             let prizeIndex = 0;
             
-            try {
-                // Gọi API để Backend thực hiện trừ lượt và chốt giải
-                const response = await fetch(`/customer/api/spin/play?campaign=${campaignId}`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    alert(data.error || 'Lỗi hệ thống');
+            if (isPreview) {
+                prizeIndex = Math.floor(Math.random() * wheelConfig.prizes.length);
+            } else {
+                try {
+                    // Gọi API để Backend thực hiện trừ lượt và chốt giải
+                    const response = await fetch(`/customer/api/spin/play?campaign=${campaignId}`, {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        alert(data.error || 'Lỗi hệ thống');
+                        isSpinning = false;
+                        spinBtn.disabled = false;
+                        centerBtn.classList.remove('disabled');
+                        return;
+                    }
+                    
+                    prizeIndex = data.prizeIndex;
+                } catch (err) {
+                    alert('Không thể kết nối tới máy chủ');
                     isSpinning = false;
                     spinBtn.disabled = false;
                     centerBtn.classList.remove('disabled');
                     return;
                 }
-                
-                prizeIndex = data.prizeIndex;
-            } catch (err) {
-                alert('Không thể kết nối tới máy chủ');
-                isSpinning = false;
-                spinBtn.disabled = false;
-                centerBtn.classList.remove('disabled');
-                return;
             }
 
             const n = wheelConfig.prizes.length;

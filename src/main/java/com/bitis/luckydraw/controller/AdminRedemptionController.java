@@ -1,16 +1,28 @@
 package com.bitis.luckydraw.controller;
+import org.springframework.security.access.prepost.PreAuthorize;
+
 
 import com.bitis.luckydraw.dto.RewardVoucherListDto;
+
 import com.bitis.luckydraw.model.RewardVoucher;
+
 import com.bitis.luckydraw.repository.RewardVoucherRepository;
+
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.stereotype.Controller;
+
 import org.springframework.ui.Model;
+
 import org.springframework.web.bind.annotation.*;
 
+
 import java.time.LocalDateTime;
+
 import java.util.List;
+
 import java.util.Map;
+
 import java.util.Optional;
 
 @Controller
@@ -34,6 +46,7 @@ public class AdminRedemptionController {
     }
 
     @GetMapping("/check")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_DOIQUA_SCAN')")
     @ResponseBody
     public ResponseEntity<?> checkVoucher(@RequestParam("code") String code) {
         Optional<RewardVoucherListDto> opt = rewardVoucherRepository.getRewardVoucherDetail(code);
@@ -62,6 +75,7 @@ public class AdminRedemptionController {
     }
 
     @PostMapping("/confirm")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_DOIQUA_REDEEM')")
     @ResponseBody
     public ResponseEntity<?> confirmRedemption(@RequestParam("code") String code) {
         Optional<RewardVoucher> opt = rewardVoucherRepository.findByMaVoucher(code);
@@ -85,3 +99,4 @@ public class AdminRedemptionController {
         return ResponseEntity.ok(Map.of("message", "Đổi quà thành công! Đã ghi nhận trạng thái mã."));
     }
 }
+

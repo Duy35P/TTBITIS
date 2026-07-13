@@ -11,8 +11,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 @Controller
 @RequestMapping("/admin/turns")
+@PreAuthorize("hasRole('ADMIN') or hasAuthority('QL_LUOTQUAY')")
 public class AdminTurnHistoryController {
 
     private final TurnTransactionRepository turnTransactionRepository;

@@ -42,7 +42,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-bottom: 1px solid #f4f4f4; padding-bottom: 5px; margin-bottom: 10px;">
           <h4 style="color: #3c8dbc; margin: 0;">3. Thưởng Sản Phẩm (SKU Ưu Tiên)</h4>
           <div style="display: flex; gap: 8px;">
-            <button type="button" class="btn-primary" style="padding: 2px 10px; font-size: 12px; background-color: #f39c12; border: none; color: #fff; border-radius: 3px; cursor: pointer;" onclick="document.getElementById('excelFileInput').click()">📥 Import Excel</button>
+            <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_CHIENDICH_EDIT')" type="button" class="btn-primary" style="padding: 2px 10px; font-size: 12px; background-color: #f39c12; border: none; color: #fff; border-radius: 3px; cursor: pointer;" onclick="document.getElementById('excelFileInput').click()">📥 Import Excel</button>
             <button type="button" class="btn-primary" style="padding: 2px 10px; font-size: 12px; background-color: #00a65a; border: none;" onclick="addSkuRow()">+ Thêm SKU</button>
           </div>
         </div>

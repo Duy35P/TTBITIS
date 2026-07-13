@@ -137,18 +137,18 @@
          <ul class="sidebar-menu">
           <li class="header">Menu Quản Trị</li>
           <!-- TODO: Add endpoints for overview, campaign, etc -->
-          <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin}"><span>Tổng quan</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_TONGQUAN')"><a th:href="@{/admin}"><span>Tổng quan</span></a></li>
           <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_CHIENDICH')"><a th:href="@{/admin/campaigns}"><span>Chiến dịch</span></a></li>
           
           <!-- LInk động Spring Boot -->
           <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_KHACHHANG')"><a th:href="@{/admin/customers}"><span>Khách hàng</span></a></li>
-          <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/stores}"><span>Cửa hàng / Đại lý</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_CUAHANG')"><a th:href="@{/admin/stores}"><span>Cửa hàng / Đại lý</span></a></li>
           <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_NHANVIEN')"><a th:href="@{/admin/staffs}"><span>Nhân viên</span></a></li>
           
-          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_GIAITHUONG')"><a th:href="@{/admin/prizes}"><span>Kho giải thưởng</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_GIAITHUONG') or hasAuthority('QL_PHANBO')"><a th:href="@{/admin/prizes}"><span>Kho giải thưởng</span></a></li>
           <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_VOUCHER')"><a th:href="@{/admin/vouchers}"><span>Quản lý Voucher</span></a></li>
           <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_DOIQUA')"><a th:href="@{/admin/redemption}"><span>Đổi Quà (Gạch mã)</span></a></li>
-          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_CHIENDICH')"><a th:href="@{/admin/turns}"><span>Biến động Lượt quay</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_LUOTQUAY')"><a th:href="@{/admin/turns}"><span>Biến động Lượt quay</span></a></li>
           <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_HOADON')"><a th:href="@{/admin/invoices}"><span>Tra cứu Hóa đơn</span></a></li>
           <li><a th:href="@{/admin/profile}"><span>Cài đặt</span></a></li>
           <li>

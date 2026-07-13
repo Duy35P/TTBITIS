@@ -18,8 +18,11 @@ import com.bitis.luckydraw.service.StoreExcelService;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 @Controller
 @RequestMapping("/admin/stores")
+@PreAuthorize("hasRole('ADMIN') or hasAuthority('QL_CUAHANG')")
 public class AdminStoreController {
 
     private final StoreRepository storeRepository;
@@ -62,6 +65,7 @@ public class AdminStoreController {
         return "admin/store-list";
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_EDIT') or hasAuthority('ACT_CUAHANG_ADD')")
     @PostMapping("/save")
     public String saveStore(@RequestParam(name = "storeId", required = false) String storeIdStr,
                             @RequestParam String tenCuaHang,
@@ -87,6 +91,7 @@ public class AdminStoreController {
         return "redirect:/admin/stores";
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_IMPORT')")
     @PostMapping("/import-excel")
     public String importExcel(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
         if (file.isEmpty()) {
@@ -117,6 +122,7 @@ public class AdminStoreController {
         return "redirect:/admin/stores";
     }
 
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_EXPORT')")
     @GetMapping("/export-excel")
     public void exportExcel(jakarta.servlet.http.HttpServletResponse response) {
         try {
