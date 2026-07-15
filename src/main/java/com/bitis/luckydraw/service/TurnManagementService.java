@@ -139,9 +139,6 @@ public class TurnManagementService {
             throw new Exception("Hóa đơn này đã được nhận lượt quay trước đó.");
         }
 
-        // Cập nhật chủ nhân hóa đơn
-        invoice.setMaKhachHang(maKhachHang);
-        
         // Tính toán lượt quay
         Double deltaAmount = invoice.getTongTien();
         if (invoice.getMaHoaDonGoc() != null && !invoice.getMaHoaDonGoc().isEmpty()) {

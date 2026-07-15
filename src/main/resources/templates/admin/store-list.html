@@ -94,18 +94,15 @@
                   <span class="badge" style="background-color: #f39c12; color: #fff;" th:if="${store.trangThai != 1}">Tạm ngưng</span>
                 </td>
                 <td class="action-links">
-                  <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_EDIT')" href="javascript:void(0)" 
-                     th:data-id="${store.id}" 
-                     th:data-name="${store.tenCuaHang}" 
-                     th:data-code="${store.maStore}" 
-                     th:data-address="${store.diaChiStore}"
-                     th:data-status="${store.trangThai}"
-                     onclick="openEditModal(this)">Sửa</a>
-                     
-                  <span sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_EDIT')" class="action-separator">|</span>
-                  <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_EDIT')" class="text-danger" style="cursor:pointer;" th:onclick="deleteStore([[${store.maStore}]])">Khóa</a>
-                </td>
-              </tr>
+                    <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_EDIT')" href="javascript:void(0)" 
+                       th:data-id="${store.id}" 
+                       th:data-name="${store.tenCuaHang}" 
+                       th:data-code="${store.maStore}" 
+                       th:data-address="${store.diaChiStore}"
+                       th:data-status="${store.trangThai}"
+                       onclick="openEditModal(this)">Sửa</a>
+                  </td>
+                </tr>
             </tbody>
           </table>
         </div>
@@ -150,7 +147,6 @@
       </form>
     </div>
   </div>
-
 
   <script>
     function openModal(modalId, title) {

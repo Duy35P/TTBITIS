@@ -29,14 +29,10 @@
         <div class="box-header">
           <h3 class="box-title">Danh sách tài khoản</h3>
           <div class="box-tools">
-            <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_NHANVIEN_IMPORT')" type="button" class="btn-primary" style="background-color: #f39c12; border-color: #e08e0b;" onclick="document.getElementById('importStaffExcel').click()">Nhập Excel</button>
             <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_NHANVIEN_EXPORT')" th:href="@{/admin/staffs/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
             <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_NHANVIEN_ADD')" type="button" class="btn-primary" onclick="openModal('staffModal', 'Thêm Nhân Viên Mới')">+ Thêm Nhân Viên</button>
           </div>
         </div>
-        <form th:action="@{/admin/staffs/import-excel}" method="post" enctype="multipart/form-data" style="display:none;" id="importStaffForm">
-              <input type="file" name="file" accept=".xlsx" id="importStaffExcel" onchange="document.getElementById('importStaffForm').submit()">
-        </form>
         <div class="box-body">
           
           <div class="nav-tabs" style="display: flex; gap: 10px; border-bottom: 1px solid #ddd; margin-bottom: 20px;">

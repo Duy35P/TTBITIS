@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{admin/fragments/layout :: head('Cổng Xác Nhận Đổi Quà (Cửa Hàng)')}">
+<head th:replace="~{admin/fragments/layout :: head('Kiểm Tra Mã Quà Tặng')}">
 </head>
 <body>
   <!-- Header -->
@@ -12,17 +12,17 @@
   <!-- Content -->
   <div class="content-wrapper">
     <section class="content-header">
-      <h1>Cổng Xác Nhận Đổi Quà (Redemption Portal)</h1>
+      <h1>Kiểm Tra Mã Quà Tặng</h1>
     </section>
     
     <section class="content">
       
       <!-- Scanner Area -->
       <div class="scanner-box" style="background-color: #fff; border-radius: 8px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin-bottom: 25px; border-top: 4px solid #00a65a;">
-        <h2 style="font-size: 20px; margin-bottom: 20px; color: #444; font-weight: 400;">Nhập hoặc Quét mã Voucher của khách hàng</h2>
+        <h2 style="font-size: 20px; margin-bottom: 20px; color: #444; font-weight: 400;">Nhập mã Voucher của khách hàng</h2>
         <div class="search-container" style="display: flex; max-width: 600px; margin: 0 auto; gap: 10px;">
           <input type="text" class="form-control" style="flex: 1; padding: 15px 20px; font-size: 18px; border: 2px solid #ddd; border-radius: 4px; outline: none; font-family: monospace; text-transform: uppercase; letter-spacing: 2px;" id="voucherCodeInput" placeholder="VD: VCH-8A9X-214P" autocomplete="off" onkeypress="handleEnter(event)">
-          <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_DOIQUA_SCAN')" class="btn btn-success" style="padding: 0 30px; font-size: 16px; font-weight: 600; border-radius: 4px; cursor: pointer; transition: 0.2s;" onclick="checkVoucher()">Kiểm tra mã</button>
+          <button sec:authorize="hasRole('ADMIN') or hasAuthority('QL_KIEMTRAMA')" class="btn btn-success" style="padding: 0 30px; font-size: 16px; font-weight: 600; border-radius: 4px; cursor: pointer; transition: 0.2s;" onclick="checkVoucher()">Kiểm tra mã</button>
         </div>       
       </div>
 
@@ -53,7 +53,7 @@
               <div class="value" id="resPhone" style="font-size: 18px; font-weight: 600; color: #111;"></div>
             </div>
             <div class="info-item" id="errorReasonContainer" style="display:none; grid-column: 1 / -1; background: #fef2f2; padding: 15px; border-left: 4px solid #dc2626; border-radius: 4px;">
-              <label style="color: #dc2626; display: block; font-size: 13px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Lý do không hợp lệ</label>
+              <label id="errorReasonLabel" style="color: #dc2626; display: block; font-size: 13px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Lý do không hợp lệ</label>
               <div class="value" id="errorReason" style="color: #dc2626; font-size: 15px; font-weight: 600;"></div>
             </div>
           </div>
@@ -61,41 +61,6 @@
         
         <div class="result-footer" style="padding: 20px; background-color: #f9fafb; border-top: 1px solid #eee; text-align: right;">
           <button class="btn btn-default" style="margin-right: 10px; padding: 12px 20px; border-radius: 4px;" onclick="resetScanner()">Hủy / Quét mã khác</button>
-          <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_DOIQUA_REDEEM')" class="btn btn-warning" id="btnRedeem" style="color: #fff; padding: 12px 30px; font-size: 16px; font-weight: 700; border-radius: 4px; cursor: pointer; transition: 0.2s;" onclick="confirmRedemption()">Tiến Hành Đổi Quà (Gạch Mã)</button>
-        </div>
-      </div>
-
-      <!-- Recent History (Table) -->
-      <div class="box">
-        <div class="box-header">
-          <h3 class="box-title">Lịch sử gạch mã gần đây</h3>
-        </div>
-        <div class="box-body">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>Thời gian đổi</th>
-                <th>Mã Voucher</th>
-                <th>Khách hàng</th>
-                <th>SĐT</th>
-                <th>Giải thưởng</th>
-                <th>Cửa hàng thao tác</th>
-              </tr>
-            </thead>
-            <tbody id="historyTableBody">
-              <tr th:each="hist : ${recentHistory}">
-                <td th:text="${hist.thoiGianDoi != null ? #temporals.format(hist.thoiGianDoi, 'dd/MM/yyyy HH:mm:ss') : '-'}"></td>
-                <td><strong style="font-family: monospace;" th:text="${hist.maVoucher}"></strong></td>
-                <td th:text="${hist.tenKhach}"></td>
-                <td th:text="${hist.phone}"></td>
-                <td th:text="${hist.tenGiai}"></td>
-                <td th:text="${hist.tenStoreDoiThuong != null ? hist.tenStoreDoiThuong : hist.maStoreDoiThuong}"></td>
-              </tr>
-              <tr th:if="${#lists.isEmpty(recentHistory)}">
-                <td colspan="6" style="text-align: center; padding: 20px;">Chưa có lịch sử đổi quà.</td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </div>
 
@@ -123,7 +88,6 @@
         const resultBox = document.getElementById('resultBox');
         const badge = document.getElementById('statusBadge');
         const icon = document.getElementById('prizeIcon');
-        const btnRedeem = document.getElementById('btnRedeem');
         const errContainer = document.getElementById('errorReasonContainer');
         const resCode = document.getElementById('resCode');
 
@@ -132,18 +96,47 @@
 
         if (!response.ok) {
           // Lỗi
-          badge.textContent = "Mã Không Hợp Lệ";
-          badge.style.backgroundColor = "#fee2e2";
-          badge.style.color = "#991b1b";
-          icon.style.backgroundColor = "#fef2f2";
-          icon.style.color = "#dc2626";
-          icon.textContent = "❌";
-          btnRedeem.disabled = true;
-          errContainer.style.display = "block";
-          document.getElementById('errorReason').textContent = data.message;
-          document.getElementById('resPrize').textContent = "Không xác định";
-          document.getElementById('resName').textContent = "Không xác định";
-          document.getElementById('resPhone').textContent = "Không xác định";
+          if (data.detail) {
+              // Mã đúng nhưng đã sử dụng
+              badge.textContent = "Mã Đã Sử Dụng";
+              badge.style.backgroundColor = "#ffedd5";
+              badge.style.color = "#9a3412";
+              icon.style.backgroundColor = "#fff7ed";
+              icon.style.color = "#ea580c";
+              icon.textContent = "⚠️";
+              
+              errContainer.style.display = "block";
+              errContainer.style.backgroundColor = "#fff7ed";
+              errContainer.style.borderLeftColor = "#ea580c";
+              document.getElementById('errorReasonLabel').textContent = "Trạng thái mã";
+              document.getElementById('errorReasonLabel').style.color = "#ea580c";
+              document.getElementById('errorReason').style.color = "#ea580c";
+              document.getElementById('errorReason').textContent = data.message;
+              
+              document.getElementById('resPrize').innerHTML = `${data.detail.tenGiai} <br/><span style="font-size:12px; margin-top:5px; display:inline-block;" class="label ${data.tonKho > 0 ? 'label-primary' : 'label-danger'}">Tồn kho CH: ${data.tonKho}</span>`;
+              document.getElementById('resName').textContent = data.detail.tenKhach;
+              document.getElementById('resPhone').textContent = data.detail.phone;
+          } else {
+              // Mã sai hoàn toàn
+              badge.textContent = "Mã Không Hợp Lệ";
+              badge.style.backgroundColor = "#fee2e2";
+              badge.style.color = "#991b1b";
+              icon.style.backgroundColor = "#fef2f2";
+              icon.style.color = "#dc2626";
+              icon.textContent = "❌";
+              
+              errContainer.style.display = "block";
+              errContainer.style.backgroundColor = "#fef2f2";
+              errContainer.style.borderLeftColor = "#dc2626";
+              document.getElementById('errorReasonLabel').textContent = "Lý do không hợp lệ";
+              document.getElementById('errorReasonLabel').style.color = "#dc2626";
+              document.getElementById('errorReason').style.color = "#dc2626";
+              document.getElementById('errorReason').textContent = data.message;
+              
+              document.getElementById('resPrize').textContent = "Không xác định";
+              document.getElementById('resName').textContent = "Không xác định";
+              document.getElementById('resPhone').textContent = "Không xác định";
+          }
         } else {
           badge.textContent = "Mã Hợp Lệ";
           badge.style.backgroundColor = "#dcfce7";
@@ -151,7 +144,6 @@
           icon.style.backgroundColor = "#f0fdf4";
           icon.style.color = "#00a65a";
           icon.textContent = "🎁";
-          btnRedeem.disabled = false;
           errContainer.style.display = "none";
           
           document.getElementById('resPrize').innerHTML = `${data.detail.tenGiai} <br/><span style="font-size:12px; margin-top:5px; display:inline-block;" class="label ${data.tonKho > 0 ? 'label-primary' : 'label-danger'}">Tồn kho CH: ${data.tonKho}</span>`;
@@ -163,25 +155,6 @@
       }
     }
 
-    async function confirmRedemption() {
-      const code = document.getElementById('resCode').textContent;
-      if(confirm(`Xác nhận đổi quà cho mã ${code}?\nHành động này không thể hoàn tác.`)) {
-        try {
-          const response = await fetch(`/admin/redemption/confirm?code=${encodeURIComponent(code)}`, {
-            method: 'POST'
-          });
-          const data = await response.json();
-          if (response.ok) {
-            alert(data.message);
-            location.reload(); // Refresh to update history
-          } else {
-            alert(data.message);
-          }
-        } catch (e) {
-          alert("Lỗi kết nối máy chủ");
-        }
-      }
-    }
 
     function resetScanner() {
       document.getElementById('voucherCodeInput').value = '';

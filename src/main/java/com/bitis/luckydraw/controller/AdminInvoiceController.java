@@ -92,6 +92,8 @@ public class AdminInvoiceController {
                     customerPhone = c.getPhone();
                 } else if (inv.getMaKhachHang().startsWith("CUS-")) {
                     customerPhone = inv.getMaKhachHang().replace("CUS-", "");
+                } else {
+                    customerPhone = inv.getMaKhachHang();
                 }
             }
 

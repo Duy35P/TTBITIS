@@ -25,7 +25,7 @@ public class SecurityConfig {
                 .requestMatchers("/admin/vouchers/**").hasAnyAuthority("ROLE_ADMIN", "QL_VOUCHER")
                 .requestMatchers("/admin/prizes/**").hasAnyAuthority("ROLE_ADMIN", "QL_GIAITHUONG", "QL_PHANBO")
                 .requestMatchers("/admin/invoices/**").hasAnyAuthority("ROLE_ADMIN", "QL_HOADON")
-                .requestMatchers("/admin/redemption/**").hasAnyAuthority("ROLE_ADMIN", "QL_DOIQUA")
+                .requestMatchers("/admin/redemption/**").hasAnyAuthority("ROLE_ADMIN", "QL_KIEMTRAMA")
                 .requestMatchers("/admin/profile/**").authenticated()
                 .requestMatchers("/admin/customers/**").hasAnyAuthority("ROLE_ADMIN", "QL_KHACHHANG")
                 .requestMatchers("/admin/staffs/**").hasAnyAuthority("ROLE_ADMIN", "QL_NHANVIEN")

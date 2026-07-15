@@ -16,4 +16,13 @@ public interface StaffRepository extends JpaRepository<Staff, Long> {
 
     @Query(value = "SELECT * FROM vw_staff_list", nativeQuery = true)
     List<StaffListDto> getStaffList();
+
+    @Query(value = "SELECT * FROM vw_staff_list WHERE " +
+           "(:keyword IS NULL OR :keyword = '' OR LOWER(username) LIKE '%' + LOWER(:keyword) + '%' OR LOWER(tenNhanVien) LIKE '%' + LOWER(:keyword) + '%') AND " +
+           "(:roleId IS NULL OR :roleId = 'all' OR roleId = :roleId) AND " +
+           "(:storeMa IS NULL OR :storeMa = 'all' OR maStore = :storeMa)", nativeQuery = true)
+    List<StaffListDto> filterStaffList(
+            @org.springframework.data.repository.query.Param("keyword") String keyword,
+            @org.springframework.data.repository.query.Param("roleId") String roleId,
+            @org.springframework.data.repository.query.Param("storeMa") String storeMa);
 }

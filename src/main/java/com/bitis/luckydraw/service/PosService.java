@@ -59,7 +59,7 @@ public class PosService {
             }
             Invoice invoice = new Invoice();
             invoice.setMaStore(request.getMaStore());
-            invoice.setMaKhachHang(null); // Sẽ được cập nhật khi Zalo User quét QR
+            invoice.setMaKhachHang(request.getCustomerPhone()); // Lấy số điện thoại lúc mua hàng
             invoice.setMaHoaDon(request.getInvoiceCode());
             invoice.setMaHoaDonGoc(request.getOriginalInvoiceCode());
             invoice.setTongTien(request.getTotalAmount());

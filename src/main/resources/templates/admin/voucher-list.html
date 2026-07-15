@@ -12,7 +12,7 @@
   <!-- Content -->
   <div class="content-wrapper">
     <section class="content-header">
-      <h1>Lịch sử Trúng thưởng / Đổi quà <small>Danh sách Voucher đã phát</small></h1>
+      <h1>Lịch sử Trúng thưởng / Đổi quà</h1>
       <ul class="breadcrumb">
         <li><a th:href="@{/admin}">🏠 LuckyDraw</a></li>
         <li>Lịch sử Trúng thưởng</li>
@@ -27,17 +27,31 @@
         <div class="box-body">
           
           <form method="get" th:action="@{/admin/vouchers}">
-          <div class="filter-area" style="display: flex; gap: 15px; margin-bottom: 15px; background: #f9fafb; padding: 15px; border-radius: 4px; border: 1px solid #eee; align-items: flex-end;">
+          <div class="filter-area" style="display: flex; gap: 15px; margin-bottom: 15px; background: #f9fafb; padding: 15px; border-radius: 4px; border: 1px solid #eee; align-items: flex-end; flex-wrap: wrap;">
+            <div class="filter-group" style="display: flex; flex-direction: column; gap: 5px;">
+              <label style="font-size: 12px; font-weight: 600; color: #555;">Chiến dịch</label>
+              <select name="campaign" class="form-control" style="padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px; outline: none; min-width: 180px;">
+                <option value="all">-- Tất cả chiến dịch --</option>
+                <option th:each="c : ${campaigns}" th:value="${c.maChienDich}" th:text="${c.tenChienDich}" th:selected="${selectedCampaign == c.maChienDich}"></option>
+              </select>
+            </div>
+            <div class="filter-group" style="display: flex; flex-direction: column; gap: 5px;">
+              <label style="font-size: 12px; font-weight: 600; color: #555;">Cửa hàng</label>
+              <select name="store" class="form-control" style="padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px; outline: none; min-width: 180px;">
+                <option value="all">-- Tất cả cửa hàng --</option>
+                <option th:each="s : ${stores}" th:value="${s.maStore}" th:text="${s.tenCuaHang}" th:selected="${selectedStore == s.maStore}"></option>
+              </select>
+            </div>
             <div class="filter-group" style="display: flex; flex-direction: column; gap: 5px;">
               <label style="font-size: 12px; font-weight: 600; color: #555;">Lọc theo Giải Thưởng</label>
-              <select name="prize" class="form-control" style="padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px; outline: none; min-width: 200px;">
+              <select name="prize" class="form-control" style="padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px; outline: none; min-width: 180px;">
                 <option value="all">-- Tất cả giải thưởng --</option>
                 <option th:each="p : ${prizes}" th:value="${p.maGiaiThuong}" th:text="${p.tenGiai}" th:selected="${selectedPrize == p.maGiaiThuong}"></option>
               </select>
             </div>
             <div class="filter-group" style="display: flex; flex-direction: column; gap: 5px;">
               <label style="font-size: 12px; font-weight: 600; color: #555;">Trạng Thái Voucher</label>
-              <select name="status" class="form-control" style="padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px; outline: none; min-width: 200px;">
+              <select name="status" class="form-control" style="padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px; outline: none; min-width: 160px;">
                 <option value="all" th:selected="${selectedStatus == 'all'}">-- Tất cả --</option>
                 <option value="issued" th:selected="${selectedStatus == 'issued'}">Đã phát (Chưa đổi)</option>
                 <option value="redeemed" th:selected="${selectedStatus == 'redeemed'}">Đã đổi quà</option>

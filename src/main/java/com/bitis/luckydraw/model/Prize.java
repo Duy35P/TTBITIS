@@ -26,9 +26,6 @@ public class Prize {
     @Column(name = "ten_giai", nullable = false, length = 255)
     private String tenGiai;
 
-    @Column(name = "hinh_anh_url", length = 500)
-    private String hinhAnhUrl;
-
     @Column(name = "loai_giai", nullable = false)
     private Integer loaiGiai;
 
@@ -43,7 +40,4 @@ public class Prize {
 
     @Column(name = "gioi_han_trung_moi_customer")
     private Integer gioiHanTrungMoiCustomer;
-
-    @Column(name = "is_pre_generated_code")
-    private Boolean isPreGeneratedCode = false;
 }

@@ -19,6 +19,18 @@ public interface RewardVoucherRepository extends JpaRepository<RewardVoucher, Lo
     @Query(value = "SELECT * FROM vw_reward_voucher_list", nativeQuery = true)
     List<RewardVoucherListDto> getRewardVoucherList();
 
+    @Query(value = "SELECT * FROM vw_reward_voucher_list WHERE " +
+           "(:prizeMa = 'all' OR maGiaiThuong = :prizeMa) AND " +
+           "(:status = -1 OR trangThai = :status) AND " +
+           "(:campaignMa = 'all' OR maChienDich = :campaignMa) AND " +
+           "(:storeMa = 'all' OR maStorePhatHanh = :storeMa OR maStoreDoiThuong = :storeMa) " +
+           "ORDER BY thoiGianTao DESC", nativeQuery = true)
+    List<RewardVoucherListDto> filterRewardVoucherList(
+            @org.springframework.data.repository.query.Param("prizeMa") String prizeMa, 
+            @org.springframework.data.repository.query.Param("status") Integer status, 
+            @org.springframework.data.repository.query.Param("campaignMa") String campaignMa, 
+            @org.springframework.data.repository.query.Param("storeMa") String storeMa);
+
     @Query(value = "SELECT * FROM vw_reward_voucher_list WHERE maKhachHang = :maKhachHang ORDER BY thoiGianTao DESC", nativeQuery = true)
     List<RewardVoucherListDto> getRewardVoucherListByKhachHang(@org.springframework.data.repository.query.Param("maKhachHang") String maKhachHang);
 

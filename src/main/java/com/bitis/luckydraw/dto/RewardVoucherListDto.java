@@ -7,6 +7,7 @@ public interface RewardVoucherListDto {
     String getMaVoucher();
     String getMaGiaiThuong();
     String getTenGiai();
+    Integer getLoaiGiai();
     String getMaKhachHang();
     String getTenKhach();
     String getPhone();
@@ -17,4 +18,6 @@ public interface RewardVoucherListDto {
     String getTenStoreDoiThuong();
     LocalDateTime getThoiGianDoi();
     Integer getTrangThai();
+    String getMaChienDich();
+    String getTenChienDich();
 }

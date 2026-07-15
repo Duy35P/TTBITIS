@@ -4,6 +4,8 @@ import com.bitis.luckydraw.dto.PrizeListDto;
 import com.bitis.luckydraw.dto.RewardVoucherListDto;
 import com.bitis.luckydraw.repository.PrizeRepository;
 import com.bitis.luckydraw.repository.RewardVoucherRepository;
+import com.bitis.luckydraw.repository.CampaignRepository;
+import com.bitis.luckydraw.repository.StoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,36 +26,46 @@ public class AdminVoucherController {
     @Autowired
     private PrizeRepository prizeRepository;
 
+    @Autowired
+    private CampaignRepository campaignRepository;
+
+    @Autowired
+    private StoreRepository storeRepository;
+
     @GetMapping
     public String index(Model model, 
                         @RequestParam(name = "prize", required = false) String prizeMa,
-                        @RequestParam(name = "status", required = false) String statusStr) {
+                        @RequestParam(name = "status", required = false) String statusStr,
+                        @RequestParam(name = "campaign", required = false) String campaignMa,
+                        @RequestParam(name = "store", required = false) String storeMa) {
         
         List<PrizeListDto> allPrizes = prizeRepository.getPrizeList();
         
         List<PrizeListDto> prizes = allPrizes.stream()
                 .filter(p -> Boolean.TRUE.equals(p.getLaGiaiThuong()))
                 .collect(Collectors.toList());
-                
-        List<RewardVoucherListDto> vouchers = rewardVoucherRepository.getRewardVoucherList();
 
-        // Apply filters
-        if (prizeMa != null && !prizeMa.isEmpty() && !prizeMa.equals("all")) {
-            vouchers = vouchers.stream()
-                    .filter(v -> prizeMa.equals(v.getMaGiaiThuong()))
-                    .collect(Collectors.toList());
-        }
+        String pPrize = (prizeMa != null && !prizeMa.isEmpty()) ? prizeMa : "all";
+        String pCampaign = (campaignMa != null && !campaignMa.isEmpty()) ? campaignMa : "all";
+        String pStore = (storeMa != null && !storeMa.isEmpty()) ? storeMa : "all";
+        int pStatus = -1;
+        String pStatusStr = "all";
+        
         if (statusStr != null && !statusStr.isEmpty() && !statusStr.equals("all")) {
-            int status = statusStr.equals("issued") ? 0 : 1;
-            vouchers = vouchers.stream()
-                    .filter(v -> v.getTrangThai() != null && v.getTrangThai() == status)
-                    .collect(Collectors.toList());
+            pStatus = statusStr.equals("issued") ? 0 : 1;
+            pStatusStr = statusStr;
         }
+                
+        List<RewardVoucherListDto> vouchers = rewardVoucherRepository.filterRewardVoucherList(pPrize, pStatus, pCampaign, pStore);
 
+        model.addAttribute("campaigns", campaignRepository.findAll());
+        model.addAttribute("stores", storeRepository.findAll());
         model.addAttribute("prizes", prizes);
         model.addAttribute("vouchers", vouchers);
-        model.addAttribute("selectedPrize", prizeMa != null ? prizeMa : "all");
-        model.addAttribute("selectedStatus", statusStr != null ? statusStr : "all");
+        model.addAttribute("selectedPrize", pPrize);
+        model.addAttribute("selectedStatus", pStatusStr);
+        model.addAttribute("selectedCampaign", pCampaign);
+        model.addAttribute("selectedStore", pStore);
 
         return "admin/voucher-list";
     }

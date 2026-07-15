@@ -24,6 +24,19 @@ public interface StorePrizeInventoryRepository extends JpaRepository<StorePrizeI
     @Query(value = "SELECT COALESCE(SUM(ton_kho), 0) FROM store_prize_inventory", nativeQuery = true)
     Long sumTonKho();
 
+    @Query(value = "SELECT COALESCE(SUM(ton_kho), 0) FROM store_prize_inventory WHERE ma_giai_thuong = :maGiaiThuong", nativeQuery = true)
+    Long sumTonKhoByMaGiaiThuong(@Param("maGiaiThuong") String maGiaiThuong);
+
+    @Query(value = "SELECT c.ma_chien_dich AS maChienDich, c.ten_chien_dich AS tenChienDich, " +
+                   "COALESCE(SUM(spi.tong_luong_cap), 0) AS tongLuongCap, " +
+                   "COALESCE(SUM(spi.da_phat), 0) AS daPhat, " +
+                   "COALESCE(SUM(spi.ton_kho), 0) AS tonKho " +
+                   "FROM store_prize_inventory spi " +
+                   "JOIN prize p ON spi.ma_giai_thuong = p.ma_giai_thuong " +
+                   "JOIN campaign c ON p.ma_chien_dich = c.ma_chien_dich " +
+                   "GROUP BY c.ma_chien_dich, c.ten_chien_dich", nativeQuery = true)
+    List<java.util.Map<String, Object>> getCampaignRewardStats();
+
     @Query(value = "SELECT * FROM vw_store_prize_inventory " +
                    "WHERE (:maStore IS NULL OR maStore = :maStore) " +
                    "AND (:maChienDich IS NULL OR maChienDich = :maChienDich) " +

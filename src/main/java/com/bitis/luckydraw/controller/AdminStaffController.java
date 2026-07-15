@@ -225,43 +225,6 @@ public class AdminStaffController {
         return "redirect:/admin/staffs";
     }
 
-    @PostMapping("/import-excel")
-    public String importExcel(@RequestParam("file") org.springframework.web.multipart.MultipartFile file, RedirectAttributes redirectAttributes) {
-        if (file.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn file Excel!");
-            return "redirect:/admin/staffs";
-        }
-        try {
-            List<Staff> staffs = staffExcelService.parseExcelFile(file);
-            int count = 0;
-            for (Staff staff : staffs) {
-                Optional<Staff> opt = staffRepository.findByUsername(staff.getUsername());
-                if (opt.isPresent()) {
-                    Staff existing = opt.get();
-                    existing.setTenNhanVien(staff.getTenNhanVien());
-                    existing.setRoleId(staff.getRoleId());
-                    existing.setMaStore(staff.getMaStore());
-                    existing.setTrangThai(staff.getTrangThai());
-                    if (staff.getPassword() != null && !staff.getPassword().isEmpty()) {
-                        existing.setPassword(staff.getPassword());
-                    }
-                    staffRepository.save(existing);
-                    count++;
-                } else {
-                    if (staff.getPassword() == null || staff.getPassword().isEmpty()) {
-                        staff.setPassword("123456");
-                    }
-                    staffRepository.save(staff);
-                    count++;
-                }
-            }
-            redirectAttributes.addFlashAttribute("successMessage", "Đã import thành công " + count + " nhân viên mới!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi import: " + e.getMessage());
-        }
-        return "redirect:/admin/staffs";
-    }
-
     @GetMapping("/export-excel")
     public void exportExcel(jakarta.servlet.http.HttpServletResponse response) {
         try {

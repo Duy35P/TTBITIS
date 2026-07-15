@@ -67,6 +67,9 @@ public class AdminDashboardController {
         Long tonKho = storePrizeInventoryRepository.sumTonKho();
         model.addAttribute("totalDaPhat", daPhat != null ? daPhat : 0);
         model.addAttribute("totalTonKho", tonKho != null ? tonKho : 0);
+        
+        java.util.List<java.util.Map<String, Object>> campaignStats = storePrizeInventoryRepository.getCampaignRewardStats();
+        model.addAttribute("campaignStats", campaignStats);
 
         // Table: Lịch sử trúng thưởng
         model.addAttribute("recentWins", rewardVoucherRepository.getRecentWins());

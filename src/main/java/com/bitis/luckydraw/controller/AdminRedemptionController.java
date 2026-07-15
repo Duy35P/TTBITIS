@@ -1,28 +1,16 @@
 package com.bitis.luckydraw.controller;
+
 import org.springframework.security.access.prepost.PreAuthorize;
-
-
 import com.bitis.luckydraw.dto.RewardVoucherListDto;
-
 import com.bitis.luckydraw.model.RewardVoucher;
-
 import com.bitis.luckydraw.repository.RewardVoucherRepository;
-
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.stereotype.Controller;
-
 import org.springframework.ui.Model;
-
 import org.springframework.web.bind.annotation.*;
-
-
 import java.time.LocalDateTime;
-
 import java.util.List;
-
 import java.util.Map;
-
 import java.util.Optional;
 
 @Controller
@@ -46,7 +34,7 @@ public class AdminRedemptionController {
     }
 
     @GetMapping("/check")
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_DOIQUA_SCAN')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL_KIEMTRAMA')")
     @ResponseBody
     public ResponseEntity<?> checkVoucher(@RequestParam("code") String code) {
         Optional<RewardVoucherListDto> opt = rewardVoucherRepository.getRewardVoucherDetail(code);
@@ -55,11 +43,7 @@ public class AdminRedemptionController {
         }
         
         RewardVoucherListDto detail = opt.get();
-        if (detail.getTrangThai() != null && detail.getTrangThai() == 1) {
-            String timeDoi = detail.getThoiGianDoi() != null ? detail.getThoiGianDoi().toString() : "không rõ";
-            return ResponseEntity.badRequest().body(Map.of("message", "Mã đã được sử dụng / Đổi quà rồi vào lúc " + timeDoi + " tại " + (detail.getTenStoreDoiThuong() != null ? detail.getTenStoreDoiThuong() : detail.getMaStoreDoiThuong())));
-        }
-
+        
         // Fetch tồn kho cửa hàng
         String maStore = detail.getMaStorePhatHanh();
         Integer tonKho = null;
@@ -68,35 +52,22 @@ public class AdminRedemptionController {
             tonKho = invOpt.get().getTonKho();
         }
 
+        if (detail.getTrangThai() != null && detail.getTrangThai() == 1) {
+            String timeDoi = "không rõ";
+            if (detail.getThoiGianDoi() != null) {
+                java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+                timeDoi = detail.getThoiGianDoi().format(formatter);
+            }
+            return ResponseEntity.badRequest().body(Map.of(
+                "message", "Mã đã được sử dụng / Đổi quà rồi vào lúc " + timeDoi + " tại " + (detail.getTenStoreDoiThuong() != null ? detail.getTenStoreDoiThuong() : detail.getMaStoreDoiThuong()),
+                "detail", detail,
+                "tonKho", tonKho != null ? tonKho : 0
+            ));
+        }
+
         return ResponseEntity.ok(Map.of(
             "detail", detail,
-            "tonKho", tonKho != null ? tonKho : "Không quản lý kho"
+            "tonKho", tonKho != null ? tonKho : 0
         ));
     }
-
-    @PostMapping("/confirm")
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_DOIQUA_REDEEM')")
-    @ResponseBody
-    public ResponseEntity<?> confirmRedemption(@RequestParam("code") String code) {
-        Optional<RewardVoucher> opt = rewardVoucherRepository.findByMaVoucher(code);
-        if (opt.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Mã không tồn tại trong hệ thống."));
-        }
-        
-        RewardVoucher voucher = opt.get();
-        if (voucher.getTrangThai() != null && voucher.getTrangThai() == 1) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Mã đã được sử dụng / Đổi quà rồi."));
-        }
-
-        voucher.setTrangThai(1);
-        voucher.setThoiGianDoi(LocalDateTime.now());
-        
-        // Tạm thời dùng maStorePhatHanh làm maStoreDoiThuong vì chưa có tính năng login phân quyền cửa hàng
-        String storeGachMa = voucher.getMaStorePhatHanh();
-        voucher.setMaStoreDoiThuong(storeGachMa);
-        rewardVoucherRepository.save(voucher);
-
-        return ResponseEntity.ok(Map.of("message", "Đổi quà thành công! Đã ghi nhận trạng thái mã."));
-    }
 }
-

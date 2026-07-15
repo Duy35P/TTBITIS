@@ -541,6 +541,7 @@
         var isReal = document.getElementById('prizeIsReal').checked;
         var totalInput = document.getElementById('prizeTotal');
         var probInput = document.getElementById('prizeProb');
+        var limitInput = document.getElementById('prizeLimit');
         var campaignSelect = document.getElementById('prizeCampaign');
         var currentPrizeMa = document.getElementById('prizeMa').value;
 
@@ -549,6 +550,11 @@
             totalInput.value = -1;
             totalInput.readOnly = true;
             totalInput.style.backgroundColor = '#e9ecef';
+
+            // Khóa giới hạn trúng
+            limitInput.value = '';
+            limitInput.readOnly = true;
+            limitInput.style.backgroundColor = '#e9ecef';
 
             // Tính xác suất còn lại
             var selectedCampaign = campaignSelect.value;
@@ -581,6 +587,9 @@
             if (totalInput.value === '') totalInput.value = 0;
             totalInput.readOnly = true;
             totalInput.style.backgroundColor = '#e9ecef';
+            
+            limitInput.readOnly = false;
+            limitInput.style.backgroundColor = '';
             
             probInput.readOnly = false;
             probInput.style.backgroundColor = '';

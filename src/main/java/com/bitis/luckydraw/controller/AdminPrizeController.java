@@ -344,8 +344,14 @@ public class AdminPrizeController {
     private void syncPrizeInventory(String maGiaiThuong) {
         prizeRepository.findByMaGiaiThuong(maGiaiThuong).ifPresent(p -> {
             if (Boolean.TRUE.equals(p.getLaGiaiThuong())) {
-                long count = prizeCodeRepository.countByMaGiaiThuongAndIsUsed(maGiaiThuong, false);
-                p.setTonKhoToanHeThong((int) count);
+                long totalUnusedCodes = prizeCodeRepository.countByMaGiaiThuongAndIsUsed(maGiaiThuong, false);
+                Long sumAllocated = storePrizeInventoryRepository.sumTonKhoByMaGiaiThuong(maGiaiThuong);
+                int totalAllocated = sumAllocated != null ? sumAllocated.intValue() : 0;
+                
+                int remainingGlobal = (int) totalUnusedCodes - totalAllocated;
+                if (remainingGlobal < 0) remainingGlobal = 0; // Prevent negative inventory just in case
+                
+                p.setTonKhoToanHeThong(remainingGlobal);
                 prizeRepository.save(p);
             }
         });
@@ -434,13 +440,11 @@ public class AdminPrizeController {
                 existing.setTonKhoToanHeThong(prize.getTonKhoToanHeThong());
                 existing.setXacSuat(prize.getXacSuat());
                 existing.setLaGiaiThuong(laGiaiThuong);
-                existing.setIsPreGeneratedCode(prize.getIsPreGeneratedCode() != null ? prize.getIsPreGeneratedCode() : false);
                 prizeRepository.save(existing);
                 redirectAttributes.addFlashAttribute("successMessage", "Cập nhật giải thưởng thành công. Giải trượt đã được tự động cập nhật!");
             } else {
                 // Create
                 prize.setLaGiaiThuong(laGiaiThuong);
-                if (prize.getIsPreGeneratedCode() == null) prize.setIsPreGeneratedCode(false);
                 prizeRepository.save(prize);
                 redirectAttributes.addFlashAttribute("successMessage", "Thêm giải thưởng mới thành công. Giải trượt đã được tự động cập nhật!");
             }
