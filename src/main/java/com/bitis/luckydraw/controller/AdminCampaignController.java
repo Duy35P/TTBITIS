@@ -107,8 +107,8 @@ public class AdminCampaignController {
         }
         
         if (formCampaign.getHanTokenNgay() != null) {
-            if (formCampaign.getHanTokenNgay() < 1) {
-                throw new IllegalArgumentException("Lỗi: Hạn sử dụng Token phải từ 1 ngày trở lên!");
+            if (formCampaign.getHanTokenNgay() < 0) {
+                throw new IllegalArgumentException("Lỗi: Hạn sử dụng Token không được là số âm (Nhập 0 để hết hạn theo chiến dịch)!");
             }
             if (formCampaign.getNgayBatDau() != null && formCampaign.getNgayKetThuc() != null) {
                 long durationDays = java.time.temporal.ChronoUnit.DAYS.between(formCampaign.getNgayBatDau().toLocalDate(), formCampaign.getNgayKetThuc().toLocalDate());

@@ -69,6 +69,13 @@ public class TurnManagementService {
 
         for (CampaignStore cs : campaigns) {
             String maChienDich = cs.getMaChienDich();
+            
+            // ponytail: chỉ cộng lượt cho chiến dịch đang chạy tại thời điểm xuất hóa đơn
+            Campaign c = campaignRepo.findByMaChienDich(maChienDich).orElse(null);
+            if (c == null || c.getTrangThai() == null || c.getTrangThai() != 1) continue;
+            if (c.getNgayBatDau() != null && c.getNgayBatDau().isAfter(invoice.getNgayTao())) continue;
+            if (c.getNgayKetThuc() != null && c.getNgayKetThuc().isBefore(invoice.getNgayTao())) continue;
+
             int turns = ruleEngine.calculateTurns(maChienDich, deltaAmount, request.getPaymentMethod(), request.getSkuList());
 
             if (turns > 0) {
@@ -79,12 +86,46 @@ public class TurnManagementService {
 
         // 5. Nếu được cấp ít nhất 1 lượt, sinh GameAccessToken
         if (totalTurnsGrantedAcrossCampaigns > 0) {
-            int maxHanTokenNgay = 30;
+            int maxHanTokenNgay = 0;
+            LocalDateTime absoluteExpiration = null;
+            LocalDateTime maxNgayKetThuc = null;
+            
             for (CampaignStore cs : campaigns) {
                 Campaign c = campaignRepo.findByMaChienDich(cs.getMaChienDich()).orElse(null);
-                if (c != null && c.getHanTokenNgay() != null) {
-                    maxHanTokenNgay = Math.max(maxHanTokenNgay, c.getHanTokenNgay());
+                if (c != null) {
+                    if (c.getNgayKetThuc() != null) {
+                        if (maxNgayKetThuc == null || c.getNgayKetThuc().isAfter(maxNgayKetThuc)) {
+                            maxNgayKetThuc = c.getNgayKetThuc();
+                        }
+                    }
+                    if (c.getHanTokenNgay() != null) {
+                        if (c.getHanTokenNgay() > 0) {
+                            maxHanTokenNgay = Math.max(maxHanTokenNgay, c.getHanTokenNgay());
+                        } else if (c.getHanTokenNgay() == 0 && c.getNgayKetThuc() != null) {
+                            if (absoluteExpiration == null || c.getNgayKetThuc().isAfter(absoluteExpiration)) {
+                                absoluteExpiration = c.getNgayKetThuc();
+                            }
+                        }
+                    }
                 }
+            }
+            
+            LocalDateTime finalExpiration = null;
+            if (maxHanTokenNgay > 0) {
+                finalExpiration = LocalDateTime.now().plusDays(maxHanTokenNgay);
+            }
+            if (absoluteExpiration != null) {
+                if (finalExpiration == null || absoluteExpiration.isAfter(finalExpiration)) {
+                    finalExpiration = absoluteExpiration;
+                }
+            }
+            if (finalExpiration == null) {
+                finalExpiration = LocalDateTime.now().plusDays(30);
+            }
+
+            // ponytail: Chặn 2 điều kiện - Không cho phép hạn Token vượt quá Ngày Kết Thúc chiến dịch
+            if (maxNgayKetThuc != null && finalExpiration.isAfter(maxNgayKetThuc)) {
+                finalExpiration = maxNgayKetThuc;
             }
 
             GameAccessToken token = new GameAccessToken();
@@ -93,7 +134,7 @@ public class TurnManagementService {
             token.setSoLuongLuotThuong(totalTurnsGrantedAcrossCampaigns);
             token.setDaSuDung(false);
             token.setMaKhachHangKichHoat(null); // ponytail: chưa ai claim, set khi quét QR
-            token.setHetHanLuc(LocalDateTime.now().plusDays(maxHanTokenNgay));
+            token.setHetHanLuc(finalExpiration);
             return tokenRepo.save(token);
         }
 
@@ -150,6 +191,13 @@ public class TurnManagementService {
 
             for (CampaignStore cs : campaigns) {
                 String maChienDich = cs.getMaChienDich();
+                
+                // ponytail: chỉ cộng lượt cho chiến dịch đang chạy tại thời điểm xuất hóa đơn
+                Campaign c = campaignRepo.findByMaChienDich(maChienDich).orElse(null);
+                if (c == null || c.getTrangThai() == null || c.getTrangThai() != 1) continue;
+                if (c.getNgayBatDau() != null && c.getNgayBatDau().isAfter(invoice.getNgayTao())) continue;
+                if (c.getNgayKetThuc() != null && c.getNgayKetThuc().isBefore(invoice.getNgayTao())) continue;
+
                 int turns = ruleEngine.calculateTurns(maChienDich, deltaAmount, invoice.getPhuongThucTt(), skuList);
 
                 if (turns > 0) {
