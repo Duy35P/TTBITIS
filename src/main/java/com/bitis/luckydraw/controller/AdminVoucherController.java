@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping("/admin/vouchers")
+@RequestMapping("/quanly/vouchers")
 public class AdminVoucherController {
 
     @Autowired
@@ -67,6 +67,6 @@ public class AdminVoucherController {
         model.addAttribute("selectedCampaign", pCampaign);
         model.addAttribute("selectedStore", pStore);
 
-        return "admin/voucher-list";
+        return "quanly/voucher-list";
     }
 }

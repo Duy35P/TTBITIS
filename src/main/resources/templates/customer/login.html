@@ -247,10 +247,15 @@
 
             <!-- SECTION 1: HIỂN THỊ KHI QUÉT MÃ QR (CÓ RECEIPT) -->
             <div id="receiptSection" style="display: none;">
-                <div class="success-text">
-                    ✓ Quét mã thành công
+                <div th:if="${errorMessage == null}">
+                    <div class="success-text">
+                        ✓ Quét mã thành công
+                    </div>
+                    <p class="message">Bạn nhận được <strong>lượt quay</strong> từ hóa đơn mua hàng:</p>
                 </div>
-                <p class="message">Bạn nhận được <strong>lượt quay</strong> từ hóa đơn mua hàng:</p>
+                <div th:if="${errorMessage != null}">
+                    <p class="message">Mã hóa đơn đang xử lý:</p>
+                </div>
                 <div class="receipt-code" id="receiptCodeDisplay"></div>
                 
                 <p class="message" style="font-size: 0.85rem; color: #666; margin-bottom: 20px;">
@@ -260,7 +265,6 @@
 
             <!-- SECTION 2: HIỂN THỊ KHI ĐĂNG NHẬP BÌNH THƯỜNG -->
             <div id="generalSection" style="display: none;">
-                <h2 style="font-size: 1.25rem; color: #1a3f7a; margin-bottom: 10px; font-weight: 800;">Chào mừng trở lại!</h2>
                 <p class="message" style="margin-bottom: 25px;">
                     Đăng nhập cực nhanh bằng Zalo để tham gia các chương trình khuyến mãi, quay thưởng và nhận hàng ngàn phần quà giá trị.
                 </p>
@@ -268,7 +272,7 @@
 
             <!-- Form Đăng Nhập -->
             <form action="/customer/auth/zalo/login" method="GET" id="loginForm">
-
+                <input type="hidden" name="receipt" id="receiptInput" />
                 <button type="submit" class="btn-zalo" id="loginZaloBtn">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect width="24" height="24" rx="6" fill="#fff"/>
@@ -302,11 +306,11 @@
         const bannerIcon = document.getElementById('bannerIcon');
         const receiptInput = document.getElementById('receiptInput');
 
-        if (receiptCode) {
+        if (receiptCode && receiptCode !== 'GENERAL_LOGIN') {
             // Flow 1: Khách quét QR từ hóa đơn
             receiptSection.style.display = 'block';
             document.getElementById('receiptCodeDisplay').textContent = receiptCode;
-            receiptInput.value = receiptCode;
+            if (receiptInput) receiptInput.value = receiptCode;
             
             bannerTitle.textContent = 'Vòng Quay May Mắn';
             bannerIcon.textContent = '🧾';

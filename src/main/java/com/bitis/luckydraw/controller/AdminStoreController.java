@@ -22,7 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 @Controller
-@RequestMapping("/admin/stores")
+@RequestMapping("/quanly/stores")
 @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL_CUAHANG')")
 public class AdminStoreController {
 
@@ -63,7 +63,7 @@ public class AdminStoreController {
         model.addAttribute("stores", stores);
         model.addAttribute("activeCampaignsMap", activeCampaignsMap);
         model.addAttribute("pendingCampaignsMap", pendingCampaignsMap);
-        return "admin/store-list";
+        return "quanly/store-list";
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_EDIT') or hasAuthority('ACT_CUAHANG_ADD')")
@@ -89,7 +89,7 @@ public class AdminStoreController {
         
         storeRepository.save(store);
         
-        return "redirect:/admin/stores";
+        return "redirect:/quanly/stores";
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_IMPORT')")
@@ -97,7 +97,7 @@ public class AdminStoreController {
     public String importExcel(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
         if (file.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn file Excel!");
-            return "redirect:/admin/stores";
+            return "redirect:/quanly/stores";
         }
         try {
             List<Store> stores = storeExcelService.parseExcelFile(file);
@@ -120,7 +120,7 @@ public class AdminStoreController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi import: " + e.getMessage());
         }
-        return "redirect:/admin/stores";
+        return "redirect:/quanly/stores";
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_EXPORT')")

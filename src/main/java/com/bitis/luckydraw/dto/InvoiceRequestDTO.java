@@ -14,6 +14,7 @@ public class InvoiceRequestDTO {
     private List<SkuItem> skuList;
 
     public static class SkuItem {
+        @com.fasterxml.jackson.annotation.JsonAlias({"sku", "skuCode"})
         private String sku;
         private String name;
         private Integer quantity;

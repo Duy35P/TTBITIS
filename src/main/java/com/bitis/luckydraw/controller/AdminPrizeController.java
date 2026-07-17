@@ -29,7 +29,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 @Controller
-@RequestMapping("/admin/prizes")
+@RequestMapping("/quanly/prizes")
 public class AdminPrizeController {
 
     private final PrizeRepository prizeRepository;
@@ -145,7 +145,7 @@ public class AdminPrizeController {
         model.addAttribute("selectedCampaign", campaign);
         model.addAttribute("selectedPrize", prizeParam);
 
-        return "admin/prize-list";
+        return "quanly/prize-list";
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_PHANBO_ADD')")
@@ -165,7 +165,7 @@ public class AdminPrizeController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
-        return "redirect:/admin/prizes?tab=allocations";
+        return "redirect:/quanly/prizes?tab=allocations";
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_PHANBO_EDIT')")
@@ -181,7 +181,7 @@ public class AdminPrizeController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
-        return "redirect:/admin/prizes?tab=allocations";
+        return "redirect:/quanly/prizes?tab=allocations";
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_PHANBO_REVOKE')")
@@ -197,7 +197,7 @@ public class AdminPrizeController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
-        return "redirect:/admin/prizes?tab=allocations";
+        return "redirect:/quanly/prizes?tab=allocations";
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_PHANBO_CANCEL')")
@@ -209,7 +209,7 @@ public class AdminPrizeController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi thu hồi: " + e.getMessage());
         }
-        return "redirect:/admin/prizes?tab=allocations";
+        return "redirect:/quanly/prizes?tab=allocations";
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_IMPORT')")
@@ -218,7 +218,7 @@ public class AdminPrizeController {
     public String importPrizes(@RequestParam("file") org.springframework.web.multipart.MultipartFile file, RedirectAttributes redirectAttributes) {
         if (file.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn file Excel!");
-            return "redirect:/admin/prizes";
+            return "redirect:/quanly/prizes";
         }
         try {
             List<com.bitis.luckydraw.model.Prize> prizesToImport = prizeExcelService.parseExcelFile(file);
@@ -263,7 +263,7 @@ public class AdminPrizeController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi import: " + e.getMessage());
         }
-        return "redirect:/admin/prizes";
+        return "redirect:/quanly/prizes";
     }
 
     @PostMapping("/import-codes-excel")
@@ -317,7 +317,7 @@ public class AdminPrizeController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi import: " + e.getMessage());
         }
-        return "redirect:/admin/prizes";
+        return "redirect:/quanly/prizes";
     }
 
     private String getCellValueAsString(org.apache.poi.ss.usermodel.Cell cell) {
@@ -336,7 +336,7 @@ public class AdminPrizeController {
         model.addAttribute("codesPage", codesPage);
         model.addAttribute("maGiaiThuong", maGiaiThuong);
         prizeRepository.findByMaGiaiThuong(maGiaiThuong).ifPresent(p -> model.addAttribute("prizeName", p.getTenGiai()));
-        return "admin/prize-code-list";
+        return "quanly/prize-code-list";
     }
 
 
@@ -394,7 +394,7 @@ public class AdminPrizeController {
 
             if (laGiaiThuong && prize.getTonKhoToanHeThong() != null && prize.getTonKhoToanHeThong() < 0) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Giải thưởng là quà tặng thật không thể có số lượng vô hạn (-1). Vui lòng nhập số lượng >= 0.");
-                return "redirect:/admin/prizes?tab=prizes";
+                return "redirect:/quanly/prizes?tab=prizes";
             }
 
             // Ponytail logic: Kiểm tra tổng tỷ lệ trúng thưởng & Tự động tính giải trượt
@@ -405,7 +405,7 @@ public class AdminPrizeController {
                 long countTruot = existingPrizes.stream().filter(p -> !Boolean.TRUE.equals(p.getLaGiaiThuong()) && !p.getMaGiaiThuong().equals(prize.getMaGiaiThuong())).count();
                 if (countTruot > 0) {
                     redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Mỗi chiến dịch chỉ được phép có TỐI ĐA 1 giải trượt!");
-                    return "redirect:/admin/prizes?tab=prizes";
+                    return "redirect:/quanly/prizes?tab=prizes";
                 }
             }
 
@@ -421,7 +421,7 @@ public class AdminPrizeController {
                 totalReal += (prize.getXacSuat() != null ? prize.getXacSuat() : 0);
                 if (totalReal > 100) {
                     redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Tổng tỷ lệ trúng thưởng của các giải thật đã vượt quá 100% (" + totalReal + "%). Vui lòng giảm bớt!");
-                    return "redirect:/admin/prizes?tab=prizes";
+                    return "redirect:/quanly/prizes?tab=prizes";
                 }
             } else {
                 // Tự động ép tỷ lệ giải trượt = 100 - tổng giải thật
@@ -457,7 +457,7 @@ public class AdminPrizeController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi lưu giải thưởng: " + e.getMessage());
         }
-        return "redirect:/admin/prizes?tab=prizes";
+        return "redirect:/quanly/prizes?tab=prizes";
     }
 
     @PostMapping("/delete")
@@ -466,7 +466,7 @@ public class AdminPrizeController {
             java.util.Optional<Prize> prizeOpt = prizeRepository.findByMaGiaiThuong(maGiaiThuong);
             if (prizeOpt.isEmpty()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy giải thưởng.");
-                return "redirect:/admin/prizes?tab=prizes";
+                return "redirect:/quanly/prizes?tab=prizes";
             }
             Prize prizeToDelete = prizeOpt.get();
             
@@ -491,7 +491,7 @@ public class AdminPrizeController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi xoá giải thưởng: " + e.getMessage());
         }
-        return "redirect:/admin/prizes?tab=prizes";
+        return "redirect:/quanly/prizes?tab=prizes";
     }
 
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_PHANBO_EXPORT')")
@@ -548,7 +548,7 @@ public class AdminPrizeController {
     public String importAllocations(@RequestParam("file") org.springframework.web.multipart.MultipartFile file, RedirectAttributes redirectAttributes) {
         if (file.isEmpty()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn file Excel!");
-            return "redirect:/admin/prizes?tab=allocations";
+            return "redirect:/quanly/prizes?tab=allocations";
         }
         try {
             // Because we didn't wire the bean via constructor (to avoid changing signature too much), we fetch it from application context or just instantiate it. Wait, no, we must wire it or just instantiate it since it has no dependencies!
@@ -583,6 +583,6 @@ public class AdminPrizeController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi import: " + e.getMessage());
         }
-        return "redirect:/admin/prizes?tab=allocations";
+        return "redirect:/quanly/prizes?tab=allocations";
     }
 }

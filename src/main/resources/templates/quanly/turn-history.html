@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{admin/fragments/layout :: head('Lịch Sử Biến Động Lượt Quay')}">
+<head th:replace="~{quanly/fragments/layout :: head('Lịch Sử Biến Động Lượt Quay')}">
 </head>
 <body>
   <!-- Header -->
-  <header th:replace="~{admin/fragments/layout :: header}"></header>
+  <header th:replace="~{quanly/fragments/layout :: header}"></header>
 
   <!-- Sidebar -->
-  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+  <aside th:replace="~{quanly/fragments/layout :: sidebar}"></aside>
 
   <!-- Content -->
   <div class="content-wrapper">
     <section class="content-header">
       <h1>Lịch sử Biến động Lượt Quay <small>Tra cứu nguồn gốc thêm/trừ lượt quay của khách hàng</small></h1>
       <ul class="breadcrumb">
-        <li><a th:href="@{/admin/dashboard}">🏠 LuckyDraw</a></li>
+        <li><a th:href="@{/quanly/dashboard}">🏠 LuckyDraw</a></li>
         <li>Biến động Lượt Quay</li>
       </ul>
     </section>
@@ -26,7 +26,7 @@
         </div>
         <div class="box-body">
           
-          <form class="filter-area" method="get" th:action="@{/admin/turns}">
+          <form class="filter-area" method="get" th:action="@{/quanly/turns}">
             <div class="filter-group">
               <label>Số điện thoại Khách hàng</label>
               <input type="text" name="phone" th:value="${phone}" class="form-control" placeholder="Nhập số điện thoại cần tra cứu...">

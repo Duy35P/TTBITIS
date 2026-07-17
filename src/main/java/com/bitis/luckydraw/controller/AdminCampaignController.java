@@ -54,7 +54,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 @Controller
-@RequestMapping("/admin/campaigns")
+@RequestMapping("/quanly/campaigns")
 public class AdminCampaignController {
 
     private final CampaignRepository campaignRepository;
@@ -84,7 +84,7 @@ public class AdminCampaignController {
     @GetMapping
     public String listCampaigns(Model model, org.springframework.security.core.Authentication auth) {
         model.addAttribute("campaigns", campaignRepository.findAll());
-        return "admin/campaign-list";
+        return "quanly/campaign-list";
     }
 
     @GetMapping("/api/statuses")
@@ -204,7 +204,7 @@ public class AdminCampaignController {
             String errorMsg = e.getCause() != null && e.getCause().getCause() != null ? e.getCause().getCause().getMessage() : e.getMessage();
             redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
         }
-        return "redirect:/admin/campaigns";
+        return "redirect:/quanly/campaigns";
     }
 
     @PostMapping("/save-ajax")
@@ -263,7 +263,7 @@ public class AdminCampaignController {
             log.setIpAddress("127.0.0.1"); // TODO: Get actual IP if needed
             systemAuditLogRepository.save(log);
         });
-        return "redirect:/admin/campaigns";
+        return "redirect:/quanly/campaigns";
     }
     @GetMapping("/{campaignId}/history")
     public String getCampaignHistoryModal(@PathVariable Long campaignId, Model model) {
@@ -273,7 +273,7 @@ public class AdminCampaignController {
         model.addAttribute("campaign", campaign);
         model.addAttribute("historyList", historyList);
         
-        return "admin/fragments/campaign-history-fragment :: content";
+        return "quanly/fragments/campaign-history-fragment :: content";
     }
 
     @GetMapping("/{campaignId}/stores")
@@ -293,7 +293,7 @@ public class AdminCampaignController {
         model.addAttribute("assignedStoreMas", assignedStoreMas);
         
         // Return a fragment HTML to be injected into the modal body
-        return "admin/fragments/store-allocation-fragment :: content";
+        return "quanly/fragments/store-allocation-fragment :: content";
     }
     
     @PostMapping("/{campaignId}/stores/save")
@@ -351,7 +351,7 @@ public class AdminCampaignController {
             systemAuditLogRepository.save(log);
         }
         
-        return "redirect:/admin/campaigns";
+        return "redirect:/quanly/campaigns";
     }
 
     @GetMapping("/{campaignId}/rules")
@@ -367,7 +367,7 @@ public class AdminCampaignController {
         model.addAttribute("paymentRules", payments);
         model.addAttribute("skuRules", skus);
         
-        return "admin/fragments/campaign-rules-fragment :: content";
+        return "quanly/fragments/campaign-rules-fragment :: content";
     }
 
     @PostMapping("/{campaignId}/rules/save")
@@ -482,7 +482,7 @@ public class AdminCampaignController {
             redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
         }
         
-        return "redirect:/admin/campaigns";
+        return "redirect:/quanly/campaigns";
     }
 
     @GetMapping("/{campaignId}/design")
@@ -494,7 +494,7 @@ public class AdminCampaignController {
         
         model.addAttribute("campaign", campaign);
         model.addAttribute("prizes", prizes);
-        return "admin/minigame-builder";
+        return "quanly/minigame-builder";
     }
 
     @PostMapping("/design/save")

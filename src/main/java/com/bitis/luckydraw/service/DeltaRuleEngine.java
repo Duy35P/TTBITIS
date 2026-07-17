@@ -47,8 +47,8 @@ public class DeltaRuleEngine {
         if (paymentMethod != null && !paymentMethod.isEmpty()) {
             List<CampaignRulePayment> paymentRules = rulePaymentRepo.findByMaChienDich(maChienDich);
             for (CampaignRulePayment pr : paymentRules) {
-                if (paymentMethod.equalsIgnoreCase(pr.getPhuongThucThanhToan())) {
-                    totalTurns += pr.getSoLuotThuong();
+                if (pr.getPhuongThucThanhToan() != null && pr.getPhuongThucThanhToan().equalsIgnoreCase(paymentMethod)) {
+                    totalTurns += pr.getSoLuotThuong() != null ? pr.getSoLuotThuong() : 0;
                 }
             }
         }
@@ -58,8 +58,8 @@ public class DeltaRuleEngine {
             List<CampaignRuleSku> skuRules = ruleSkuRepo.findByMaChienDich(maChienDich);
             for (InvoiceRequestDTO.SkuItem item : skuList) {
                 for (CampaignRuleSku sr : skuRules) {
-                    if (item.getSku().equalsIgnoreCase(sr.getMaSku())) {
-                        totalTurns += sr.getSoLuotThuong() * item.getQuantity();
+                    if (sr.getMaSku() != null && sr.getMaSku().equalsIgnoreCase(item.getSku())) {
+                        totalTurns += (sr.getSoLuotThuong() != null ? sr.getSoLuotThuong() : 0) * (item.getQuantity() != null ? item.getQuantity() : 1);
                     }
                 }
             }

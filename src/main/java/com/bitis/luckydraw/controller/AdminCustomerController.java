@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping("/admin/customers")
+@RequestMapping("/quanly/customers")
 public class AdminCustomerController {
 
     private final CustomerRepository customerRepository;
@@ -64,7 +64,7 @@ public class AdminCustomerController {
         model.addAttribute("customers", customers);
         model.addAttribute("turnsMap", turnsMap);
         model.addAttribute("prizesMap", prizesMap);
-        return "admin/customer-list";
+        return "quanly/customer-list";
     }
 
     @PostMapping("/toggle-status")
@@ -74,7 +74,7 @@ public class AdminCustomerController {
             customer.setTrangThai(status);
             customerRepository.save(customer);
         });
-        return "redirect:/admin/customers";
+        return "redirect:/quanly/customers";
     }
 
     @GetMapping("/export-excel")

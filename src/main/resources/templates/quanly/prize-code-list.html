@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{admin/fragments/layout :: head('Lucky Draw - Quản lý Mã Nạp Sẵn')}">
+<head th:replace="~{quanly/fragments/layout :: head('Lucky Draw - Quản lý Mã Nạp Sẵn')}">
 </head>
 <body>
   <!-- Header -->
-  <header th:replace="~{admin/fragments/layout :: header}"></header>
+  <header th:replace="~{quanly/fragments/layout :: header}"></header>
 
   <!-- Sidebar -->
-  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+  <aside th:replace="~{quanly/fragments/layout :: sidebar}"></aside>
 
   <!-- Content -->
   <div class="content-wrapper">
@@ -17,8 +17,8 @@
         <small th:text="${prizeName}"></small>
       </h1>
       <ul class="breadcrumb">
-        <li><a href="/admin">🏠 LuckyDraw</a></li>
-        <li><a href="/admin/prizes">Kho giải thưởng</a></li>
+        <li><a href="/quanly">🏠 LuckyDraw</a></li>
+        <li><a href="/quanly/prizes">Kho giải thưởng</a></li>
         <li>Danh sách mã</li>
       </ul>
     </section>
@@ -33,7 +33,7 @@
           <h3 class="box-title">Danh sách mã (Giải: <span th:text="${prizeName}" style="color: #00a65a; font-weight: bold;"></span>)</h3>
           <div>
 
-            <a href="/admin/prizes" class="btn-default" style="background-color: #f4f4f4; padding: 6px 12px; border-radius: 3px; border: 1px solid #ddd; text-decoration: none; color: #333; margin-left: 10px;">Quay lại</a>
+            <a href="/quanly/prizes" class="btn-default" style="background-color: #f4f4f4; padding: 6px 12px; border-radius: 3px; border: 1px solid #ddd; text-decoration: none; color: #333; margin-left: 10px;">Quay lại</a>
           </div>
         </div>
         <div class="box-body">
@@ -65,8 +65,8 @@
           <!-- Pagination -->
           <div th:if="${codesPage.totalPages > 1}" style="margin-top: 20px; text-align: right;">
              <span style="margin-right: 15px; color: #666;">Trang <span th:text="${codesPage.number + 1}"></span> / <span th:text="${codesPage.totalPages}"></span></span>
-             <a th:if="${codesPage.hasPrevious()}" th:href="@{/admin/prizes/codes/{ma}(ma=${maGiaiThuong}, page=${codesPage.number - 1})}" style="padding: 5px 10px; border: 1px solid #ccc; text-decoration: none; border-radius: 3px; color: #333;">&laquo; Trước</a>
-             <a th:if="${codesPage.hasNext()}" th:href="@{/admin/prizes/codes/{ma}(ma=${maGiaiThuong}, page=${codesPage.number + 1})}" style="padding: 5px 10px; border: 1px solid #ccc; text-decoration: none; border-radius: 3px; color: #333; margin-left: 5px;">Sau &raquo;</a>
+             <a th:if="${codesPage.hasPrevious()}" th:href="@{/quanly/prizes/codes/{ma}(ma=${maGiaiThuong}, page=${codesPage.number - 1})}" style="padding: 5px 10px; border: 1px solid #ccc; text-decoration: none; border-radius: 3px; color: #333;">&laquo; Trước</a>
+             <a th:if="${codesPage.hasNext()}" th:href="@{/quanly/prizes/codes/{ma}(ma=${maGiaiThuong}, page=${codesPage.number + 1})}" style="padding: 5px 10px; border: 1px solid #ccc; text-decoration: none; border-radius: 3px; color: #333; margin-left: 5px;">Sau &raquo;</a>
           </div>
 
         </div>

@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/admin/redemption")
+@RequestMapping("/quanly/redemption")
 public class AdminRedemptionController {
 
     private final RewardVoucherRepository rewardVoucherRepository;
@@ -30,7 +30,7 @@ public class AdminRedemptionController {
     public String viewRedemptionPage(Model model) {
         List<RewardVoucherListDto> recentHistory = rewardVoucherRepository.getRecentRedemptions();
         model.addAttribute("recentHistory", recentHistory);
-        return "admin/staff-redemption";
+        return "quanly/staff-redemption";
     }
 
     @GetMapping("/check")

@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{admin/fragments/layout :: head('Thông tin cá nhân & Cài đặt')}">
+<head th:replace="~{quanly/fragments/layout :: head('Thông tin cá nhân & Cài đặt')}">
 </head>
 <body>
   <!-- Header -->
-  <header th:replace="~{admin/fragments/layout :: header}"></header>
+  <header th:replace="~{quanly/fragments/layout :: header}"></header>
 
   <!-- Sidebar -->
-  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+  <aside th:replace="~{quanly/fragments/layout :: sidebar}"></aside>
 
   <!-- Content -->
   <div class="content-wrapper">
@@ -17,7 +17,7 @@
         <small>Thông tin cá nhân & Bảo mật</small>
       </h1>
       <ul class="breadcrumb">
-        <li><a th:href="@{/admin}">🏠 LuckyDraw</a></li>
+        <li><a th:href="@{/quanly}">🏠 LuckyDraw</a></li>
         <li>Cài đặt</li>
       </ul>
     </section>
@@ -120,7 +120,7 @@
         formData.append('tenNhanVien', nameVal);
 
         try {
-            const response = await fetch('/admin/profile/update-info', {
+            const response = await fetch('/quanly/profile/update-info', {
                 method: 'POST',
                 body: formData
             });
@@ -167,7 +167,7 @@
         formData.append('newPassword', newPwd);
 
         try {
-            const response = await fetch('/admin/profile/change-password', {
+            const response = await fetch('/quanly/profile/change-password', {
                 method: 'POST',
                 body: formData
             });

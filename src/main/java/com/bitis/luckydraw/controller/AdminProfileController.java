@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/admin/profile")
+@RequestMapping("/quanly/profile")
 public class AdminProfileController {
 
     @Autowired
@@ -33,7 +33,7 @@ public class AdminProfileController {
         String username = auth.getName();
         Staff staff = staffRepository.findByUsername(username).orElse(null);
         if (staff == null) {
-            return "redirect:/admin"; // Fallback nếu không có dữ liệu
+            return "redirect:/quanly"; // Fallback nếu không có dữ liệu
         }
         
         String storeName = "Không có (Trụ sở chính)";
@@ -47,7 +47,7 @@ public class AdminProfileController {
         model.addAttribute("staff", staff);
         model.addAttribute("storeName", storeName);
         
-        return "admin/profile";
+        return "quanly/profile";
     }
 
     @PostMapping("/update-info")

@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{admin/fragments/layout :: head('Lucky Draw - Tra Cứu Hóa Đơn')}">
+<head th:replace="~{quanly/fragments/layout :: head('Lucky Draw - Tra Cứu Hóa Đơn')}">
 </head>
 <body>
   <!-- Header -->
-  <header th:replace="~{admin/fragments/layout :: header}"></header>
+  <header th:replace="~{quanly/fragments/layout :: header}"></header>
 
   <!-- Sidebar -->
-  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+  <aside th:replace="~{quanly/fragments/layout :: sidebar}"></aside>
 
   <!-- Content -->
   <div class="content-wrapper">
     <section class="content-header">
       <h1>Tra Cứu Hóa Đơn <small>Quản lý dữ liệu mua hàng đồng bộ từ máy POS</small></h1>
       <ul class="breadcrumb">
-        <li><a th:href="@{/admin}">🏠 LuckyDraw</a></li>
+        <li><a th:href="@{/quanly}">🏠 LuckyDraw</a></li>
         <li>Tra cứu Hóa đơn</li>
       </ul>
     </section>
@@ -26,7 +26,7 @@
         </div>
         <div class="box-body">
           
-          <form method="get" th:action="@{/admin/invoices}">
+          <form method="get" th:action="@{/quanly/invoices}">
           <div class="filter-area" style="background-color: #f9fafb; padding: 15px; border-radius: 4px; border: 1px solid #eee; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
             <div class="filter-group" style="display: flex; flex-direction: column; flex: 1; min-width: 200px;">
               <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Mã Hóa Đơn hoặc SĐT</label>
@@ -44,7 +44,7 @@
             <div class="filter-group" style="flex: 0; justify-content: flex-end; display: flex; gap: 10px;">
               <button type="submit" class="btn-primary" style="background-color: #3c8dbc; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; height: 38px; white-space: nowrap;">🔍 Lọc Data</button>
               <div style="display: flex; gap: 10px; align-items: center;">
-                <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_HOADON_EXPORT')" th:href="@{/admin/invoices/export-excel(keyword=${selectedKeyword}, status=${selectedStatus})}" class="btn-primary" style="background-color: #00a65a; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; height: 38px; white-space: nowrap; text-decoration: none; line-height: 22px;">📊 Xuất Excel</a>
+                <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_HOADON_EXPORT')" th:href="@{/quanly/invoices/export-excel(keyword=${selectedKeyword}, status=${selectedStatus})}" class="btn-primary" style="background-color: #00a65a; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; height: 38px; white-space: nowrap; text-decoration: none; line-height: 22px;">📊 Xuất Excel</a>
               </div>
             </div>
           </div>

@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{admin/fragments/layout :: head('Quản lý Cửa Hàng')}">
+<head th:replace="~{quanly/fragments/layout :: head('Quản lý Cửa Hàng')}">
 </head>
 <body>
   <!-- Header -->
-  <header th:replace="~{admin/fragments/layout :: header}"></header>
+  <header th:replace="~{quanly/fragments/layout :: header}"></header>
 
   <!-- Sidebar -->
-  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+  <aside th:replace="~{quanly/fragments/layout :: sidebar}"></aside>
   <!-- Content -->
   <div class="content-wrapper">
     <section class="content-header">
@@ -34,10 +34,10 @@
           <div class="box-tools" style="display: flex; gap: 10px;">
             <input type="text" class="search-box" placeholder="Tìm tên cửa hàng, mã đại lý...">
             
-            <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_EXPORT')" th:href="@{/admin/stores/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
+            <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_EXPORT')" th:href="@{/quanly/stores/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
             
             <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_IMPORT')" type="button" class="btn-primary" style="background-color: #f39c12; border-color: #e08e0b;" onclick="document.getElementById('excelFileInput').click()">Nhập Excel</button>
-            <form sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_IMPORT')" th:action="@{/admin/stores/import-excel}" method="post" enctype="multipart/form-data" style="display:none; margin: 0;" id="importForm">
+            <form sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_CUAHANG_IMPORT')" th:action="@{/quanly/stores/import-excel}" method="post" enctype="multipart/form-data" style="display:none; margin: 0;" id="importForm">
                 <input type="file" name="file" accept=".xlsx" id="excelFileInput" onchange="document.getElementById('importForm').submit()">
             </form>
             
@@ -114,7 +114,7 @@
   <!-- Modal Thêm/Sửa Cửa Hàng -->
   <div id="storeModal" class="modal">
     <div class="modal-content">
-      <form th:action="@{/admin/stores/save}" method="post">
+      <form th:action="@{/quanly/stores/save}" method="post">
         <input type="hidden" id="storeId" name="storeId">
         
         <div class="modal-header">

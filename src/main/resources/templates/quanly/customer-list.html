@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{admin/fragments/layout :: head('Quản lý Khách Hàng')}">
+<head th:replace="~{quanly/fragments/layout :: head('Quản lý Khách Hàng')}">
 </head>
 <body>
 
    <!-- Header -->
-  <header th:replace="~{admin/fragments/layout :: header}"></header>
+  <header th:replace="~{quanly/fragments/layout :: header}"></header>
 
   <!-- Sidebar -->
-  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+  <aside th:replace="~{quanly/fragments/layout :: sidebar}"></aside>
 
   <!-- Content -->
   <div class="content-wrapper">
@@ -29,7 +29,7 @@
           <h3 class="box-title">Danh sách Khách hàng</h3>
           <div class="box-tools">
             <input type="text" class="search-box" placeholder="Tìm theo Tên hoặc SĐT...">
-            <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_KHACHHANG_EXPORT')" th:href="@{/admin/customers/export-excel}" class="btn-export" style="text-decoration: none; display: inline-block;">Xuất Excel</a>
+            <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_KHACHHANG_EXPORT')" th:href="@{/quanly/customers/export-excel}" class="btn-export" style="text-decoration: none; display: inline-block;">Xuất Excel</a>
           </div>
         </div>
         <div class="box-body">
@@ -69,7 +69,7 @@
                   <span class="badge bg-red" th:if="${customer.trangThai != 1}">Banned</span>
                 </td>
                 <td class="action-links">
-                  <form sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_KHACHHANG_EDIT')" th:action="@{/admin/customers/toggle-status}" method="post" style="display:inline;">
+                  <form sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_KHACHHANG_EDIT')" th:action="@{/quanly/customers/toggle-status}" method="post" style="display:inline;">
                     <input type="hidden" name="customerId" th:value="${customer.id}" />
                     <input type="hidden" name="status" th:value="${customer.trangThai == 1 ? 0 : 1}" />
                     <button type="submit" 

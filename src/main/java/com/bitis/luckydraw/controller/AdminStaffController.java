@@ -25,7 +25,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping("/admin/staffs")
+@RequestMapping("/quanly/staffs")
 public class AdminStaffController {
 
     @Autowired
@@ -121,7 +121,7 @@ public class AdminStaffController {
             model.addAttribute("activeTab", "staffs");
         }
 
-        return "admin/staff-list";
+        return "quanly/staff-list";
     }
 
     @PostMapping("/role/save")
@@ -156,7 +156,7 @@ public class AdminStaffController {
             redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
             redirectAttributes.addFlashAttribute("activeTab", "roles");
         }
-        return "redirect:/admin/staffs";
+        return "redirect:/quanly/staffs";
     }
 
     @PostMapping("/save")
@@ -210,7 +210,7 @@ public class AdminStaffController {
             }
         }
         redirectAttributes.addFlashAttribute("success", "Lưu nhân viên thành công!");
-        return "redirect:/admin/staffs";
+        return "redirect:/quanly/staffs";
     }
 
     @PostMapping("/toggle-status")
@@ -222,7 +222,7 @@ public class AdminStaffController {
             staffRepository.save(staff);
             redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái thành công!");
         }
-        return "redirect:/admin/staffs";
+        return "redirect:/quanly/staffs";
     }
 
     @GetMapping("/export-excel")

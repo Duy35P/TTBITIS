@@ -14,7 +14,7 @@ import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 @Controller
-@RequestMapping("/admin/turns")
+@RequestMapping("/quanly/turns")
 @PreAuthorize("hasRole('ADMIN') or hasAuthority('QL_LUOTQUAY')")
 public class AdminTurnHistoryController {
 
@@ -53,6 +53,6 @@ public class AdminTurnHistoryController {
         model.addAttribute("loai", loai == null ? "all" : loai);
         model.addAttribute("maChienDich", maChienDich == null ? "all" : maChienDich);
 
-        return "admin/turn-history";
+        return "quanly/turn-history";
     }
 }

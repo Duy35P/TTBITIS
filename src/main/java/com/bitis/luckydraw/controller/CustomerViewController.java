@@ -193,6 +193,10 @@ public class CustomerViewController {
             session.setAttribute("CUSTOMER_PHONE", newPhone);
         });
         
+        if (session.getAttribute("PENDING_RECEIPT") != null) {
+            return "redirect:/customer/auth/process-receipt";
+        }
+        
         redirectAttributes.addFlashAttribute("successMessage", "Cập nhật thông tin thành công!");
         return "redirect:/customer/index";
     }

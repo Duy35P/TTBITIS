@@ -137,22 +137,22 @@
          <ul class="sidebar-menu">
           <li class="header">Menu Quản Trị</li>
           <!-- TODO: Add endpoints for overview, campaign, etc -->
-          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_TONGQUAN')"><a th:href="@{/admin}"><span>Tổng quan</span></a></li>
-          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_CHIENDICH')"><a th:href="@{/admin/campaigns}"><span>Chiến dịch</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_TONGQUAN')"><a th:href="@{/quanly}"><span>Tổng quan</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_CHIENDICH')"><a th:href="@{/quanly/campaigns}"><span>Chiến dịch</span></a></li>
           
           <!-- LInk động Spring Boot -->
-          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_KHACHHANG')"><a th:href="@{/admin/customers}"><span>Khách hàng</span></a></li>
-          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_CUAHANG')"><a th:href="@{/admin/stores}"><span>Cửa hàng / Đại lý</span></a></li>
-          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_NHANVIEN')"><a th:href="@{/admin/staffs}"><span>Nhân viên</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_KHACHHANG')"><a th:href="@{/quanly/customers}"><span>Khách hàng</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_CUAHANG')"><a th:href="@{/quanly/stores}"><span>Cửa hàng / Đại lý</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_NHANVIEN')"><a th:href="@{/quanly/staffs}"><span>Nhân viên</span></a></li>
           
-          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_GIAITHUONG') or hasAuthority('QL_PHANBO')"><a th:href="@{/admin/prizes}"><span>Kho giải thưởng</span></a></li>
-          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_VOUCHER')"><a th:href="@{/admin/vouchers}"><span>Lịch sử Trúng thưởng</span></a></li>
-          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_KIEMTRAMA')"><a th:href="@{/admin/redemption}"><span>Kiểm tra Mã Quà tặng</span></a></li>
-          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_LUOTQUAY')"><a th:href="@{/admin/turns}"><span>Biến động Lượt quay</span></a></li>
-          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_HOADON')"><a th:href="@{/admin/invoices}"><span>Tra cứu Hóa đơn</span></a></li>
-          <li><a th:href="@{/admin/profile}"><span>Cài đặt</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_GIAITHUONG') or hasAuthority('QL_PHANBO')"><a th:href="@{/quanly/prizes}"><span>Kho giải thưởng</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_VOUCHER')"><a th:href="@{/quanly/vouchers}"><span>Lịch sử Trúng thưởng</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_KIEMTRAMA')"><a th:href="@{/quanly/redemption}"><span>Kiểm tra Mã Quà tặng</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_LUOTQUAY')"><a th:href="@{/quanly/turns}"><span>Biến động Lượt quay</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_HOADON')"><a th:href="@{/quanly/invoices}"><span>Tra cứu Hóa đơn</span></a></li>
+          <li><a th:href="@{/quanly/profile}"><span>Cài đặt</span></a></li>
           <li>
-             <form th:action="@{/admin/logout}" method="post" style="display: inline;">
+             <form th:action="@{/quanly/logout}" method="post" style="display: inline;">
                  <button type="submit" style="background:none; border:none; color: #b8c7ce; padding: 12px 5px 12px 15px; cursor: pointer; width: 100%; text-align: left;"><i class="fa fa-sign-out"></i> <span>Đăng xuất</span></button>
              </form>
           </li>

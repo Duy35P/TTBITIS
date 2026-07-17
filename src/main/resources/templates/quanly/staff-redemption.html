@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{admin/fragments/layout :: head('Kiểm Tra Mã Quà Tặng')}">
+<head th:replace="~{quanly/fragments/layout :: head('Kiểm Tra Mã Quà Tặng')}">
 </head>
 <body>
   <!-- Header -->
-  <header th:replace="~{admin/fragments/layout :: header}"></header>
+  <header th:replace="~{quanly/fragments/layout :: header}"></header>
 
   <!-- Sidebar -->
-  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+  <aside th:replace="~{quanly/fragments/layout :: sidebar}"></aside>
 
   <!-- Content -->
   <div class="content-wrapper">
@@ -82,7 +82,7 @@
       }
 
       try {
-        const response = await fetch(`/admin/redemption/check?code=${encodeURIComponent(input)}`);
+        const response = await fetch(`/quanly/redemption/check?code=${encodeURIComponent(input)}`);
         const data = await response.json();
         
         const resultBox = document.getElementById('resultBox');

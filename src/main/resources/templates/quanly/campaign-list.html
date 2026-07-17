@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head th:replace="~{admin/fragments/layout :: head('Quản lý Chiến Dịch')}">
+<head th:replace="~{quanly/fragments/layout :: head('Quản lý Chiến Dịch')}">
 </head>
 <body>
   <!-- Header -->
-  <header th:replace="~{admin/fragments/layout :: header}"></header>
+  <header th:replace="~{quanly/fragments/layout :: header}"></header>
 
   <!-- Sidebar -->
-  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+  <aside th:replace="~{quanly/fragments/layout :: sidebar}"></aside>
 
   <!-- Content -->
   <div class="content-wrapper">
@@ -33,7 +33,7 @@
           <h3 class="box-title">Danh sách Chiến Dịch</h3>
           <div class="box-tools" style="display: flex; gap: 10px;">
             <input type="text" class="search-box" placeholder="Tìm tên chiến dịch...">
-            <a th:href="@{/admin/campaigns/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
+            <a th:href="@{/quanly/campaigns/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
             <button style="background-color: #3c8dbc; border: none; color: #fff; padding: 6px 12px; border-radius: 3px; font-size: 14px; font-weight: 600; cursor: pointer;" onclick="openAddCampaignModal()">+ Thêm mới</button>
           </div>
         </div>
@@ -96,9 +96,9 @@
                      th:data-id="${campaign.id}"
                      th:data-name="${campaign.tenChienDich}"
                      onclick="openCampaignHistoryModal(this)" style="color: #605ca8;">Lịch sử</a> <span class="action-separator">|</span>
-                  <a th:href="@{/admin/campaigns/{id}/design(id=${campaign.id})}" style="color: #e83e8c;">Thiết kế</a> <span class="action-separator">|</span>
+                  <a th:href="@{/quanly/campaigns/{id}/design(id=${campaign.id})}" style="color: #e83e8c;">Thiết kế</a> <span class="action-separator">|</span>
                      
-                  <form class="toggle-status-form" th:action="@{/admin/campaigns/toggle-status}" method="post" th:style="${campaign.trangThai == 2 ? 'display:none;' : 'display:inline;'}">
+                  <form class="toggle-status-form" th:action="@{/quanly/campaigns/toggle-status}" method="post" th:style="${campaign.trangThai == 2 ? 'display:none;' : 'display:inline;'}">
                     <input type="hidden" name="campaignId" th:value="${campaign.id}" />
                     <input type="hidden" name="status" th:value="${campaign.trangThai == 1 || campaign.trangThai == 3 ? 0 : 1}" />
                     <button type="submit" 
@@ -303,7 +303,7 @@
       const formData = new FormData(this);
       
       try {
-          const response = await fetch('/admin/campaigns/save-ajax', {
+          const response = await fetch('/quanly/campaigns/save-ajax', {
               method: 'POST',
               body: formData
           });
@@ -346,7 +346,7 @@
       document.getElementById('storeAssignModalContent').innerHTML = '<div style="text-align: center; padding: 20px;">Đang tải danh sách cửa hàng...</div>';
       
       try {
-        const response = await fetch('/admin/campaigns/' + campaignId + '/stores');
+        const response = await fetch('/quanly/campaigns/' + campaignId + '/stores');
         if (response.ok) {
            const html = await response.text();
            document.getElementById('storeAssignModalContent').innerHTML = html;
@@ -368,7 +368,7 @@
       document.getElementById('ruleModalContent').innerHTML = '<div style="text-align: center; padding: 20px;">Đang tải cấu hình luật...</div>';
       
       try {
-        const response = await fetch('/admin/campaigns/' + campaignId + '/rules');
+        const response = await fetch('/quanly/campaigns/' + campaignId + '/rules');
         if (response.ok) {
            const html = await response.text();
            document.getElementById('ruleModalContent').innerHTML = html;
@@ -389,7 +389,7 @@
       document.getElementById('historyModalContent').innerHTML = '<div style="text-align: center; padding: 20px;">Đang tải dữ liệu...</div>';
       
       try {
-        const response = await fetch('/admin/campaigns/' + campaignId + '/history');
+        const response = await fetch('/quanly/campaigns/' + campaignId + '/history');
         if (response.ok) {
            const html = await response.text();
            document.getElementById('historyModalContent').innerHTML = html;
@@ -595,7 +595,7 @@
     // Live update campaign statuses every 10 seconds
     setInterval(async () => {
         try {
-            const response = await fetch('/admin/campaigns/api/statuses');
+            const response = await fetch('/quanly/campaigns/api/statuses');
             const statuses = await response.json();
             
             document.querySelectorAll('tr[data-campaign-id]').forEach(row => {

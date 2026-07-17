@@ -38,15 +38,8 @@ public class TurnManagementService {
 
     @Transactional
     public GameAccessToken processInvoice(InvoiceRequestDTO request) throws Exception {
-        // 1. Tìm hoặc tạo Customer
-        Customer customer = customerRepo.findByPhone(request.getCustomerPhone())
-                .orElseGet(() -> {
-                    Customer newCustomer = new Customer();
-                    newCustomer.setMaKhachHang("CUS-" + request.getCustomerPhone());
-                    newCustomer.setPhone(request.getCustomerPhone());
-                    newCustomer.setTrangThai(1);
-                    return customerRepo.save(newCustomer);
-                });
+        // Không tạo Customer rác, chỉ dùng SĐT để làm mã KH tham chiếu cho hóa đơn
+        String maKhachHangThamChieu = "CUS-" + request.getCustomerPhone();
 
         // 2. Tính Delta Amount
         Double deltaAmount = request.getTotalAmount();
@@ -62,12 +55,12 @@ public class TurnManagementService {
 
         // Nếu Delta <= 0, không cấp lượt nhưng vẫn ghi nhận hóa đơn
         if (deltaAmount <= 0) {
-            saveInvoice(request, customer.getMaKhachHang());
+            saveInvoice(request, maKhachHangThamChieu, true); // true = Đã xử lý (không được cộng lượt nữa)
             return null; // Không trả về token
         }
 
-        // 3. Lưu Invoice mới
-        Invoice invoice = saveInvoice(request, customer.getMaKhachHang());
+        // 3. Lưu Invoice mới với trạng thái daXuLy = false (chờ khách hàng claim)
+        Invoice invoice = saveInvoice(request, maKhachHangThamChieu, false);
 
         // 4. Lấy danh sách Campaign đang chạy tại Store này
         List<CampaignStore> campaigns = campaignStoreRepo.findByMaStore(request.getMaStore());
@@ -79,14 +72,7 @@ public class TurnManagementService {
             int turns = ruleEngine.calculateTurns(maChienDich, deltaAmount, request.getPaymentMethod(), request.getSkuList());
 
             if (turns > 0) {
-                // Gọi Stored Procedure (SP tự quản lý Upsert Lock và Ghi Transaction)
-                customerTurnRepo.addCustomerTurnsSafe(
-                        customer.getMaKhachHang(),
-                        maChienDich,
-                        turns,
-                        "INVOICE:" + invoice.getMaHoaDon()
-                );
-
+                // CHỈ TÍNH LƯỢT CHỨ KHÔNG CỘNG LƯỢT TRỰC TIẾP VÀO DB
                 totalTurnsGrantedAcrossCampaigns += turns;
             }
         }
@@ -106,7 +92,7 @@ public class TurnManagementService {
             token.setMaHoaDon(invoice.getMaHoaDon());
             token.setSoLuongLuotThuong(totalTurnsGrantedAcrossCampaigns);
             token.setDaSuDung(false);
-            token.setMaKhachHangKichHoat(customer.getMaKhachHang());
+            token.setMaKhachHangKichHoat(null); // ponytail: chưa ai claim, set khi quét QR
             token.setHetHanLuc(LocalDateTime.now().plusDays(maxHanTokenNgay));
             return tokenRepo.save(token);
         }
@@ -114,7 +100,7 @@ public class TurnManagementService {
         return null;
     }
 
-    private Invoice saveInvoice(InvoiceRequestDTO request, String maKhachHang) throws Exception {
+    private Invoice saveInvoice(InvoiceRequestDTO request, String maKhachHang, boolean daXuLy) throws Exception {
         Invoice invoice = new Invoice();
         invoice.setMaHoaDon(request.getInvoiceNumber());
         invoice.setMaHoaDonGoc(request.getOriginalInvoiceNumber());
@@ -123,7 +109,7 @@ public class TurnManagementService {
         invoice.setTongTien(request.getTotalAmount());
         invoice.setPhuongThucTt(request.getPaymentMethod());
         invoice.setSanPhamJson(objectMapper.writeValueAsString(request.getSkuList()));
-        invoice.setDaXuLy(true);
+        invoice.setDaXuLy(daXuLy);
         return invoiceRepo.save(invoice);
     }
 

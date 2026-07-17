@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping("/admin/invoices")
+@RequestMapping("/quanly/invoices")
 public class AdminInvoiceController {
 
     @Autowired
@@ -169,7 +169,7 @@ public class AdminInvoiceController {
         model.addAttribute("selectedKeyword", keyword != null ? keyword : "");
         model.addAttribute("selectedStatus", status != null ? status : "all");
 
-        return "admin/invoice-list";
+        return "quanly/invoice-list";
     }
 
     @GetMapping("/export-excel")

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <th:block th:replace="~{admin/fragments/layout :: head('Lucky Draw - Tổng quan (Dashboard)')}"></th:block>
+  <th:block th:replace="~{quanly/fragments/layout :: head('Lucky Draw - Tổng quan (Dashboard)')}"></th:block>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -68,17 +68,17 @@
 <body>
 
   <!-- Header -->
-  <header th:replace="~{admin/fragments/layout :: header}"></header>
+  <header th:replace="~{quanly/fragments/layout :: header}"></header>
 
   <!-- Sidebar -->
-  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+  <aside th:replace="~{quanly/fragments/layout :: sidebar}"></aside>
 
   <!-- Content -->
   <div class="content-wrapper">
     <section class="content-header">
       <h1>Tổng quan <small>Báo cáo & Thống kê</small></h1>
       <ul class="breadcrumb">
-        <li><a th:href="@{/admin}">🏠 LuckyDraw</a></li>
+        <li><a th:href="@{/quanly}">🏠 LuckyDraw</a></li>
         <li>Tổng quan</li>
       </ul>
     </section>

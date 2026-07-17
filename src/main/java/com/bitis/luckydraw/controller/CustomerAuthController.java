@@ -209,6 +209,15 @@ public class CustomerAuthController {
                 session.setAttribute("CUSTOMER_AVATAR", userInfo.getPicture().getData().getUrl());
             }
 
+            // --- SMART ROUTING ĐỂ ÉP NHẬP SỐ ĐIỆN THOẠI TRƯỚC KHI DÙNG TOKEN ---
+            if (customer.getPhone().startsWith("ZALO")) {
+                if (receipt != null && !receipt.trim().isEmpty()) {
+                    session.setAttribute("PENDING_RECEIPT", receipt);
+                }
+                redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng cập nhật số điện thoại thật để tiếp tục.");
+                return "redirect:/customer/update-phone";
+            }
+
             // Smart Routing (giống hệt mockLogin)
             if (receipt != null && !receipt.trim().isEmpty()) {
                 try {
@@ -252,5 +261,48 @@ public class CustomerAuthController {
     public String logout(HttpSession session) {
         session.invalidate();
         return "redirect:/customer/login";
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/process-receipt")
+    public String processReceipt(HttpSession session, RedirectAttributes redirectAttributes) {
+        String receipt = (String) session.getAttribute("PENDING_RECEIPT");
+        String maKhachHang = (String) session.getAttribute("CUSTOMER_MA");
+
+        if (maKhachHang == null) {
+            return "redirect:/customer/login";
+        }
+
+        if (receipt == null || receipt.trim().isEmpty()) {
+            return "redirect:/customer/index";
+        }
+
+        // Xóa receipt khỏi session sau khi xử lý để tránh lặp lại
+        session.removeAttribute("PENDING_RECEIPT");
+
+        try {
+            boolean tokenUsed = turnManagementService.useGameAccessToken(receipt, maKhachHang);
+            if (tokenUsed) {
+                redirectAttributes.addFlashAttribute("successMessage", "Xác nhận mã QR thành công! Lượt quay đã được cộng vào tài khoản của bạn.");
+                return "redirect:/customer/index";
+            }
+            java.util.List<String> campaigns = turnManagementService.claimInvoice(receipt, maKhachHang);
+            if (campaigns.size() == 1) {
+                redirectAttributes.addFlashAttribute("successMessage", "Bạn nhận được lượt quay từ hóa đơn.");
+                return "redirect:/customer/spin?campaign=" + campaigns.get(0);
+            } else if (campaigns.size() > 1) {
+                redirectAttributes.addFlashAttribute("successMessage", "Mã hóa đơn áp dụng cho " + campaigns.size() + " chương trình.");
+                return "redirect:/customer/index";
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", "Mã không thỏa điều kiện nhận lượt.");
+                return "redirect:/customer/index";
+            }
+        } catch (Exception e) {
+            if (e.getMessage() != null && (e.getMessage().contains("đã được sử dụng") || e.getMessage().contains("đã được nhận lượt"))) {
+                redirectAttributes.addFlashAttribute("successMessage", "Chào mừng bạn quay lại!");
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            }
+            return "redirect:/customer/index";
+        }
     }
 }

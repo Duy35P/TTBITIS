@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{admin/fragments/layout :: head('Lucky Draw - Quản lý Kho Quà')}">
+<head th:replace="~{quanly/fragments/layout :: head('Lucky Draw - Quản lý Kho Quà')}">
 </head>
 <body>
   <!-- Header -->
-  <header th:replace="~{admin/fragments/layout :: header}"></header>
+  <header th:replace="~{quanly/fragments/layout :: header}"></header>
 
   <!-- Sidebar -->
-  <aside th:replace="~{admin/fragments/layout :: sidebar}"></aside>
+  <aside th:replace="~{quanly/fragments/layout :: sidebar}"></aside>
 
   <!-- Content -->
   <div class="content-wrapper">
@@ -45,7 +45,7 @@
           <div sec:authorize="hasRole('ADMIN') or hasAuthority('QL_GIAITHUONG')" id="prizes" class="tab-content" th:style="${activeTab == 'prizes' ? 'display:block;' : 'display:none;'}">
             <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
               <!-- Lọc chiến dịch -->
-              <form method="get" th:action="@{/admin/prizes}" style="display: flex; gap: 10px; align-items: center; margin: 0;">
+              <form method="get" th:action="@{/quanly/prizes}" style="display: flex; gap: 10px; align-items: center; margin: 0;">
                 <input type="hidden" name="tab" value="prizes">
                 <label style="font-size: 14px; font-weight: 600; color: #555;">Lọc theo Chiến dịch:</label>
                 <select name="campaign" onchange="this.form.submit()" style="padding: 6px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none; min-width: 250px;">
@@ -55,13 +55,13 @@
               </form>
               
               <div style="display: flex; gap: 10px;">
-                <form sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_IMPORT')" th:action="@{/admin/prizes/import-codes-excel}" method="post" enctype="multipart/form-data" style="margin: 0;">
+                <form sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_IMPORT')" th:action="@{/quanly/prizes/import-codes-excel}" method="post" enctype="multipart/form-data" style="margin: 0;">
                   <input type="file" name="file" accept=".xlsx, .xls" style="display:none;" id="excelCodeInput" onchange="this.form.submit()">
                   <button type="button" onclick="document.getElementById('excelCodeInput').click()" style="background-color: #39cccc; border: none; color: white; padding: 6px 12px; border-radius: 3px; cursor: pointer; font-weight: 600;"><i class="fa fa-upload"></i> Nạp mã Hàng loạt</button>
                 </form>
                 
-                <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_EXPORT')" th:href="@{/admin/prizes/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
-                <form sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_IMPORT')" th:action="@{/admin/prizes/import}" method="post" enctype="multipart/form-data" style="margin: 0;">
+                <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_EXPORT')" th:href="@{/quanly/prizes/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
+                <form sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_IMPORT')" th:action="@{/quanly/prizes/import}" method="post" enctype="multipart/form-data" style="margin: 0;">
                   <input type="file" name="file" accept=".xlsx, .xls" style="display:none;" id="excelPrizeInput" onchange="this.form.submit()">
                   <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_IMPORT')" type="button" onclick="document.getElementById('excelPrizeInput').click()" style="background-color: #f39c12; border: none; color: white; padding: 6px 12px; border-radius: 3px; cursor: pointer;"><i class="fa fa-upload"></i> Import Excel Giải Thưởng</button>
                 </form>
@@ -106,7 +106,7 @@
                   </td>
                   <td style="padding: 12px 8px;" class="action-links">
                     <div th:if="${p.laGiaiThuong}" style="margin-bottom: 5px;">
-                       <a th:href="@{/admin/prizes/codes/{ma}(ma=${p.maGiaiThuong})}" style="color: #f39c12; font-weight: 600; font-size: 13px;"><i class="fa fa-list"></i> Xem mã (<span th:text="${p.tonKhoThucTe}">0</span>)</a>
+                       <a th:href="@{/quanly/prizes/codes/{ma}(ma=${p.maGiaiThuong})}" style="color: #f39c12; font-weight: 600; font-size: 13px;"><i class="fa fa-list"></i> Xem mã (<span th:text="${p.tonKhoThucTe}">0</span>)</a>
                     </div>
                     <span>
                         <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_EDIT')" href="javascript:void(0)" 
@@ -144,7 +144,7 @@
             <div sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_PHANBO_ADD')" style="margin-bottom: 15px; background: #f9f9f9; padding: 15px; border-radius: 4px; border: 1px solid #ddd;">
               <h4 style="margin-bottom: 10px; font-weight: 600; font-size: 15px;">Thêm Phân bổ Mới</h4>
               
-              <form th:action="@{/admin/prizes/allocate}" method="post" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+              <form th:action="@{/quanly/prizes/allocate}" method="post" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
                 <div>
                   <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Chọn Chiến Dịch</label>
                   <select id="allocateCampaign" onchange="filterStoresByCampaign()" required style="padding: 6px; width: 200px; border: 1px solid #ccc; border-radius: 3px;">
@@ -183,7 +183,7 @@
               </form>
             </div>
             <!-- Bộ lọc Phân Bổ -->
-            <form method="get" th:action="@{/admin/prizes}">
+            <form method="get" th:action="@{/quanly/prizes}">
               <input type="hidden" name="tab" value="allocations">
               <div class="filter-area" style="background-color: #f9fafb; padding: 15px; border-radius: 4px; border: 1px solid #eee; margin-bottom: 15px; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
                 <div class="filter-group" style="display: flex; flex-direction: column; flex: 1; min-width: 200px;">
@@ -209,7 +209,7 @@
                 </div>
                 <div class="filter-group" style="flex: 0; justify-content: flex-end; display: flex; gap: 10px;">
                   <button type="submit" class="btn-primary" style="height: 38px; white-space: nowrap; background-color: #3c8dbc; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px;">Lọc dữ liệu</button>
-                  <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_PHANBO_EXPORT')" th:href="@{/admin/prizes/allocations/export-excel(store=${selectedStore}, campaign=${selectedCampaign}, prize=${selectedPrize})}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 9px 20px; display: inline-block; height: 38px; white-space: nowrap; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; ">Xuất Excel</a>
+                  <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_PHANBO_EXPORT')" th:href="@{/quanly/prizes/allocations/export-excel(store=${selectedStore}, campaign=${selectedCampaign}, prize=${selectedPrize})}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 9px 20px; display: inline-block; height: 38px; white-space: nowrap; color: #fff; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; font-size: 14px; ">Xuất Excel</a>
                 </div>
               </div>
             </form>
@@ -270,7 +270,7 @@
   <!-- Modal Thêm/Sửa Giải Thưởng -->
   <div id="prizeModal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
     <div style="background-color: #fff; padding: 20px; border-radius: 4px; width: 100%; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-      <form th:action="@{/admin/prizes/save}" method="post" id="prizeForm" onsubmit="return validatePrizeForm();">
+      <form th:action="@{/quanly/prizes/save}" method="post" id="prizeForm" onsubmit="return validatePrizeForm();">
           <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f4f4f4; padding-bottom: 15px; margin-bottom: 15px;">
             <div style="font-size: 18px; font-weight: 600;" id="prizeModalTitle">Thêm Giải Thưởng Mới</div>
             <button type="button" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #888;" onclick="closeModal('prizeModal')">&times;</button>
@@ -341,7 +341,7 @@
   <!-- Modal Sửa Phân Bổ -->
   <div id="editAllocationModal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
     <div style="background-color: #fff; padding: 20px; border-radius: 4px; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-      <form th:action="@{/admin/prizes/allocations/update}" method="post">
+      <form th:action="@{/quanly/prizes/allocations/update}" method="post">
           <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f4f4f4; padding-bottom: 15px; margin-bottom: 15px;">
             <div style="font-size: 18px; font-weight: 600;">Chỉnh Sửa Số Lượng Cấp</div>
             <button type="button" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #888;" onclick="closeModal('editAllocationModal')">&times;</button>
@@ -369,13 +369,13 @@
   </div>
 
   <!-- Form Revoke Allocation Ẩn -->
-  <form id="revokeAllocationForm" th:action="@{/admin/prizes/allocations/revoke}" method="post" style="display: none;">
+  <form id="revokeAllocationForm" th:action="@{/quanly/prizes/allocations/revoke}" method="post" style="display: none;">
       <input type="hidden" name="maStore" id="revokeStoreMa">
       <input type="hidden" name="maGiaiThuong" id="revokePrizeMa">
   </form>
 
   <!-- Form Delete Ẩn -->
-  <form id="deleteForm" th:action="@{/admin/prizes/delete}" method="post" style="display: none;">
+  <form id="deleteForm" th:action="@{/quanly/prizes/delete}" method="post" style="display: none;">
       <input type="hidden" name="maGiaiThuong" id="deleteMaGiaiThuong">
   </form>
 

@@ -13,7 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Controller
-@RequestMapping({"/admin", "/admin/"})
+@RequestMapping({"/quanly", "/quanly/"})
 public class AdminDashboardController {
 
     @Autowired
@@ -40,12 +40,12 @@ public class AdminDashboardController {
         if (auth != null && auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("QL_TONGQUAN"))) {
             // Không có quyền xem tổng quan -> redirect trang khác
             if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("QL_CHIENDICH") || a.getAuthority().equals("ROLE_GAME_MAKER"))) {
-                return "redirect:/admin/campaigns";
+                return "redirect:/quanly/campaigns";
             }
             if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("QL_CUAHANG"))) {
-                return "redirect:/admin/stores";
+                return "redirect:/quanly/stores";
             }
-            return "redirect:/admin/profile"; // Trang cá nhân/cài đặt (luôn có)
+            return "redirect:/quanly/profile"; // Trang cá nhân/cài đặt (luôn có)
         }
 
         long totalCustomers = customerRepository.count();
@@ -74,6 +74,6 @@ public class AdminDashboardController {
         // Table: Lịch sử trúng thưởng
         model.addAttribute("recentWins", rewardVoucherRepository.getRecentWins());
 
-        return "admin/index";
+        return "quanly/index";
     }
 }

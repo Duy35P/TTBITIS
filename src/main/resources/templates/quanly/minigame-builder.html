@@ -76,7 +76,7 @@
 
   <!-- Header -->
   <header class="main-header">
-    <a th:href="@{/admin/campaigns}" class="logo">LuckyDraw</a>
+    <a th:href="@{/quanly/campaigns}" class="logo">LuckyDraw</a>
     <nav class="navbar">
       <div style="color:white; font-size: 18px; font-weight: bold;">Giao Diện Thiết Kế Minigame: <span th:text="${campaign.tenChienDich}"></span></div>
     </nav>
@@ -85,7 +85,7 @@
   <!-- Sidebar -->
   <aside class="main-sidebar">
     <ul class="sidebar-menu">
-      <li><a th:href="@{/admin/campaigns}">⬅️ <span>Quay lại Chiến dịch</span></a></li>
+      <li><a th:href="@{/quanly/campaigns}">⬅️ <span>Quay lại Chiến dịch</span></a></li>
       <li class="active"><a href="#">🎨 <span>Design Minigame</span></a></li>
     </ul>
   </aside>
@@ -498,7 +498,7 @@
       };
 
       try {
-          const response = await fetch('/admin/campaigns/design/save', {
+          const response = await fetch('/quanly/campaigns/design/save', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json'
