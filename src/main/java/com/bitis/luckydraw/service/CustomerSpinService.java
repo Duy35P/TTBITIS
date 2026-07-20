@@ -43,9 +43,7 @@ public class CustomerSpinService {
             }
         }
         if (fallbackPrize == null) {
-            // Nếu không có cấu hình giải trượt, lấy bừa 1 giải đầu tiên có giá trị thấp nhất hoặc tự throw lỗi.
-            // Lười: lấy giải đầu tiên có xác suất cao nhất làm giải trượt tạm (hoặc throw lỗi)
-            fallbackPrize = prizes.get(prizes.size() - 1); // fallback lười
+            throw new Exception("Hệ thống bắt buộc phải cấu hình ít nhất 1 giải 'Chúc may mắn lần sau' (Mất lượt) để làm giải dự phòng!");
         }
 
         // 3. Tính xác suất random

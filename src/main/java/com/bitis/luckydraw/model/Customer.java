@@ -31,6 +31,9 @@ public class Customer {
     @Column(name = "ten_khach", length = 255)
     private String tenKhach;
 
+    @Column(name = "password", length = 255)
+    private String password;
+
     @Column(name = "trang_thai", nullable = false)
     private Integer trangThai;
 

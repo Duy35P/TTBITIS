@@ -31,6 +31,87 @@ public class CustomerAuthController {
     @Autowired
     private com.bitis.luckydraw.service.ZaloAuthService zaloAuthService;
 
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @org.springframework.web.bind.annotation.PostMapping("/local-login")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public org.springframework.http.ResponseEntity<?> localLogin(
+            @RequestParam("phone") String phone,
+            @RequestParam("password") String password,
+            @RequestParam(name = "receipt", required = false) String receipt,
+            HttpSession session) {
+
+        Optional<Customer> optCustomer = customerRepository.findByPhone(phone);
+        if (optCustomer.isEmpty()) {
+            return org.springframework.http.ResponseEntity.badRequest().body("Tài khoản không tồn tại!");
+        }
+        
+        Customer customer = optCustomer.get();
+        if (customer.getTrangThai() != null && customer.getTrangThai() == 0) {
+            return org.springframework.http.ResponseEntity.badRequest().body("Tài khoản đã bị khóa!");
+        }
+
+        if (customer.getPassword() == null || !passwordEncoder.matches(password, customer.getPassword())) {
+            return org.springframework.http.ResponseEntity.badRequest().body("Sai mật khẩu!");
+        }
+
+        // Lưu Session
+        session.setAttribute("CUSTOMER_ID", customer.getId());
+        session.setAttribute("CUSTOMER_PHONE", customer.getPhone());
+        session.setAttribute("CUSTOMER_NAME", customer.getTenKhach());
+        session.setAttribute("CUSTOMER_MA", customer.getMaKhachHang());
+
+        if (receipt != null && !receipt.trim().isEmpty()) {
+            session.setAttribute("PENDING_RECEIPT", receipt);
+        }
+        return org.springframework.http.ResponseEntity.ok().build();
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/local-register")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public org.springframework.http.ResponseEntity<?> localRegister(
+            @RequestParam("phone") String phone,
+            @RequestParam("name") String name,
+            @RequestParam("password") String password,
+            @RequestParam(name = "receipt", required = false) String receipt,
+            HttpSession session) {
+
+        Optional<Customer> optCustomer = customerRepository.findByPhone(phone);
+        Customer customer;
+        if (optCustomer.isPresent()) {
+            customer = optCustomer.get();
+            // Nếu đã có mật khẩu => Báo SĐT đã tồn tại
+            if (customer.getPassword() != null && !customer.getPassword().trim().isEmpty()) {
+                return org.springframework.http.ResponseEntity.badRequest().body("Số điện thoại đã được đăng ký, vui lòng đăng nhập!");
+            }
+            // Nếu chưa có mật khẩu (khách cũ từ Zalo) => Cập nhật mật khẩu mới
+            customer.setPassword(passwordEncoder.encode(password));
+            customer.setTenKhach(name);
+            customer = customerRepository.save(customer);
+        } else {
+            // Khách hoàn toàn mới
+            customer = new Customer();
+            customer.setPhone(phone);
+            customer.setTenKhach(name);
+            customer.setPassword(passwordEncoder.encode(password));
+            customer.setTrangThai(1);
+            customer.setMaKhachHang("CUS-LOCAL-" + System.currentTimeMillis());
+            customer = customerRepository.save(customer);
+        }
+
+        // Lưu Session
+        session.setAttribute("CUSTOMER_ID", customer.getId());
+        session.setAttribute("CUSTOMER_PHONE", customer.getPhone());
+        session.setAttribute("CUSTOMER_NAME", customer.getTenKhach());
+        session.setAttribute("CUSTOMER_MA", customer.getMaKhachHang());
+
+        if (receipt != null && !receipt.trim().isEmpty()) {
+            session.setAttribute("PENDING_RECEIPT", receipt);
+        }
+        return org.springframework.http.ResponseEntity.ok().build();
+    }
+
     @PostMapping("/mock-login")
     public String mockLogin(
             @RequestParam(name = "receipt", required = false) String receipt,

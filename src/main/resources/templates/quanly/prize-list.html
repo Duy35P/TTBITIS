@@ -170,7 +170,7 @@
                   <label style="display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px;">Chọn Giải Thưởng</label>
                   <select name="maGiaiThuong" id="allocatePrize" required style="padding: 6px; width: 250px; border: 1px solid #ccc; border-radius: 3px;">
                     <option value="">-- Chọn giải thưởng --</option>
-                    <option th:each="p : ${prizes}" th:if="${p.laGiaiThuong != null and p.laGiaiThuong}" th:value="${p.maGiaiThuong}" th:data-campaign="${p.maChienDich}" th:text="${p.tenGiai + ' (Còn ' + p.tonKhoToanHeThong + ')'}"></option>
+                    <option th:each="p : ${allPrizes}" th:if="${p.laGiaiThuong != null and p.laGiaiThuong}" th:value="${p.maGiaiThuong}" th:data-campaign="${p.maChienDich}" th:text="${p.tenGiai + ' (Còn ' + p.tonKhoToanHeThong + ')'}"></option>
                   </select>
                 </div>
                 <div>
@@ -204,7 +204,7 @@
                   <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Giải thưởng</label>
                   <select name="prize" class="form-control" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
                     <option value="all">-- Tất cả Giải thưởng --</option>
-                    <option th:each="p : ${prizes}" th:value="${p.maGiaiThuong}" th:text="${p.tenGiai}" th:selected="${p.maGiaiThuong == selectedPrize}"></option>
+                    <option th:each="p : ${allPrizes}" th:value="${p.maGiaiThuong}" th:text="${p.tenGiai}" th:selected="${p.maGiaiThuong == selectedPrize}"></option>
                   </select>
                 </div>
                 <div class="filter-group" style="flex: 0; justify-content: flex-end; display: flex; gap: 10px;">

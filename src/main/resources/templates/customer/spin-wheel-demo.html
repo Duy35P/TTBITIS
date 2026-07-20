@@ -254,7 +254,12 @@
           🚧 ĐANG Ở CHẾ ĐỘ XEM TRƯỚC (PREVIEW MODE) - QUAY THỬ KHÔNG LÀM TRỪ KHO GIẢI THƯỞNG 🚧
       </div>
 
-    <nav style="position: fixed; top: 16px; left: 16px; z-index: 50; display: flex; gap: 10px; flex-wrap: wrap;">
+    <!-- ponytail: native HTML details tag replaces JS sidebar, 0 JS, 100% lazy -->
+    <details style="position: fixed; top: 16px; left: 16px; z-index: 50;">
+        <summary style="list-style: none; background: rgba(30,74,138,0.9); color: #fff; padding: 10px 16px; border-radius: 50px; font-weight: bold; cursor: pointer; border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            ☰ Menu
+        </summary>
+        <nav style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px;">
         <a href="/customer/index" 
 style="color:#fff;background:rgba(30,74,138,0.7);padding:8px 16px;border-radius:50px;text-decoration:none;font-weight:700;font-size:0.9rem;border:2px solid rgba(255,255,255,0.3);transition:all 0.2s;display:flex;align-items:center;gap:6px;"
            onmouseover="this.style.background='rgba(30,74,138,0.95)'" 
@@ -273,7 +278,8 @@ style="color:#fff;background:rgba(30,74,138,0.7);padding:8px 16px;border-radius:
            onmouseout="this.style.background='rgba(30,74,138,0.7)'">
             🎁 Lịch sử
         </a>
-    </nav>
+        </nav>
+    </details>
 
     <h1 id="appTitle">VÒNG QUAY MAY MẮN</h1>
 
@@ -451,7 +457,7 @@ style="color:#fff;background:rgba(30,74,138,0.7);padding:8px 16px;border-radius:
             const n = wheelConfig.prizes.length;
             const sliceAngle = 360 / n;
             const extraSpins = 5 + Math.floor(Math.random() * 3);
-            const targetAngle = 360 - (prizeIndex * sliceAngle + sliceAngle / 2);
+            const targetAngle = (270 - (prizeIndex * sliceAngle + sliceAngle / 2) + 360) % 360;
             const totalRotation = currentRotation + extraSpins * 360 + targetAngle - (currentRotation % 360);
 
             const startTime = performance.now();

@@ -228,6 +228,77 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .auth-tab.active {
+            color: #1a3f7a;
+            border-bottom: 2px solid #0068FF;
+            margin-bottom: -2px;
+        }
+        .local-form {
+            display: none;
+            text-align: left;
+        }
+        .local-form.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #444;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border 0.3s;
+        }
+        .form-group input:focus {
+            border-color: #0068FF;
+        }
+        .btn-local {
+            width: 100%;
+            padding: 12px;
+            background: #1a3f7a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        .btn-local:hover {
+            background: #122c56;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
     </style>
 </head>
@@ -265,12 +336,47 @@
 
             <!-- SECTION 2: HIỂN THỊ KHI ĐĂNG NHẬP BÌNH THƯỜNG -->
             <div id="generalSection" style="display: none;">
-                <p class="message" style="margin-bottom: 25px;">
-                    Đăng nhập cực nhanh bằng Zalo để tham gia các chương trình khuyến mãi, quay thưởng và nhận hàng ngàn phần quà giá trị.
-                </p>
             </div>
 
-            <!-- Form Đăng Nhập -->
+            <!-- TABS CHO LOCAL AUTH -->
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="switchTab('login')">Đăng Nhập</div>
+                <div class="auth-tab" onclick="switchTab('register')">Đăng Ký</div>
+            </div>
+
+            <!-- FORM LOCAL LOGIN -->
+            <form id="localLoginForm" class="local-form active" onsubmit="handleLocalLogin(event)">
+                <div class="form-group">
+                    <label>Số điện thoại</label>
+                    <input type="text" id="loginPhone" placeholder="Nhập SĐT..." required pattern="[0-9]{10}">
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <input type="password" id="loginPassword" placeholder="Nhập mật khẩu..." required>
+                </div>
+                <button type="submit" class="btn-local">Đăng Nhập</button>
+            </form>
+
+            <!-- FORM LOCAL REGISTER -->
+            <form id="localRegisterForm" class="local-form" onsubmit="handleLocalRegister(event)">
+                <div class="form-group">
+                    <label>Số điện thoại</label>
+                    <input type="text" id="regPhone" placeholder="Nhập SĐT..." required pattern="[0-9]{10}">
+                </div>
+                <div class="form-group">
+                    <label>Tên hiển thị</label>
+                    <input type="text" id="regName" placeholder="VD: Nguyễn Văn A" required>
+                </div>
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <input type="password" id="regPassword" placeholder="Tạo mật khẩu..." required>
+                </div>
+                <button type="submit" class="btn-local">Đăng Ký</button>
+            </form>
+
+            <div class="divider">Hoặc</div>
+
+            <!-- Form Đăng Nhập Zalo -->
             <form action="/customer/auth/zalo/login" method="GET" id="loginForm">
                 <input type="hidden" name="receipt" id="receiptInput" />
                 <button type="submit" class="btn-zalo" id="loginZaloBtn">
@@ -283,9 +389,9 @@
                 </button>
             </form>
 
-            <div class="divider">Hoặc</div>
-
-            <a href="/customer/index" class="btn-secondary">Quay lại trang chủ</a>
+            <div style="margin-top: 20px;">
+                <a href="/customer/index" class="btn-secondary">Quay lại trang chủ</a>
+            </div>
         </div>
 
         <!-- Màn hình loading -->
@@ -317,7 +423,6 @@
         } else {
             // Flow 2: Khách truy cập từ Trang chủ (Không có mã hóa đơn)
             generalSection.style.display = 'block';
-            document.getElementById('manualReceiptContainer').style.display = 'block';
             
             bannerTitle.textContent = 'Đăng Nhập';
             bannerIcon.textContent = '👤';
@@ -335,6 +440,79 @@
                 document.querySelector('.loading-text').textContent = 'Đang đăng nhập...';
             }
         });
+
+        // Tab Switch Logic
+        function switchTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.local-form').forEach(f => f.classList.remove('active'));
+            if (tab === 'login') {
+                document.querySelectorAll('.auth-tab')[0].classList.add('active');
+                document.getElementById('localLoginForm').classList.add('active');
+            } else {
+                document.querySelectorAll('.auth-tab')[1].classList.add('active');
+                document.getElementById('localRegisterForm').classList.add('active');
+            }
+        }
+
+        // Handle Local Login
+        async function handleLocalLogin(e) {
+            e.preventDefault();
+            const phone = document.getElementById('loginPhone').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            overlay.classList.add('active');
+            document.querySelector('.loading-text').textContent = 'Đang đăng nhập...';
+
+            try {
+                const response = await fetch('/customer/auth/local-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ phone, password, receipt: receiptCode || '' })
+                });
+                
+                if (response.ok) {
+                    window.location.href = receiptCode ? '/customer/auth/process-receipt' : '/customer/index';
+                } else {
+                    const errText = await response.text();
+                    alert(errText || 'Đăng nhập thất bại. Sai SĐT hoặc mật khẩu!');
+                    overlay.classList.remove('active');
+                }
+            } catch (err) {
+                alert('Có lỗi xảy ra, vui lòng thử lại!');
+                overlay.classList.remove('active');
+            }
+        }
+
+        // Handle Local Register
+        async function handleLocalRegister(e) {
+            e.preventDefault();
+            const phone = document.getElementById('regPhone').value;
+            const password = document.getElementById('regPassword').value;
+            const name = document.getElementById('regName').value;
+            
+            overlay.classList.add('active');
+            document.querySelector('.loading-text').textContent = 'Đang xử lý...';
+
+            try {
+                const response = await fetch('/customer/auth/local-register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ phone, password, name, receipt: receiptCode || '' })
+                });
+                
+                if (response.ok) {
+                    alert('Đăng ký / Tạo mật khẩu thành công!');
+                    window.location.href = receiptCode ? '/customer/auth/process-receipt' : '/customer/index';
+                } else {
+                    const errText = await response.text();
+                    alert(errText || 'Lỗi khi đăng ký!');
+                    overlay.classList.remove('active');
+                }
+            } catch (err) {
+                alert('Có lỗi xảy ra, vui lòng thử lại!');
+                overlay.classList.remove('active');
+            }
+        }
     </script>
 </body>
 </html>

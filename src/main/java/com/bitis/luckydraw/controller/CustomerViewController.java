@@ -39,7 +39,8 @@ public class CustomerViewController {
         java.util.List<com.bitis.luckydraw.model.Campaign> allCampaigns = campaignRepository.findAll();
         java.util.List<com.bitis.luckydraw.model.Campaign> activeCampaigns = new java.util.ArrayList<>();
         for (com.bitis.luckydraw.model.Campaign c : allCampaigns) {
-            if (c.getTrangThai() != null && c.getTrangThai() == 1) {
+            // ponytail: Only show currently active ("Đang diễn ra") campaigns on customer index
+            if ("Đang diễn ra".equals(c.getDisplayStatus())) {
                 activeCampaigns.add(c);
             }
         }

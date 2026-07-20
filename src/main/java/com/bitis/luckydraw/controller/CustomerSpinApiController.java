@@ -155,17 +155,26 @@ public class CustomerSpinApiController {
             e.printStackTrace();
             // Lấy message lỗi gốc từ SQL Server (ném ra bằng lệnh THROW)
             String errorMsg = e.getMessage();
-            Throwable cause = e.getCause();
-            while (cause != null) {
-                if (cause.getMessage() != null && cause.getMessage().contains("Khách hàng không còn đủ lượt quay")) {
-                    errorMsg = "Bạn đã hết lượt quay của chương trình này rồi!";
-                    break;
+            if (errorMsg != null && errorMsg.contains("50001")) {
+                errorMsg = "Bạn đã hết lượt quay của chương trình này rồi!";
+            } else if (errorMsg != null && errorMsg.contains("50002")) {
+                errorMsg = "Bạn đã đạt giới hạn trúng thưởng của chương trình này!";
+            } else {
+                Throwable cause = e.getCause();
+                while (cause != null) {
+                    if (cause.getMessage() != null && cause.getMessage().contains("50001")) {
+                        errorMsg = "Bạn đã hết lượt quay của chương trình này rồi!";
+                        break;
+                    }
+                    if (cause.getMessage() != null && cause.getMessage().contains("50002")) {
+                        errorMsg = "Bạn đã đạt giới hạn trúng thưởng của chương trình này!";
+                        break;
+                    }
+                    cause = cause.getCause();
                 }
-                if (cause.getMessage() != null && cause.getMessage().contains("Vượt quá giới hạn trúng thưởng")) {
-                    errorMsg = "Bạn đã đạt giới hạn trúng thưởng của chương trình này!";
-                    break;
-                }
-                cause = cause.getCause();
+            }
+            if (errorMsg == null) {
+                errorMsg = "Lỗi hệ thống";
             }
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", errorMsg));
         }

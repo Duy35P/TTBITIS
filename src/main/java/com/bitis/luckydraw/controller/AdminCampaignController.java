@@ -176,6 +176,19 @@ public class AdminCampaignController {
         }
         campaignRepository.save(campaign);
         
+        if (isNew) {
+            com.bitis.luckydraw.model.Prize losePrize = new com.bitis.luckydraw.model.Prize();
+            losePrize.setMaChienDich(campaign.getMaChienDich());
+            losePrize.setMaGiaiThuong("TRUOT-" + System.currentTimeMillis());
+            losePrize.setTenGiai("Chúc may mắn lần sau");
+            losePrize.setLoaiGiai(0);
+            losePrize.setLaGiaiThuong(false);
+            losePrize.setXacSuat(0.0);
+            losePrize.setGioiHanTrungMoiCustomer(null);
+            losePrize.setTonKhoToanHeThong(-1);
+            prizeRepository.save(losePrize);
+        }
+        
         if (oldMaChienDich != null && !oldMaChienDich.equals(campaign.getMaChienDich())) {
             String newMaChienDich = campaign.getMaChienDich();
             String[] relatedTables = {"campaign_store", "campaign_rule", "campaign_rule_payment", "campaign_rule_sku", "customer_turn", "prize", "turn_transaction"};
@@ -239,15 +252,6 @@ public class AdminCampaignController {
                 
                 if (!hasRules) {
                     redirectAttributes.addFlashAttribute("errorMessage", "Không thể kích hoạt vì chiến dịch chưa được cấu hình luật chơi (Basic, SKU, hoặc Payment).");
-                    return;
-                }
-                
-                if (campaign.getNgayKetThuc() != null && campaign.getNgayKetThuc().isBefore(java.time.LocalDateTime.now())) {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Không thể kích hoạt vì chiến dịch đã qua ngày kết thúc.");
-                    return;
-                }
-                if (campaign.getNgayBatDau() != null && campaign.getNgayBatDau().isAfter(java.time.LocalDateTime.now())) {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Không thể kích hoạt vì chưa đến ngày bắt đầu chiến dịch.");
                     return;
                 }
             }
@@ -588,7 +592,7 @@ public class AdminCampaignController {
                 c.getTenChienDich(),
                 c.getNgayBatDau() != null ? c.getNgayBatDau().format(formatter) : "Chưa thiết lập",
                 c.getNgayKetThuc() != null ? c.getNgayKetThuc().format(formatter) : "Chưa thiết lập",
-                c.getTrangThai() != null && c.getTrangThai() == 1 ? "Hoạt động" : "Tạm ngưng"
+                c.getDisplayStatus()
             }).collect(java.util.stream.Collectors.toList());
             
             com.bitis.luckydraw.util.ExcelExportUtil.exportDataToExcel(response, "DanhSachChienDich", headers, data);

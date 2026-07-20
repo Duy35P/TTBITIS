@@ -53,4 +53,24 @@ public class Campaign {
 
     @Column(name = "han_token_ngay", nullable = false)
     private Integer hanTokenNgay = 30;
+
+    @Transient
+    public String getDisplayStatus() {
+        if (trangThai == null || trangThai != 1) return "Tạm ngưng";
+        LocalDateTime now = LocalDateTime.now();
+        if (ngayKetThuc != null && now.isAfter(ngayKetThuc)) return "Kết thúc";
+        if (ngayBatDau != null && now.isBefore(ngayBatDau)) return "Chưa bắt đầu";
+        return "Đang diễn ra";
+    }
+
+    @Transient
+    public String getDisplayStatusColor() {
+        String status = getDisplayStatus();
+        switch (status) {
+            case "Tạm ngưng": return "bg-red";
+            case "Kết thúc": return "bg-gray";
+            case "Chưa bắt đầu": return "bg-blue";
+            default: return "bg-green";
+        }
+    }
 }

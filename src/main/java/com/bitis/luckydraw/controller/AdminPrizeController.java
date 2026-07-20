@@ -86,6 +86,12 @@ public class AdminPrizeController {
 
         List<PrizeListDto> prizes = prizeRepository.getPrizeList();
         
+        List<PrizeListDto> allPrizes = prizeRepository.getPrizeList().stream().sorted(java.util.Comparator
+                .comparing(PrizeListDto::getTenChienDich, java.util.Comparator.nullsLast(String::compareToIgnoreCase))
+                .thenComparing(PrizeListDto::getTenGiai, java.util.Comparator.nullsLast(String::compareToIgnoreCase)))
+                .collect(java.util.stream.Collectors.toList());
+        model.addAttribute("allPrizes", allPrizes);
+        
         // Filter and sort prizes by Campaign
         java.util.stream.Stream<PrizeListDto> prizeStream = prizes.stream();
         if ("prizes".equals(tab) && maChienDich != null) {
