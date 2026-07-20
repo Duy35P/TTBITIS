@@ -77,6 +77,8 @@ SELECT
     p.hinh_anh_url AS hinhAnhUrl, 
     p.ma_chien_dich AS maChienDich, 
     cam.ten_chien_dich AS tenChienDich, 
+    cam.ngay_bat_dau AS ngayBatDau,
+    cam.ngay_ket_thuc AS ngayKetThuc,
     rv.ma_khach_hang AS maKhachHang, 
     c.ten_khach AS tenKhach, 
     c.phone AS phone, 

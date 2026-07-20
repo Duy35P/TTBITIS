@@ -170,6 +170,8 @@ CREATE TABLE [dbo].[store_prize_inventory] (
     [id]                BIGINT  NOT NULL IDENTITY(1,1),
     [ma_store] VARCHAR(255)  NOT NULL,
     [ma_giai_thuong] VARCHAR(255)  NOT NULL,
+    [tong_luong_cap]    INT     NOT NULL DEFAULT 0,
+    [da_phat]           INT     NOT NULL DEFAULT 0,
     [ton_kho]           INT     NOT NULL DEFAULT 0,
     CONSTRAINT [PK_STORE_PRIZE_INVENTORY]   PRIMARY KEY CLUSTERED ([id] ASC),
     CONSTRAINT [UQ_STORE_PRIZE]             UNIQUE ([ma_store], [ma_giai_thuong]),
@@ -575,13 +577,8 @@ BEGIN
 
                 IF @ton_kho_chi_nhanh > 0 OR @ton_kho_chi_nhanh = -1
                 BEGIN
-                    IF @ton_kho_hien_tai <> -1
-                    BEGIN
-                        UPDATE [dbo].[prize] 
-                        SET ton_kho_toan_he_thong = ton_kho_toan_he_thong - 1
-                        WHERE ma_giai_thuong = @ma_giai_thuong_du_kien;
-                    END
                     
+
                     IF @ton_kho_chi_nhanh <> -1
                     BEGIN
                         UPDATE [dbo].[store_prize_inventory]
@@ -1050,13 +1047,8 @@ BEGIN
 
                 IF @ton_kho_chi_nhanh > 0 OR @ton_kho_hien_tai = -1
                 BEGIN
-                    IF @ton_kho_hien_tai > 0
-                    BEGIN
-                        UPDATE [dbo].[prize] 
-                        SET ton_kho_toan_he_thong = ton_kho_toan_he_thong - 1
-                        WHERE ma_giai_thuong = @ma_giai_thuong_du_kien;
-                    END
                     
+
                     IF @ton_kho_chi_nhanh > 0
                     BEGIN
                         UPDATE [dbo].[store_prize_inventory]

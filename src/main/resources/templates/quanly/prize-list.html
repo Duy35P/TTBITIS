@@ -59,12 +59,12 @@
                   <input type="file" name="file" accept=".xlsx, .xls" style="display:none;" id="excelCodeInput" onchange="this.form.submit()">
                   <button type="button" onclick="document.getElementById('excelCodeInput').click()" style="background-color: #39cccc; border: none; color: white; padding: 6px 12px; border-radius: 3px; cursor: pointer; font-weight: 600;"><i class="fa fa-upload"></i> Nạp mã Hàng loạt</button>
                 </form>
-                
-                <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_EXPORT')" th:href="@{/quanly/prizes/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel</a>
                 <form sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_IMPORT')" th:action="@{/quanly/prizes/import}" method="post" enctype="multipart/form-data" style="margin: 0;">
                   <input type="file" name="file" accept=".xlsx, .xls" style="display:none;" id="excelPrizeInput" onchange="this.form.submit()">
                   <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_IMPORT')" type="button" onclick="document.getElementById('excelPrizeInput').click()" style="background-color: #f39c12; border: none; color: white; padding: 6px 12px; border-radius: 3px; cursor: pointer;"><i class="fa fa-upload"></i> Import Excel Giải Thưởng</button>
                 </form>
+                <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_EXPORT')" th:href="@{/quanly/prizes/export-excel}" class="btn-primary" style="background-color: #00a65a; border-color: #008d4c; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel Cấu Hình</a>
+                <a sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_CODE_EXPORT')" th:href="@{/quanly/prizes/codes/export-excel}" class="btn-primary" style="background-color: #17a2b8; border-color: #117a8b; text-decoration: none; padding: 6px 12px; display: inline-block;">Xuất Excel Mã Code</a>
                 <button sec:authorize="hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_ADD')" type="button" onclick="openModal('prizeModal', 'Thêm Giải Thưởng Mới')" style="background-color: #3c8dbc; color: #fff; padding: 6px 12px; border: none; border-radius: 3px; cursor: pointer;">Thêm Giải Thưởng</button>
               </div>
             </div>

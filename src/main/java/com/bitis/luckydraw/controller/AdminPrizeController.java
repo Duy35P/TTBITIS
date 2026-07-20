@@ -163,7 +163,12 @@ public class AdminPrizeController {
             }
             redirectAttributes.addFlashAttribute("successMessage", "Phân bổ thành công cho " + storeMas.size() + " cửa hàng!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
+            String msg = e.getMessage();
+            if (msg != null && (msg.toLowerCase().contains("tồn kho") || msg.contains("Tá»“n kho") || msg.contains("sp_AllocatePrizeToStore"))) {
+                redirectAttributes.addFlashAttribute("errorMessage", "SỐ LƯỢNG KHÔNG ĐỦ ĐỂ PHÂN BỔ");
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + msg);
+            }
         }
         return "redirect:/quanly/prizes?tab=allocations";
     }
@@ -179,7 +184,12 @@ public class AdminPrizeController {
             prizeService.updateAllocation(maStore, maGiaiThuong, newTongLuongCap);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật số lượng thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
+            String msg = e.getMessage();
+            if (msg != null && (msg.toLowerCase().contains("tồn kho") || msg.contains("Tá»“n kho") || msg.contains("sp_AllocatePrizeToStore"))) {
+                redirectAttributes.addFlashAttribute("errorMessage", "SỐ LƯỢNG KHÔNG ĐỦ ĐỂ PHÂN BỔ");
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + msg);
+            }
         }
         return "redirect:/quanly/prizes?tab=allocations";
     }
@@ -200,17 +210,6 @@ public class AdminPrizeController {
         return "redirect:/quanly/prizes?tab=allocations";
     }
 
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_PHANBO_CANCEL')")
-    @PostMapping("/allocations/reclaim-unredeemed")
-    public String reclaimUnredeemed(@RequestParam(required = false) String maChienDich, RedirectAttributes redirectAttributes) {
-        try {
-            prizeService.reclaimUnredeemedVouchers(maChienDich);
-            redirectAttributes.addFlashAttribute("successMessage", "Đã thu hồi thành công các quà chưa đổi thuộc chiến dịch hết hạn.");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi thu hồi: " + e.getMessage());
-        }
-        return "redirect:/quanly/prizes?tab=allocations";
-    }
 
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_IMPORT')")
 
@@ -357,8 +356,26 @@ public class AdminPrizeController {
         });
     }
 
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_EXPORT')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_CODE_EXPORT')")
+    @GetMapping("/codes/export-excel")
+    public void exportCodesExcel(jakarta.servlet.http.HttpServletResponse response) {
+        try {
+            List<com.bitis.luckydraw.model.PrizeCode> codes = prizeCodeRepository.findAll();
+            String[] headers = {"Mã Giải Thưởng", "Code", "Trạng Thái", "Ngày Tạo"};
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+            List<String[]> data = codes.stream().map(c -> new String[]{
+                c.getMaGiaiThuong(),
+                c.getCode(),
+                c.getIsUsed() != null && c.getIsUsed() ? "Đã cấp" : "Chưa sử dụng",
+                c.getCreatedAt() != null ? c.getCreatedAt().format(formatter) : ""
+            }).collect(java.util.stream.Collectors.toList());
+            com.bitis.luckydraw.util.ExcelExportUtil.exportDataToExcel(response, "DanhSachCodeQuaTang", headers, data);
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
+    }
 
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_GIAITHUONG_EXPORT')")
     @GetMapping("/export-excel")
     public void exportExcel(jakarta.servlet.http.HttpServletResponse response) {
         try {

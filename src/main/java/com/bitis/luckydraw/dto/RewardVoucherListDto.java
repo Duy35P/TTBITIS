@@ -20,4 +20,6 @@ public interface RewardVoucherListDto {
     Integer getTrangThai();
     String getMaChienDich();
     String getTenChienDich();
+    LocalDateTime getNgayBatDau();
+    LocalDateTime getNgayKetThuc();
 }
