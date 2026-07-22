@@ -14,6 +14,7 @@ public interface PrizeCodeRepository extends JpaRepository<PrizeCode, Long> {
     long countByMaGiaiThuongAndIsUsed(String maGiaiThuong, Boolean isUsed);
     long countByMaGiaiThuong(String maGiaiThuong);
     boolean existsByCode(String code);
+    java.util.Optional<PrizeCode> findByCode(String code);
     
     Page<PrizeCode> findByMaGiaiThuong(String maGiaiThuong, Pageable pageable);
     

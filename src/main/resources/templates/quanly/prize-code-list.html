@@ -42,6 +42,7 @@
               <tr style="border-bottom: 1px solid #f4f4f4;">
                 <th style="padding: 12px 8px;">Mã Code</th>
                 <th style="padding: 12px 8px;">Ngày tạo</th>
+                <th style="padding: 12px 8px;">Hạn sử dụng</th>
                 <th style="padding: 12px 8px;">Trạng thái</th>
 
               </tr>
@@ -49,10 +50,11 @@
             <tbody>
               <tr th:each="code : ${codesPage.content}">
                 <td style="padding: 12px 8px;"><strong th:text="${code.code}"></strong></td>
-                <td style="padding: 12px 8px;" th:text="${#temporals.format(code.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                <td style="padding: 12px 8px;" th:text="${code.ngayTao != null ? #temporals.format(code.ngayTao, 'dd/MM/yyyy') : '-'}"></td>
+                <td style="padding: 12px 8px;" th:text="${code.ngayHetHan != null ? #temporals.format(code.ngayHetHan, 'dd/MM/yyyy') : '-'}"></td>
                 <td style="padding: 12px 8px;">
                     <span th:if="${code.isUsed}" style="background-color: #f39c12; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 12px;">Đã phát</span>
-                    <span th:unless="${code.isUsed}" style="background-color: #00a65a; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 12px;">Chưa sử dụng</span>
+                    <span th:unless="${code.isUsed}" style="background-color: #00a65a; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 12px;">Chưa phát</span>
                 </td>
 
               </tr>

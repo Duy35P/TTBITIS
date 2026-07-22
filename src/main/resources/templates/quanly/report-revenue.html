@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{quanly/fragments/layout :: head('Báo cáo Doanh thu & Hóa đơn')}">
+</head>
+<body>
+  <!-- Header -->
+  <header th:replace="~{quanly/fragments/layout :: header}"></header>
+
+  <!-- Sidebar -->
+  <aside th:replace="~{quanly/fragments/layout :: sidebar}"></aside>
+
+  <div class="content-wrapper">
+    <section class="content-header">
+      <h1>Báo cáo Doanh thu & Hóa đơn <small>Phân tích hiệu quả chiến dịch</small></h1>
+      <ul class="breadcrumb" style="list-style: none; display: flex; font-size: 14px; margin: 0; padding: 0;">
+        <li><a th:href="@{/quanly}" style="color: #444; text-decoration: none;">🏠 LuckyDraw</a></li>
+        <li style="margin-left: 5px; color: #777;">/ Báo cáo Doanh thu</li>
+      </ul>
+    </section>
+
+    <section class="content" style="padding: 15px;">
+      <div class="box" style="background: #fff; border-top: 3px solid #d2d6de; border-radius: 3px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); margin-bottom: 20px;">
+        <div class="box-body" style="padding: 10px;">
+          <form method="get" action="/quanly/report/revenue">
+            <div class="filter-area" style="background-color: #f9fafb; padding: 15px; border-radius: 4px; border: 1px solid #eee; display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
+              <div class="filter-group" style="display: flex; flex-direction: column; flex: 1; min-width: 200px;">
+                <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Chiến dịch</label>
+                <select name="maChienDich" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+                  <option value="">-- Tất cả chiến dịch --</option>
+                  <option th:each="c : ${campaigns}" 
+                          th:value="${c.maChienDich}" 
+                          th:text="${c.tenChienDich}"
+                          th:selected="${c.maChienDich == selectedCampaign}"></option>
+                </select>
+              </div>
+              <div class="filter-group" style="display: flex; flex-direction: column; flex: 1; min-width: 200px;">
+                <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Cửa hàng</label>
+                <select name="maStore" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+                  <option value="">-- Tất cả cửa hàng --</option>
+                  <option th:each="s : ${stores}" 
+                          th:value="${s.maStore}" 
+                          th:text="${s.tenCuaHang}"
+                          th:selected="${s.maStore == selectedStore}"></option>
+                </select>
+              </div>
+              <div class="filter-group" style="display: flex; flex-direction: column; min-width: 120px;">
+                <button type="submit" style="background-color: #3c8dbc; color: white; border: none; padding: 9px 15px; font-size: 14px; border-radius: 4px; cursor: pointer; font-weight: 600; outline: none;">Lọc Báo cáo</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Custom Tabs -->
+      <div style="margin-bottom: 15px; display: flex; gap: 5px; border-bottom: 2px solid #3c8dbc;">
+        <button id="summary-tab" onclick="switchTab('summary')" style="background-color: #3c8dbc; color: white; border: none; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; outline: none;">TỔNG HỢP</button>
+        <button id="detail-tab" onclick="switchTab('detail')" style="background-color: #f4f4f4; color: #555; border: 1px solid #ddd; border-bottom: none; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; outline: none;">CHI TIẾT HÓA ĐƠN</button>
+      </div>
+
+      <!-- Summary Tab -->
+      <div id="summary" style="display: block;">
+        <div class="box" style="background: #fff; border-top: 3px solid #00c0ef; border-radius: 3px; box-shadow: 0 1px 1px rgba(0,0,0,0.1);">
+          <div class="box-body" style="padding: 15px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+              <thead>
+                <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                  <th style="padding: 12px 8px; text-align: left; color: #333;">Chiến dịch</th>
+                  <th style="padding: 12px 8px; text-align: left; color: #333;">Cửa hàng</th>
+                  <th style="padding: 12px 8px; text-align: right; color: #333;">Số Hóa Đơn</th>
+                  <th style="padding: 12px 8px; text-align: right; color: #333;">Số Token</th>
+                  <th style="padding: 12px 8px; text-align: right; color: #333;">Lượt Cấp</th>
+                  <th style="padding: 12px 8px; text-align: right; color: #333;">DT Đơn Chiến Dịch</th>
+                  <th style="padding: 12px 8px; text-align: right; color: #333;">DT Đa Chiến Dịch</th>
+                  <th style="padding: 12px 8px; text-align: right; color: #333;">Tổng Doanh Thu</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:if="${#lists.isEmpty(summary)}">
+                  <td colspan="7" style="padding: 30px; text-align: center; color: #777;">Không có dữ liệu tổng hợp.</td>
+                </tr>
+                <tr th:each="item : ${summary}" style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 10px 8px; font-weight: 600; color: #333;" th:text="${item.tenChienDich}"></td>
+                  <td style="padding: 10px 8px; color: #555;" th:text="${item.tenStore}"></td>
+                  <td style="padding: 10px 8px; text-align: right; color: #555;" th:text="${#numbers.formatInteger(item.soHoaDon, 0, 'COMMA')}"></td>
+                  <td style="padding: 10px 8px; text-align: right; color: #555; font-weight: bold;" th:text="${#numbers.formatInteger(item.soToken, 0, 'COMMA')}"></td>
+                  <td style="padding: 10px 8px; text-align: right; color: #555;" th:text="${#numbers.formatInteger(item.soLuotCap, 0, 'COMMA')}"></td>
+                  <td style="padding: 10px 8px; text-align: right; color: #0073b7; font-weight: 600;" th:text="${#numbers.formatDecimal(item.doanhThuDon, 0, 'COMMA', 0, 'POINT')}"></td>
+                  <td style="padding: 10px 8px; text-align: right; color: #f39c12; font-weight: 600;" th:text="${#numbers.formatDecimal(item.doanhThuDa, 0, 'COMMA', 0, 'POINT')}"></td>
+                  <td style="padding: 10px 8px; text-align: right; color: #00a65a; font-weight: bold; font-size: 15px;" th:text="${#numbers.formatDecimal(item.doanhThuTong, 0, 'COMMA', 0, 'POINT')}"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail Tab -->
+      <div id="detail" style="display: none;">
+        <div class="box" style="background: #fff; border-top: 3px solid #00c0ef; border-radius: 3px; box-shadow: 0 1px 1px rgba(0,0,0,0.1);">
+          <div class="box-body" style="padding: 15px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+              <thead>
+                <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                  <th style="padding: 12px 8px; text-align: left; color: #333;">Mã Hóa Đơn</th>
+                  <th style="padding: 12px 8px; text-align: left; color: #333;">Mã Token</th>
+                  <th style="padding: 12px 8px; text-align: left; color: #333;">Chiến dịch Báo cáo</th>
+                  <th style="padding: 12px 8px; text-align: left; color: #333;">Cửa hàng</th>
+                  <th style="padding: 12px 8px; text-align: right; color: #333;">Doanh Thu</th>
+                  <th style="padding: 12px 8px; text-align: right; color: #333;">Lượt Cấp</th>
+                  <th style="padding: 12px 8px; text-align: center; color: #333;">Trạng thái</th>
+                  <th style="padding: 12px 8px; text-align: left; color: #333;">Phân loại / Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:if="${#lists.isEmpty(details)}">
+                  <td colspan="8" style="padding: 30px; text-align: center; color: #777;">Không tìm thấy dữ liệu chi tiết.</td>
+                </tr>
+                <tr th:each="item : ${details}" style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 10px 8px; font-weight: bold; color: #3c8dbc;" th:text="${item.maHoaDon}"></td>
+                  <td style="padding: 10px 8px; font-family: monospace; color: #555;" th:text="${item.token}"></td>
+                  <td style="padding: 10px 8px; color: #555;" th:text="${item.tenChienDich}"></td>
+                  <td style="padding: 10px 8px; color: #555;" th:text="${item.tenStore}"></td>
+                  <td style="padding: 10px 8px; text-align: right; font-weight: bold; color: #d33724;" th:text="${#numbers.formatDecimal(item.doanhThu, 0, 'COMMA', 0, 'POINT')}"></td>
+                  <td style="padding: 10px 8px; text-align: right; color: #555;" th:text="${item.soLuotCap}"></td>
+                  <td style="padding: 10px 8px; text-align: center;">
+                    <span th:if="${item.trangThai == 'Đã kích hoạt'}" style="color: #00a65a; font-weight: 600;">Đã kích hoạt</span>
+                    <span th:if="${item.trangThai != 'Đã kích hoạt'}" style="color: #777; font-weight: 600;">Chưa kích hoạt</span>
+                  </td>
+                  <td style="padding: 10px 8px;">
+                    <span th:if="${!item.isMulti}" style="color: #3c8dbc; font-weight: 600;">Đơn chiến dịch</span>
+                    <span th:if="${item.isMulti}" style="color: #f39c12; font-weight: 600;" th:text="${item.chuThich}"></span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <script>
+    function switchTab(tabId) {
+      document.getElementById('summary').style.display = 'none';
+      document.getElementById('detail').style.display = 'none';
+      
+      var sumTab = document.getElementById('summary-tab');
+      var detTab = document.getElementById('detail-tab');
+      
+      sumTab.style.backgroundColor = '#f4f4f4';
+      sumTab.style.color = '#555';
+      sumTab.style.border = '1px solid #ddd';
+      sumTab.style.borderBottom = 'none';
+      
+      detTab.style.backgroundColor = '#f4f4f4';
+      detTab.style.color = '#555';
+      detTab.style.border = '1px solid #ddd';
+      detTab.style.borderBottom = 'none';
+
+      document.getElementById(tabId).style.display = 'block';
+      
+      var activeTab = document.getElementById(tabId + '-tab');
+      activeTab.style.backgroundColor = '#3c8dbc';
+      activeTab.style.color = 'white';
+      activeTab.style.border = 'none';
+    }
+  </script>
+</body>
+</html>

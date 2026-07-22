@@ -24,12 +24,13 @@ public class PosService {
     private final CampaignRuleSkuRepository campaignRuleSkuRepository;
     private final CustomerTurnRepository customerTurnRepository;
     private final GameAccessTokenRepository tokenRepo;
+    private final InvoiceCampaignRepository invoiceCampaignRepository;
 
     public PosService(CustomerRepository customerRepository, InvoiceRepository invoiceRepository,
                       CampaignRepository campaignRepository, CampaignStoreRepository campaignStoreRepository,
                       CampaignRuleRepository campaignRuleRepository, CampaignRulePaymentRepository campaignRulePaymentRepository,
                       CampaignRuleSkuRepository campaignRuleSkuRepository, CustomerTurnRepository customerTurnRepository,
-                      GameAccessTokenRepository tokenRepo) {
+                      GameAccessTokenRepository tokenRepo, InvoiceCampaignRepository invoiceCampaignRepository) {
         this.customerRepository = customerRepository;
         this.invoiceRepository = invoiceRepository;
         this.campaignRepository = campaignRepository;
@@ -39,6 +40,7 @@ public class PosService {
         this.campaignRuleSkuRepository = campaignRuleSkuRepository;
         this.customerTurnRepository = customerTurnRepository;
         this.tokenRepo = tokenRepo;
+        this.invoiceCampaignRepository = invoiceCampaignRepository;
     }
 
     @Transactional
@@ -126,6 +128,15 @@ public class PosService {
             // KHÔNG CỘNG LƯỢT Ở ĐÂY NỮA. Lượt sẽ được cộng khi Zalo User kích hoạt Token.
             appliedCampaigns.add(campaign.getTenChienDich());
             totalTurnsEarned += turns;
+            
+            // Save invoice-campaign mapping
+            InvoiceCampaign ic = new InvoiceCampaign();
+            ic.setMaHoaDon(request.getInvoiceCode());
+            ic.setMaChienDich(campaign.getMaChienDich());
+            ic.setMaStore(request.getMaStore());
+            ic.setTongTien(deltaAmount);
+            ic.setSoLuotCap(turns);
+            invoiceCampaignRepository.save(ic);
             
             if (hasExclusive) {
                 break; // Chỉ áp dụng 1 chương trình độc quyền duy nhất cho 1 hóa đơn

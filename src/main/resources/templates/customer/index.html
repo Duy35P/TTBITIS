@@ -203,10 +203,15 @@
         /* Disabled state */
         .card.disabled {
             pointer-events: none;
+            opacity: 0.8;
         }
         
         .card.disabled .btn-action {
             color: #9ca3af;
+        }
+
+        .card.disabled .card-img {
+            filter: grayscale(100%);
         }
     </style>
 </head>
@@ -230,13 +235,11 @@
 
     <div class="container">
         
-        <a th:each="camp : ${displayCampaigns}" th:href="${camp.duongDanSlug != null && !camp.duongDanSlug.empty} ? @{'/game/' + ${camp.duongDanSlug}} : @{'/customer/spin?campaign=' + ${camp.maChienDich}}" class="card">
-            <div class="card-img" th:classappend="${camp.turns != null and camp.turns > 0 ? 'bg-blue' : 'bg-gray'}"
-                 th:style="${camp.hinhAnhUrl != null and !camp.hinhAnhUrl.empty ? 'background-image: url(' + camp.hinhAnhUrl + '); background-size: cover; background-position: center;' : ''}">
-                <span th:if="${isLoggedIn}" class="status-badge" th:classappend="${camp.turns != null and camp.turns > 0 ? 'status-active' : 'status-ended'}"
-                      th:text="${camp.turns != null and camp.turns > 0 ? 'Đang có ' + camp.turns + ' lượt' : 'Hết lượt'}">Đang có lượt</span>
-                <span th:if="${!isLoggedIn}" class="status-badge status-active">Chưa đăng nhập</span>
-                <span th:if="${camp.hinhAnhUrl == null or camp.hinhAnhUrl.empty}">🎁</span>
+        <a th:each="camp : ${displayCampaigns}" th:href="${camp.duongDanSlug != null and !camp.duongDanSlug.empty} ? @{'/game/' + ${camp.duongDanSlug}} : @{'/customer/spin?campaign=' + ${camp.maChienDich}}" class="card" th:classappend="${camp.displayStatus == 'Kết thúc' ? 'disabled' : ''}">
+            <div class="card-img" th:classappend="${camp.displayStatus == 'Kết thúc' ? 'bg-gray' : (camp.turns != null and camp.turns > 0 ? 'bg-blue' : 'bg-gray')}">
+                <img th:if="${camp.hinhAnhUrl != null and !camp.hinhAnhUrl.empty}" th:src="${camp.hinhAnhUrl}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;">
+                <span class="status-badge" th:classappend="${camp.badgeClass}" th:text="${camp.badgeText}" style="z-index: 1;"></span>
+                <span th:if="${camp.hinhAnhUrl == null or camp.hinhAnhUrl.empty}" style="z-index: 1;">🎁</span>
             </div>
             <div class="card-body">
                 <h2 class="card-title" th:text="${camp.tenChienDich}">Tên Chiến Dịch</h2>

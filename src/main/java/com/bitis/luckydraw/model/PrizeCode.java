@@ -27,6 +27,9 @@ public class PrizeCode {
     @Column(name = "is_used")
     private Boolean isUsed = false;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "ngay_tao")
+    private LocalDateTime ngayTao;
+
+    @Column(name = "ngay_het_han")
+    private LocalDateTime ngayHetHan;
 }

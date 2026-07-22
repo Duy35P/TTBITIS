@@ -169,11 +169,26 @@ public class AdminCampaignController {
             if (formCampaign.getHanTokenNgay() != null) {
                 campaign.setHanTokenNgay(formCampaign.getHanTokenNgay());
             }
+            if (formCampaign.getSoNgayHienThiThem() != null) {
+                campaign.setSoNgayHienThiThem(formCampaign.getSoNgayHienThiThem());
+            }
         } else {
             campaign = formCampaign;
             campaign.setTrangThai(0);
             if (campaign.getDocQuyen() == null) campaign.setDocQuyen(false);
         }
+        
+        if (Boolean.TRUE.equals(campaign.getDocQuyen())) {
+            java.util.Set<String> storesToValidate = new java.util.HashSet<>();
+            if (!isNew && oldMaChienDich != null) {
+                storesToValidate = campaignStoreRepository.findByMaChienDich(oldMaChienDich)
+                        .stream().map(CampaignStore::getMaStore).collect(java.util.stream.Collectors.toSet());
+            }
+            if (!storesToValidate.isEmpty()) {
+                validateExclusiveStores(campaign, storesToValidate);
+            }
+        }
+        
         campaignRepository.save(campaign);
         
         if (isNew) {
@@ -203,6 +218,33 @@ public class AdminCampaignController {
         log.setDescription(actionDescription);
         log.setIpAddress("127.0.0.1");
         systemAuditLogRepository.save(log);
+    }
+
+    private void validateExclusiveStores(Campaign currentCampaign, java.util.Set<String> storeMasToValidate) throws IllegalArgumentException {
+        if (!Boolean.TRUE.equals(currentCampaign.getDocQuyen()) || storeMasToValidate.isEmpty()) {
+            return;
+        }
+        
+        List<Campaign> otherExclusives = campaignRepository.findAll().stream()
+            .filter(c -> Boolean.TRUE.equals(c.getDocQuyen()))
+            .filter(c -> currentCampaign.getId() == null || !c.getId().equals(currentCampaign.getId()))
+            .filter(c -> !"Kết thúc".equals(c.getDisplayStatus()) && c.getTrangThai() != 0)
+            .collect(java.util.stream.Collectors.toList());
+            
+        if (otherExclusives.isEmpty()) return;
+        
+        for (Campaign other : otherExclusives) {
+            List<String> otherStores = campaignStoreRepository.findByMaChienDich(other.getMaChienDich())
+                .stream().map(CampaignStore::getMaStore).collect(java.util.stream.Collectors.toList());
+            
+            for (String storeMa : storeMasToValidate) {
+                if (otherStores.contains(storeMa)) {
+                    Store store = storeRepository.findByMaStore(storeMa).orElse(null);
+                    String storeName = store != null ? store.getTenCuaHang() : storeMa;
+                    throw new IllegalArgumentException("Lỗi: Cửa hàng '" + storeName + "' đã nằm trong chiến dịch độc quyền khác đang hoạt động (" + other.getTenChienDich() + "). Mỗi cửa hàng chỉ được tham gia 1 chiến dịch độc quyền tại cùng 1 thời điểm!");
+                }
+            }
+        }
     }
 
     @PostMapping("/save")
@@ -307,11 +349,20 @@ public class AdminCampaignController {
         String maChienDich = campaign.getMaChienDich();
         
         List<CampaignStore> oldStores = campaignStoreRepository.findByMaChienDich(maChienDich);
-        java.util.Set<String> oldStoreMas = oldStores.stream().map(CampaignStore::getMaStore).collect(Collectors.toSet());
+        java.util.Set<String> oldStoreMas = oldStores.stream().map(CampaignStore::getMaStore).collect(java.util.stream.Collectors.toSet());
         
         java.util.Set<String> newStoreMas = new java.util.HashSet<>();
         if (storeMas != null) {
             newStoreMas.addAll(storeMas);
+        }
+        
+        if (Boolean.TRUE.equals(campaign.getDocQuyen())) {
+            try {
+                validateExclusiveStores(campaign, newStoreMas);
+            } catch (IllegalArgumentException e) {
+                redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+                return "redirect:/quanly/campaigns";
+            }
         }
         
         java.util.Set<String> addedStores = new java.util.HashSet<>(newStoreMas);

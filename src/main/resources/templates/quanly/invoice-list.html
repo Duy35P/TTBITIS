@@ -107,6 +107,7 @@
                             th:data-payment="${inv.phuongThucTt}"
                             th:data-phone="${inv.khachHangSdt}"
                             th:data-items="${inv.sanPhamJson}"
+                            th:data-token="${inv.gameAccessToken}"
                             onclick="viewDetailBtn(this)">Xem Bill</button>
                 </td>
               </tr>
@@ -151,6 +152,9 @@
             <span>TỔNG CỘNG:</span>
             <span id="mTotal">0 đ</span>
           </div>
+        </div>
+        <div id="gameLinkContainer" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; display: none; font-size: 13px;">
+          Link Game: <span id="mGameLink" style="word-break: break-all;"></span>
         </div>
       </div>
     </div>
@@ -218,10 +222,11 @@
       var payment = btn.getAttribute('data-payment');
       var phone = btn.getAttribute('data-phone');
       var itemsStr = btn.getAttribute('data-items');
-      viewDetail(code, store, total, payment, phone, itemsStr);
+      var token = btn.getAttribute('data-token');
+      viewDetail(code, store, total, payment, phone, itemsStr, token);
     }
     
-    function viewDetail(code, store, total, payment, phone, itemsStr) {
+    function viewDetail(code, store, total, payment, phone, itemsStr, token) {
       document.getElementById('mCode').innerText = code;
       document.getElementById('mStore').innerText = store;
       document.getElementById('mTotal').innerText = total;
@@ -266,6 +271,15 @@
           }
       }
       document.getElementById('mItems').innerHTML = itemsHtml;
+      
+      var gameLinkNode = document.getElementById('mGameLink');
+      var containerNode = document.getElementById('gameLinkContainer');
+      if (token && token.trim() !== '' && token !== 'null') {
+          gameLinkNode.innerText = window.location.origin + '/customer/login?receipt=' + encodeURIComponent(token);
+          containerNode.style.display = 'block';
+      } else {
+          containerNode.style.display = 'none';
+      }
       
       document.getElementById('invoiceModal').classList.add('active');
     }

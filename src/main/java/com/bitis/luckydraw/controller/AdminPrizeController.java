@@ -288,6 +288,8 @@ public class AdminPrizeController {
                     
                     org.apache.poi.ss.usermodel.Cell cellMaGiai = row.getCell(0);
                     org.apache.poi.ss.usermodel.Cell cellCode = row.getCell(1);
+                    org.apache.poi.ss.usermodel.Cell cellNgayTao = row.getCell(2);
+                    org.apache.poi.ss.usermodel.Cell cellNgayHetHan = row.getCell(3);
                     
                     if (cellMaGiai == null || cellCode == null) continue;
                     
@@ -296,14 +298,17 @@ public class AdminPrizeController {
                     
                     if (maGiaiThuong.isEmpty() || code.isEmpty()) continue;
                     
-                    if (prizeCodeRepository.existsByCode(code)) {
-                        duplicateCount++;
-                        continue;
-                    }
-                    com.bitis.luckydraw.model.PrizeCode prizeCode = new com.bitis.luckydraw.model.PrizeCode();
+                    com.bitis.luckydraw.model.PrizeCode prizeCode = prizeCodeRepository.findByCode(code).orElse(new com.bitis.luckydraw.model.PrizeCode());
                     prizeCode.setMaGiaiThuong(maGiaiThuong);
                     prizeCode.setCode(code);
-                    prizeCode.setIsUsed(false);
+                    if (prizeCode.getId() == null) prizeCode.setIsUsed(false);
+                    
+                    java.time.LocalDateTime ngayTao = parseExcelDate(cellNgayTao);
+                    if (ngayTao != null) prizeCode.setNgayTao(ngayTao);
+                    else prizeCode.setNgayTao(java.time.LocalDateTime.now());
+                    
+                    prizeCode.setNgayHetHan(parseExcelDate(cellNgayHetHan));
+                    
                     prizeCodeRepository.save(prizeCode);
                     affectedPrizes.add(maGiaiThuong);
                     successCount++;
@@ -332,6 +337,25 @@ public class AdminPrizeController {
             return String.valueOf((long)cell.getNumericCellValue());
         }
         return "";
+    }
+
+    private java.time.LocalDateTime parseExcelDate(org.apache.poi.ss.usermodel.Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC && org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cell)) {
+            return cell.getLocalDateTimeCellValue();
+        } else {
+            String str = getCellValueAsString(cell).trim();
+            if (str.isEmpty()) return null;
+            try {
+                if (str.contains(":")) {
+                    return java.time.LocalDateTime.parse(str, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+                } else {
+                    return java.time.LocalDate.parse(str, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")).atStartOfDay();
+                }
+            } catch (Exception e) {
+                return null; // Ignore parse error, return null ponytail style
+            }
+        }
     }
     
     @GetMapping("/codes/{maGiaiThuong}")
@@ -367,13 +391,14 @@ public class AdminPrizeController {
     public void exportCodesExcel(jakarta.servlet.http.HttpServletResponse response) {
         try {
             List<com.bitis.luckydraw.model.PrizeCode> codes = prizeCodeRepository.findAll();
-            String[] headers = {"Mã Giải Thưởng", "Code", "Trạng Thái", "Ngày Tạo"};
+            String[] headers = {"Mã Giải Thưởng", "Code", "Trạng Thái", "Ngày Tạo", "Ngày Hết Hạn"};
             java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
             List<String[]> data = codes.stream().map(c -> new String[]{
                 c.getMaGiaiThuong(),
                 c.getCode(),
-                c.getIsUsed() != null && c.getIsUsed() ? "Đã cấp" : "Chưa sử dụng",
-                c.getCreatedAt() != null ? c.getCreatedAt().format(formatter) : ""
+                c.getIsUsed() != null && c.getIsUsed() ? "Đã cấp" : "Chưa phát",
+                c.getNgayTao() != null ? c.getNgayTao().format(formatter) : "",
+                c.getNgayHetHan() != null ? c.getNgayHetHan().format(formatter) : ""
             }).collect(java.util.stream.Collectors.toList());
             com.bitis.luckydraw.util.ExcelExportUtil.exportDataToExcel(response, "DanhSachCodeQuaTang", headers, data);
         } catch (java.io.IOException e) {
@@ -481,6 +506,49 @@ public class AdminPrizeController {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi lưu giải thưởng: " + e.getMessage());
         }
         return "redirect:/quanly/prizes?tab=prizes";
+    }
+
+    @GetMapping("/bulk-rates")
+    public String showBulkRatesPage(@RequestParam("campaignId") String campaignId, org.springframework.ui.Model model) {
+        List<Prize> prizes = prizeRepository.findByMaChienDich(campaignId);
+        com.bitis.luckydraw.model.Campaign campaign = campaignRepository.findByMaChienDich(campaignId).orElse(null);
+        model.addAttribute("prizes", prizes);
+        model.addAttribute("campaign", campaign);
+        model.addAttribute("campaignId", campaignId);
+        return "quanly/bulk-rates";
+    }
+
+    @PostMapping("/bulk-rates/save")
+    public String saveBulkRates(@RequestParam(value = "ids", required = false) String[] ids,
+                                @RequestParam(value = "rates", required = false) Double[] rates,
+                                @RequestParam("campaignId") String campaignId,
+                                RedirectAttributes redirectAttributes) {
+        if (ids != null && rates != null && ids.length == rates.length) {
+            double totalReal = 0;
+            // First pass: validation
+            for (int i = 0; i < ids.length; i++) {
+                Prize p = prizeRepository.findByMaGiaiThuong(ids[i]).orElse(null);
+                if (p != null && Boolean.TRUE.equals(p.getLaGiaiThuong())) {
+                    totalReal += (rates[i] != null ? rates[i] : 0);
+                }
+            }
+            if (totalReal > 100) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Tổng tỉ lệ các giải thưởng thực tế vượt quá 100% (" + totalReal + "%). Vui lòng điều chỉnh lại.");
+                return "redirect:/quanly/prizes/bulk-rates?campaignId=" + campaignId;
+            }
+
+            // Second pass: save
+            for (int i = 0; i < ids.length; i++) {
+                Prize p = prizeRepository.findByMaGiaiThuong(ids[i]).orElse(null);
+                if (p != null) {
+                    p.setXacSuat(rates[i] != null ? rates[i] : 0.0);
+                    prizeRepository.save(p);
+                }
+            }
+            prizeRepository.recalibrateDummyPrize(campaignId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật tỉ lệ hàng loạt thành công!");
+        }
+        return "redirect:/quanly/prizes/bulk-rates?campaignId=" + campaignId;
     }
 
     @PostMapping("/delete")

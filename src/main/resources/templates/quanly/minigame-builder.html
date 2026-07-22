@@ -70,6 +70,14 @@
   .center-btn .logo-sub { font-size: 0.4rem; font-weight: 600; color: rgba(255,255,255,0.8); letter-spacing: 1px; }
   
   .spin-btn { margin-top: 40px; padding: 12px 30px; font-size: 1.1rem; font-weight: 700; color: #1e4a8a; background: linear-gradient(180deg, #fff 0%, #e0f2fe 100%); border: none; border-radius: 25px; box-shadow: 0 6px 0 #badaf2, 0 10px 15px rgba(0,0,0,0.2); cursor: pointer; }
+  
+  /* ===== Boxes Styles ===== */
+  .boxes-stage { display: none; width: 100%; max-width: 300px; margin-top: 20px; }
+  .boxes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+  .single-box-container { display: flex; justify-content: center; align-items: center; min-height: 200px; }
+  .box-item { background: transparent; border: none; border-radius: 10px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; cursor: pointer; box-shadow: none; transition: transform 0.2s; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
+  .box-item.single { width: 150px; height: 150px; font-size: 6rem; }
+  .box-item:hover { transform: scale(1.1); }
 </style>
 </head>
 <body>
@@ -111,25 +119,51 @@
           <small style="color: #777; font-size: 11px; margin-top: 5px; display: block;">Viết liền không dấu, ngăn cách bằng dấu gạch ngang (VD: khai-truong-hn)</small>
         </div>
 
+        <div class="form-group" style="display: flex; gap: 10px;">
+          <div style="flex: 1;">
+            <label>Kiểu Game</label>
+            <select id="setType" class="form-control" onchange="updatePreview()">
+              <option value="wheel">Vòng quay may mắn</option>
+              <option value="boxes">Nhiều hộp quà (Grid)</option>
+              <option value="single_box">1 Hộp quà duy nhất</option>
+            </select>
+          </div>
+          <div style="flex: 1;">
+            <label>Ảnh nền (Tải lên)</label>
+            <input type="file" id="uploadBgImage" class="form-control" accept="image/*" onchange="handleBgImageUpload(event)">
+            <input type="hidden" id="bgImageBase64" value="">
+          </div>
+        </div>
+
         <div class="form-group">
           <label>Tiêu đề (Header Text)</label>
           <input type="text" class="form-control" id="setTitle" value="Vòng Quay May Mắn" oninput="updatePreview()">
         </div>
 
-        <div class="form-group" style="display: flex; gap: 10px;">
-          <div style="flex: 1;">
-            <label>Chữ tâm vòng quay 1</label>
-            <input type="text" class="form-control" id="setCenterText1" value="QUAY" oninput="updatePreview()">
+        <div id="wheelOnlySettings">
+          <div class="form-group" style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+              <label>Chữ tâm vòng quay 1</label>
+              <input type="text" class="form-control" id="setCenterText1" value="QUAY" oninput="updatePreview()">
+            </div>
+            <div style="flex: 1;">
+              <label>Chữ tâm vòng quay 2</label>
+              <input type="text" class="form-control" id="setCenterText2" value="THƯỞNG" oninput="updatePreview()">
+            </div>
           </div>
-          <div style="flex: 1;">
-            <label>Chữ tâm vòng quay 2</label>
-            <input type="text" class="form-control" id="setCenterText2" value="THƯỞNG" oninput="updatePreview()">
-          </div>
-        </div>
 
-        <div class="form-group">
-          <label>Chữ nút bấm (Button)</label>
-          <input type="text" class="form-control" id="setButtonText" value="Quay ngay" oninput="updatePreview()">
+          <div class="form-group">
+            <label>Chữ nút bấm (Button)</label>
+            <input type="text" class="form-control" id="setButtonText" value="Quay ngay" oninput="updatePreview()">
+          </div>
+          
+          <div class="form-group">
+            <label>Màu Viền Vòng Quay (Wheel Ring)</label>
+            <div class="color-picker-row">
+              <input type="color" class="color-input" id="setRingColor" value="#1e4a8a" onchange="updatePreview()">
+              <input type="text" class="form-control" value="#1e4a8a" readonly id="txtRingColor">
+            </div>
+          </div>
         </div>
 
         <div class="form-group">
@@ -138,6 +172,14 @@
           <input type="hidden" id="bannerBase64" th:value="${campaign.hinhAnhUrl != null ? campaign.hinhAnhUrl : ''}">
           <div style="margin-top: 10px;">
             <img id="bannerPreview" th:src="${campaign.hinhAnhUrl != null ? campaign.hinhAnhUrl : ''}" th:style="${campaign.hinhAnhUrl != null and !campaign.hinhAnhUrl.isEmpty() ? 'max-width: 100%; border-radius: 6px; display: block;' : 'max-width: 100%; border-radius: 6px; display: none;'}">
+          </div>
+        </div>
+
+        <div id="boxOnlySettings" style="display: none;">
+          <div class="form-group">
+            <label>Ảnh Hộp Quà (Mặc định: 🎁)</label>
+            <input type="file" class="form-control" id="uploadBoxImage" accept="image/*" onchange="handleBoxImageUpload(event)">
+            <input type="hidden" id="boxImageBase64" value="">
           </div>
         </div>
 
@@ -154,14 +196,6 @@
           <div class="color-picker-row">
             <input type="color" class="color-input" id="setBgBot" value="#7ec8f0" onchange="updatePreview()">
             <input type="text" class="form-control" value="#7ec8f0" readonly id="txtBgBot">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Màu Viền Vòng Quay (Wheel Ring)</label>
-          <div class="color-picker-row">
-            <input type="color" class="color-input" id="setRingColor" value="#1e4a8a" onchange="updatePreview()">
-            <input type="text" class="form-control" value="#1e4a8a" readonly id="txtRingColor">
           </div>
         </div>
 
@@ -185,7 +219,7 @@
           
           <h1 class="preview-title" id="previewTitle">Vòng Quay May Mắn</h1>
 
-          <div class="wheel-stage">
+          <div class="wheel-stage" id="previewWheelStage">
             <div class="pointer"></div>
             <div class="wheel-wrapper">
               <div class="blue-ring" id="previewRing"></div>
@@ -199,6 +233,12 @@
             </div>
             
             <button class="spin-btn" id="previewButtonText">Quay ngay</button>
+          </div>
+          
+          <div class="boxes-stage" id="previewBoxesStage">
+              <div id="previewBoxesGrid">
+                  <!-- Boxes preview generated by JS -->
+              </div>
           </div>
 
         </div>
@@ -247,6 +287,8 @@
     const savedConfigRaw = /*[[${campaign.cauhinhThemeJson}]]*/ null;
     
     let config = {
+      interactionType: 'wheel',
+      bgImage: '',
       title: 'Vòng Quay May Mắn',
       centerText1: 'QUAY',
       centerText2: 'THƯỞNG',
@@ -296,6 +338,8 @@
     });
 
     // Set initial values
+    document.getElementById('setType').value = config.interactionType || 'wheel';
+    document.getElementById('bgImageBase64').value = config.bgImage || '';
     document.getElementById('setTitle').value = config.title;
     document.getElementById('setCenterText1').value = config.centerText1 || 'QUAY';
     document.getElementById('setCenterText2').value = config.centerText2 || 'THƯỞNG';
@@ -316,7 +360,7 @@
         container.innerHTML += `
           <div class="prize-row">
             <input type="text" value="${p.name}" readonly title="${p.name}">
-            <input type="color" value="${p.color}" onchange="updatePrize(${index}, 'color', this.value)" title="Màu ô">
+            <input type="color" class="prize-color-input" value="${p.color}" onchange="updatePrize(${index}, 'color', this.value)" title="Màu ô">
             <input type="text" class="icon-input" id="icon-input-${index}" value="${displayIconValue}" oninput="updatePrize(${index}, 'icon', this.value)" title="Biểu tượng/Emoji">
             <label class="btn-upload" title="Tải ảnh lên">
                 📷
@@ -325,6 +369,9 @@
           </div>
         `;
       });
+      // Ẩn màu ô nếu là game hộp quà
+      const isWheel = config.interactionType === 'wheel' || !config.interactionType;
+      document.querySelectorAll('.prize-color-input').forEach(el => el.style.display = isWheel ? 'block' : 'none');
       drawWheelPreview();
     }
 
@@ -362,6 +409,8 @@
     }
 
     function updatePreview() {
+      config.interactionType = document.getElementById('setType').value;
+      config.bgImage = document.getElementById('bgImageBase64').value;
       config.title = document.getElementById('setTitle').value;
       config.centerText1 = document.getElementById('setCenterText1').value;
       config.centerText2 = document.getElementById('setCenterText2').value;
@@ -369,10 +418,18 @@
       config.bgTop = document.getElementById('setBgTop').value;
       config.bgBot = document.getElementById('setBgBot').value;
       config.ringColor = document.getElementById('setRingColor').value;
+      config.boxImage = document.getElementById('boxImageBase64').value;
         
       document.getElementById('txtBgTop').value = config.bgTop;
       document.getElementById('txtBgBot').value = config.bgBot;
-      document.getElementById('previewScreen').style.background = `linear-gradient(180deg, ${config.bgTop} 0%, ${config.bgBot} 100%)`;
+      
+      if (config.bgImage) {
+          document.getElementById('previewScreen').style.backgroundImage = `url(${config.bgImage})`;
+          document.getElementById('previewScreen').style.backgroundSize = 'cover';
+          document.getElementById('previewScreen').style.backgroundPosition = 'center';
+      } else {
+          document.getElementById('previewScreen').style.background = `linear-gradient(180deg, ${config.bgTop} 0%, ${config.bgBot} 100%)`;
+      }
 
       document.getElementById('txtRingColor').value = config.ringColor;
       document.getElementById('previewRing').style.background = config.ringColor;
@@ -383,7 +440,45 @@
       document.getElementById('previewCenterText2').innerText = config.centerText2;
       document.getElementById('previewButtonText').innerText = config.buttonText;
 
-      drawWheelPreview();
+      // Toggle UI visibility
+      const isWheel = config.interactionType === 'wheel' || !config.interactionType;
+      document.querySelectorAll('.prize-color-input').forEach(el => el.style.display = isWheel ? 'block' : 'none');
+
+      if (config.interactionType === 'boxes' || config.interactionType === 'single_box') {
+          document.getElementById('wheelOnlySettings').style.display = 'none';
+          document.getElementById('previewWheelStage').style.display = 'none';
+          document.getElementById('previewBoxesStage').style.display = 'block';
+          document.getElementById('boxOnlySettings').style.display = 'block';
+          
+          const grid = document.getElementById('previewBoxesGrid');
+          grid.innerHTML = '';
+          
+          const boxContent = config.boxImage 
+                ? `<img src="${config.boxImage}" style="width: 100%; height: 100%; object-fit: contain;">` 
+                : '🎁';
+
+          if (config.interactionType === 'boxes') {
+              grid.className = 'boxes-grid';
+              for (let i = 0; i < 9; i++) {
+                  const box = document.createElement('div');
+                  box.className = 'box-item';
+                  box.innerHTML = boxContent;
+                  grid.appendChild(box);
+              }
+          } else {
+              grid.className = 'single-box-container';
+              const box = document.createElement('div');
+              box.className = 'box-item single';
+              box.innerHTML = boxContent;
+              grid.appendChild(box);
+          }
+      } else {
+          document.getElementById('wheelOnlySettings').style.display = 'block';
+          document.getElementById('previewWheelStage').style.display = 'flex';
+          document.getElementById('previewBoxesStage').style.display = 'none';
+          document.getElementById('boxOnlySettings').style.display = 'none';
+          drawWheelPreview();
+      }
     }
 
     function drawWheelPreview() {
@@ -463,6 +558,40 @@
         }
     }
 
+    function handleBgImageUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            if (file.size > 1024 * 1024) { // Limit bg image to 1MB
+                alert('Ảnh nền quá lớn, vui lòng chọn ảnh dưới 1MB!');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                document.getElementById('bgImageBase64').value = base64;
+                updatePreview();
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function handleBoxImageUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            if (file.size > 1024 * 1024) { // Limit image to 1MB
+                alert('Ảnh hộp quà quá lớn, vui lòng chọn ảnh dưới 1MB!');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                document.getElementById('boxImageBase64').value = base64;
+                updatePreview();
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
     async function saveDesign() {
       const slugValue = document.getElementById('setSlug').value.trim();
       if (!slugValue) {
@@ -475,6 +604,9 @@
       // Better to clean config before saving, but JSON.stringify usually drops functions and ignores DOM objects.
       // Let's create a clean copy just in case.
       const cleanConfig = {
+          interactionType: config.interactionType,
+          bgImage: config.bgImage,
+          boxImage: config.boxImage,
           title: config.title,
           centerText1: config.centerText1,
           centerText2: config.centerText2,
@@ -532,6 +664,9 @@
     }
 
     // Init
+    if (config.bgImage) {
+        document.getElementById('bgImageBase64').value = config.bgImage;
+    }
     renderPrizeInputs();
     updatePreview();
   </script>

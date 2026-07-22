@@ -54,8 +54,12 @@ public class Campaign {
     @Column(name = "han_token_ngay", nullable = false)
     private Integer hanTokenNgay = 30;
 
+    @Column(name = "so_ngay_hien_thi_them")
+    private Integer soNgayHienThiThem = 0;
+
     @Transient
     public String getDisplayStatus() {
+        if (trangThai != null && trangThai == 2) return "Kết thúc";
         if (trangThai == null || trangThai != 1) return "Tạm ngưng";
         LocalDateTime now = LocalDateTime.now();
         if (ngayKetThuc != null && now.isAfter(ngayKetThuc)) return "Kết thúc";

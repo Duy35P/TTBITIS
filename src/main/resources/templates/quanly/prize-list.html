@@ -222,9 +222,7 @@
                   <th style="padding: 12px 8px;">Chiến Dịch</th>
                   <th style="padding: 12px 8px;">SL Phân bổ (Tổng cấp)</th>
                   <th style="padding: 12px 8px;">Đã trúng tại CH</th>
-                  <th style="padding: 12px 8px;">SL quay còn lại</th>
-                  <th style="padding: 12px 8px; border-left: 2px solid #eee;">Đã đổi thực tế</th>
-                  <th style="padding: 12px 8px;">Tồn kho vật lý</th>
+                  <th style="padding: 12px 8px;">SL còn lại</th>
                   <th style="padding: 12px 8px;">Thao tác</th>
                 </tr>
               </thead>
@@ -236,8 +234,6 @@
                   <td style="padding: 12px 8px;" th:text="${a.tongLuongCap}"></td>
                   <td style="padding: 12px 8px;" th:text="${a.daPhat}"></td>
                   <td style="padding: 12px 8px;"><strong th:text="${a.tonKho}" style="color: #e74c3c;"></strong></td>
-                  <td style="padding: 12px 8px; border-left: 2px solid #eee;" th:text="${a.daDoiThucTe != null ? a.daDoiThucTe : 0}"></td>
-                  <td style="padding: 12px 8px;"><strong th:text="${a.tonKhoThucTe != null ? a.tonKhoThucTe : a.tongLuongCap}" style="color: #27ae60;"></strong></td>
                   <td style="padding: 12px 8px;" class="action-links">
                     <span>
                         <a href="javascript:void(0)" 
@@ -326,7 +322,11 @@
             </div>
             <div style="margin-bottom: 15px; flex: 1;">
               <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px;">Tỷ lệ trúng (%) *</label>
-              <input type="number" name="xacSuat" id="prizeProb" required step="0.01" min="0" max="100" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 3px;">
+              <div style="display: flex; gap: 10px; align-items: center; height: 38px;">
+                  <span id="prizeProbText">0</span>%
+                  <input type="hidden" name="xacSuat" id="prizeProb" value="0">
+                  <button type="button" id="btnEditBulkRate" style="display: none; background-color: #fff; color: #333; padding: 4px 10px; border-radius: 3px; border: 1px solid #ccc; cursor: pointer; font-size: 13px;" onclick="goToBulkRate()">Chỉnh tỉ lệ</button>
+              </div>
             </div>
           </div>
           
@@ -506,12 +506,17 @@
            document.getElementById('prizeCampaign').value = pChienDich;
            document.getElementById('prizeTotal').value = pTotal || 0;
            document.getElementById('prizeProb').value = pProb || 0;
+           document.getElementById('prizeProbText').textContent = pProb || 0;
            if (pIsReal !== undefined && pIsReal !== null) {
                document.getElementById('prizeIsReal').checked = (pIsReal === 'true' || pIsReal === true);
            } else {
                document.getElementById('prizeIsReal').checked = true;
            }
+           document.getElementById('btnEditBulkRate').style.display = 'block';
         } else {
+           if(document.getElementById('prizeModalTitle')) {
+               document.getElementById('prizeModalTitle').textContent = 'Thêm Giải Thưởng Mới';
+           }
            document.getElementById('savePrizeBtn').style.backgroundColor = '#3c8dbc';
            document.getElementById('savePrizeBtn').textContent = 'Lưu Giải Thưởng';
            
@@ -519,10 +524,15 @@
            document.getElementById('prizeMa').readOnly = false;
            document.getElementById('prizeMa').style.backgroundColor = '';
            document.getElementById('prizeName').value = '';
+           
+           var currentCampaign = document.querySelector('select[name="campaign"]').value;
+           document.getElementById('prizeCampaign').value = currentCampaign === 'all' ? '' : currentCampaign;
            document.getElementById('prizeLimit').value = '';
            document.getElementById('prizeTotal').value = '';
-           document.getElementById('prizeProb').value = '';
+           document.getElementById('prizeProb').value = '0';
+           document.getElementById('prizeProbText').textContent = '0';
            document.getElementById('prizeIsReal').checked = true;
+           document.getElementById('btnEditBulkRate').style.display = 'none';
         }
         
         // Cập nhật lại UI dựa trên trạng thái checkbox
@@ -579,6 +589,7 @@
             if (leftProb < 0) leftProb = 0;
             
             probInput.value = leftProb.toFixed(2);
+            document.getElementById('prizeProbText').textContent = leftProb.toFixed(2);
             probInput.readOnly = true;
             probInput.style.backgroundColor = '#e9ecef';
             document.getElementById('prizeTotalHint').textContent = "Giải trượt luôn được mặc định Tồn kho = -1 (Không giới hạn)";
@@ -697,6 +708,15 @@
 
     function closeModal(modalId) {
       document.getElementById(modalId).style.display = 'none';
+    }
+
+    function goToBulkRate() {
+      var campaignId = document.getElementById('prizeCampaign').value;
+      if (campaignId) {
+          window.location.href = '/quanly/prizes/bulk-rates?campaignId=' + campaignId;
+      } else {
+          alert('Vui lòng lưu giải thưởng và chọn chiến dịch trước.');
+      }
     }
   </script>
 </body>

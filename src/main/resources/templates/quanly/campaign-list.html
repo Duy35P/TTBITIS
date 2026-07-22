@@ -88,6 +88,7 @@
                      th:data-status="${campaign.trangThai}"
                      th:data-docquyen="${campaign.docQuyen}"
                      th:data-hantoken="${campaign.hanTokenNgay}"
+                     th:data-extradays="${campaign.soNgayHienThiThem}"
                      onclick="openEditCampaignModal(this)">Sửa</a> <span class="action-separator">|</span>
                   <a href="javascript:void(0)" 
                      th:data-id="${campaign.id}"
@@ -167,6 +168,11 @@
           <input type="number" class="form-control" name="hanTokenNgay" id="campaignHanTokenNgay" value="0" required>
           <small class="form-text text-muted">Nhập số 0 để mã QR có thời hạn chính xác bằng với ngày kết thúc chiến dịch. Nhập số &gt; 0 để mã QR hết hạn sau X ngày kể từ lúc in.</small>
         </div>
+        <div class="form-group">
+          <label>Số ngày hiển thị thêm (sau kết thúc)</label>
+          <input type="number" class="form-control" name="soNgayHienThiThem" id="campaignExtraDays" value="0" required>
+          <small class="form-text text-muted">Web sẽ hiển thị thẻ trạng thái "Kết thúc" trong X ngày sau khi chiến dịch kết thúc, trước khi ẩn hẳn.</small>
+        </div>
         <div class="form-group" id="campaignStatusGroup">
           <label>Công tắc hoạt động</label>
           <select class="form-control" name="trangThai" id="campaignStatus">
@@ -214,6 +220,7 @@
       document.getElementById('campaignSlug').value = '';
       document.getElementById('campaignDocQuyen').checked = false;
       document.getElementById('campaignHanTokenNgay').value = '0';
+      document.getElementById('campaignExtraDays').value = '0';
       document.getElementById('campaignStatus').value = '0';
       document.getElementById('campaignStatusGroup').style.display = 'none'; // Ẩn khi thêm mới
       document.getElementById('campaignDesc').value = '';
@@ -243,6 +250,10 @@
       let hanToken = btn.getAttribute('data-hantoken');
       if (!hanToken || hanToken === 'null') hanToken = 0;
       document.getElementById('campaignHanTokenNgay').value = hanToken;
+      
+      let extraDays = btn.getAttribute('data-extradays');
+      if (!extraDays || extraDays === 'null') extraDays = 0;
+      document.getElementById('campaignExtraDays').value = extraDays;
       
       document.getElementById('campaignFormError').style.display = 'none';
       document.getElementById('campaignFormError').innerText = '';

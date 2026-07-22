@@ -27,6 +27,9 @@ public class CustomerViewController {
     @org.springframework.beans.factory.annotation.Autowired
     private com.bitis.luckydraw.repository.CustomerTurnRepository customerTurnRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.bitis.luckydraw.repository.PrizeCodeRepository prizeCodeRepository;
+
     @GetMapping("/index")
     public String indexPage(HttpSession session, Model model, jakarta.servlet.http.HttpServletResponse response) {
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -39,8 +42,19 @@ public class CustomerViewController {
         java.util.List<com.bitis.luckydraw.model.Campaign> allCampaigns = campaignRepository.findAll();
         java.util.List<com.bitis.luckydraw.model.Campaign> activeCampaigns = new java.util.ArrayList<>();
         for (com.bitis.luckydraw.model.Campaign c : allCampaigns) {
-            // ponytail: Only show currently active ("Đang diễn ra") campaigns on customer index
-            if ("Đang diễn ra".equals(c.getDisplayStatus())) {
+            String status = c.getDisplayStatus();
+            boolean isVisible = false;
+            
+            if ("Đang diễn ra".equals(status)) {
+                isVisible = true;
+            } else if ("Kết thúc".equals(status)) {
+                int extraDays = c.getSoNgayHienThiThem() != null ? c.getSoNgayHienThiThem() : 0;
+                if (c.getNgayKetThuc().plusDays(extraDays).isAfter(java.time.LocalDateTime.now())) {
+                    isVisible = true;
+                }
+            }
+            
+            if (isVisible) {
                 activeCampaigns.add(c);
             }
         }
@@ -67,6 +81,26 @@ public class CustomerViewController {
             cData.put("hinhAnhUrl", camp.getHinhAnhUrl());
             int turns = turnMap.getOrDefault(camp.getMaChienDich(), 0);
             cData.put("turns", turns);
+            cData.put("displayStatus", camp.getDisplayStatus());
+            
+            // ponytail: dumb templates, smart models. One line UI rendering.
+            String badgeText;
+            String badgeClass;
+            if ("Kết thúc".equals(camp.getDisplayStatus())) {
+                badgeText = "Đã kết thúc";
+                badgeClass = "status-ended";
+            } else if (!isLoggedIn) {
+                badgeText = "Chưa đăng nhập";
+                badgeClass = "status-active";
+            } else if (turns > 0) {
+                badgeText = "Đang có " + turns + " lượt";
+                badgeClass = "status-active";
+            } else {
+                badgeText = "Hết lượt";
+                badgeClass = "status-ended";
+            }
+            cData.put("badgeText", badgeText);
+            cData.put("badgeClass", badgeClass);
             
             if (turns > 0) {
                 displayCampaigns.add(cData);
@@ -167,6 +201,15 @@ public class CustomerViewController {
         com.bitis.luckydraw.dto.RewardVoucherListDto dto = list.stream().filter(v -> v.getMaVoucher().equals(code)).findFirst().orElse(null);
         
         model.addAttribute("voucher", dto); // Truyền DTO vì nó có tenGiai
+        
+        // Fetch specific expiration date from prize code if available
+        if (dto != null) {
+            java.time.LocalDateTime expiry = prizeCodeRepository.findByCode(dto.getMaVoucher())
+                .map(com.bitis.luckydraw.model.PrizeCode::getNgayHetHan)
+                .orElse(null);
+            model.addAttribute("customExpiry", expiry);
+        }
+        
         return "customer/prize-detail";
     }
 

@@ -212,11 +212,9 @@
             <div class="ticket-header">
                 <h2>Chúc Mừng Bạn Trúng</h2>
                 <div class="prize-name" th:text="${voucher.tenGiai}">Tên giải thưởng</div>
-                <div class="expiry-date" th:if="${voucher.ngayBatDau != null and voucher.ngayKetThuc != null}"
-                     th:text="'HSD: ' + ${#temporals.format(voucher.ngayBatDau, 'HH:mm dd/MM/yyyy')} + ' - ' + ${#temporals.format(voucher.ngayKetThuc, 'HH:mm dd/MM/yyyy')}">
+                <div class="expiry-date" th:if="${customExpiry != null}"
+                     th:text="'HSD: ' + ${#temporals.format(customExpiry, 'HH:mm dd/MM/yyyy')}">
                 </div>
-                <div class="status-badge" th:if="${voucher.trangThai == 0}">✓ Chưa đổi thưởng</div>
-                <div class="status-badge" th:if="${voucher.trangThai == 1}" style="background: #e8f5e9; color: #2e7d32;">✓ Đã đổi thưởng</div>
             </div>
             <div class="ticket-body">
                 <div class="info-group">
