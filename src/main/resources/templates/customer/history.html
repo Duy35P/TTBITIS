@@ -240,7 +240,10 @@
                             <td>
                                 <span class="rank-badge" th:classappend="${stat.index == 0 ? 'rank-1' : (stat.index == 1 ? 'rank-2' : (stat.index == 2 ? 'rank-3' : 'rank-default'))}" th:text="${stat.index + 1}"></span>
                             </td>
-                            <td class="prize-name-cell" th:text="${item.tenGiai}"></td>
+                            <td class="prize-name-cell">
+                                <div th:text="${item.tenGiai}"></div>
+                                <div style="font-size: 0.75rem; color: #777; font-weight: normal; margin-top: 4px;" th:text="${item.tenChienDich}"></div>
+                            </td>
                             <td th:text="${#temporals.format(item.thoiGianTao, 'dd/MM/yyyy HH:mm')}"></td>
                         </tr>
                     </tbody>

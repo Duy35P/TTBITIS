@@ -98,22 +98,39 @@
           // Lỗi
           if (data.detail) {
               // Mã đúng nhưng đã sử dụng
-              badge.textContent = "Mã Đã Sử Dụng";
-              badge.style.backgroundColor = "#ffedd5";
-              badge.style.color = "#9a3412";
-              icon.style.backgroundColor = "#fff7ed";
-              icon.style.color = "#ea580c";
-              icon.textContent = "⚠️";
+              if (data.message === "Mã chưa được phát.") {
+                  badge.textContent = "Mã Chưa Phát";
+                  badge.style.backgroundColor = "#e0f2fe";
+                  badge.style.color = "#0369a1";
+                  icon.style.backgroundColor = "#e0f2fe";
+                  icon.style.color = "#0284c7";
+                  icon.textContent = "ℹ️";
+                  
+                  errContainer.style.display = "block";
+                  errContainer.style.backgroundColor = "#e0f2fe";
+                  errContainer.style.borderLeftColor = "#0284c7";
+                  document.getElementById('errorReasonLabel').textContent = "Trạng thái mã";
+                  document.getElementById('errorReasonLabel').style.color = "#0284c7";
+                  document.getElementById('errorReason').style.color = "#0284c7";
+                  document.getElementById('errorReason').textContent = data.message;
+              } else {
+                  badge.textContent = "Mã Đã Sử Dụng";
+                  badge.style.backgroundColor = "#ffedd5";
+                  badge.style.color = "#9a3412";
+                  icon.style.backgroundColor = "#fff7ed";
+                  icon.style.color = "#ea580c";
+                  icon.textContent = "⚠️";
+                  
+                  errContainer.style.display = "block";
+                  errContainer.style.backgroundColor = "#fff7ed";
+                  errContainer.style.borderLeftColor = "#ea580c";
+                  document.getElementById('errorReasonLabel').textContent = "Trạng thái mã";
+                  document.getElementById('errorReasonLabel').style.color = "#ea580c";
+                  document.getElementById('errorReason').style.color = "#ea580c";
+                  document.getElementById('errorReason').textContent = data.message;
+              }
               
-              errContainer.style.display = "block";
-              errContainer.style.backgroundColor = "#fff7ed";
-              errContainer.style.borderLeftColor = "#ea580c";
-              document.getElementById('errorReasonLabel').textContent = "Trạng thái mã";
-              document.getElementById('errorReasonLabel').style.color = "#ea580c";
-              document.getElementById('errorReason').style.color = "#ea580c";
-              document.getElementById('errorReason').textContent = data.message;
-              
-              document.getElementById('resPrize').innerHTML = `${data.detail.tenGiai} <br/><span style="font-size:12px; margin-top:5px; display:inline-block;" class="label ${data.tonKho > 0 ? 'label-primary' : 'label-danger'}">Tồn kho CH: ${data.tonKho}</span>`;
+              document.getElementById('resPrize').innerHTML = `${data.detail.tenGiai} <br/><span style="font-size:13px; color:#666;">${data.detail.tenChienDich}</span><br/><span style="font-size:12px; margin-top:5px; display:inline-block;" class="label ${data.tonKho > 0 ? 'label-primary' : 'label-danger'}">Tồn kho CH: ${data.tonKho}</span>`;
               document.getElementById('resName').textContent = data.detail.tenKhach;
               document.getElementById('resPhone').textContent = data.detail.phone;
           } else {
@@ -146,7 +163,7 @@
           icon.textContent = "🎁";
           errContainer.style.display = "none";
           
-          document.getElementById('resPrize').innerHTML = `${data.detail.tenGiai} <br/><span style="font-size:12px; margin-top:5px; display:inline-block;" class="label ${data.tonKho > 0 ? 'label-primary' : 'label-danger'}">Tồn kho CH: ${data.tonKho}</span>`;
+          document.getElementById('resPrize').innerHTML = `${data.detail.tenGiai} <br/><span style="font-size:13px; color:#666;">${data.detail.tenChienDich}</span><br/><span style="font-size:12px; margin-top:5px; display:inline-block;" class="label ${data.tonKho > 0 ? 'label-primary' : 'label-danger'}">Tồn kho CH: ${data.tonKho}</span>`;
           document.getElementById('resName').textContent = data.detail.tenKhach;
           document.getElementById('resPhone').textContent = data.detail.phone;
         }

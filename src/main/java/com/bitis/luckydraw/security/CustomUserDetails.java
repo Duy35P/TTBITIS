@@ -30,4 +30,15 @@ public class CustomUserDetails extends User {
     public List<String> getAssignedStores() {
         return assignedStores;
     }
+
+    public boolean isAdmin() {
+        return getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
+    public List<String> getEffectiveStores() {
+        if (isAdmin()) return null;
+        if (assignedStores != null && !assignedStores.isEmpty()) return assignedStores;
+        if (maStore != null) return List.of(maStore);
+        return null;
+    }
 }

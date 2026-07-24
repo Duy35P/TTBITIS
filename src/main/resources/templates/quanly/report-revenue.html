@@ -43,8 +43,19 @@
                           th:selected="${s.maStore == selectedStore}"></option>
                 </select>
               </div>
-              <div class="filter-group" style="display: flex; flex-direction: column; min-width: 120px;">
+              <div class="filter-group" style="display: flex; flex-direction: column; flex: 1; min-width: 150px;">
+                <label style="font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px;">Phân loại Hóa đơn</label>
+                <select name="phanLoai" style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; outline: none;">
+                  <option value="">-- Tất cả phân loại --</option>
+                  <option value="DON" th:selected="${selectedPhanLoai == 'DON'}">Đơn chiến dịch</option>
+                  <option value="DA" th:selected="${selectedPhanLoai == 'DA'}">Đa chiến dịch</option>
+                </select>
+              </div>
+              <div class="filter-group" style="display: flex; flex-direction: row; min-width: 120px; gap: 10px; align-items: flex-end;">
                 <button type="submit" style="background-color: #3c8dbc; color: white; border: none; padding: 9px 15px; font-size: 14px; border-radius: 4px; cursor: pointer; font-weight: 600; outline: none;">Lọc Báo cáo</button>
+                <th:block sec:authorize="hasRole('ADMIN') or hasAuthority('QL_BAOCAODOANHTHU')">
+                  <a th:href="@{/quanly/report/revenue/export-excel(maChienDich=${selectedCampaign}, maStore=${selectedStore}, phanLoai=${selectedPhanLoai})}" style="background-color: #00a65a; color: white; text-decoration: none; padding: 9px 15px; font-size: 14px; border-radius: 4px; cursor: pointer; font-weight: 600; display: inline-block;">Xuất Excel</a>
+                </th:block>
               </div>
             </div>
           </form>
@@ -76,18 +87,32 @@
               </thead>
               <tbody>
                 <tr th:if="${#lists.isEmpty(summary)}">
-                  <td colspan="7" style="padding: 30px; text-align: center; color: #777;">Không có dữ liệu tổng hợp.</td>
+                  <td colspan="8" style="padding: 30px; text-align: center; color: #777;">Không có dữ liệu tổng hợp.</td>
                 </tr>
-                <tr th:each="item : ${summary}" style="border-bottom: 1px solid #eee;">
-                  <td style="padding: 10px 8px; font-weight: 600; color: #333;" th:text="${item.tenChienDich}"></td>
-                  <td style="padding: 10px 8px; color: #555;" th:text="${item.tenStore}"></td>
-                  <td style="padding: 10px 8px; text-align: right; color: #555;" th:text="${#numbers.formatInteger(item.soHoaDon, 0, 'COMMA')}"></td>
-                  <td style="padding: 10px 8px; text-align: right; color: #555; font-weight: bold;" th:text="${#numbers.formatInteger(item.soToken, 0, 'COMMA')}"></td>
-                  <td style="padding: 10px 8px; text-align: right; color: #555;" th:text="${#numbers.formatInteger(item.soLuotCap, 0, 'COMMA')}"></td>
-                  <td style="padding: 10px 8px; text-align: right; color: #0073b7; font-weight: 600;" th:text="${#numbers.formatDecimal(item.doanhThuDon, 0, 'COMMA', 0, 'POINT')}"></td>
-                  <td style="padding: 10px 8px; text-align: right; color: #f39c12; font-weight: 600;" th:text="${#numbers.formatDecimal(item.doanhThuDa, 0, 'COMMA', 0, 'POINT')}"></td>
-                  <td style="padding: 10px 8px; text-align: right; color: #00a65a; font-weight: bold; font-size: 15px;" th:text="${#numbers.formatDecimal(item.doanhThuTong, 0, 'COMMA', 0, 'POINT')}"></td>
-                </tr>
+                <th:block th:each="group : ${summary}">
+                  <!-- Dòng tổng của Chiến Dịch -->
+                  <tr style="background-color: #e8f4f8; font-weight: bold; border-top: 2px solid #3c8dbc; border-bottom: 2px solid #3c8dbc;">
+                    <td style="padding: 12px 8px; color: #0056b3;" th:text="${group.tenChienDich} + ' (Tổng)'"></td>
+                    <td style="padding: 12px 8px; color: #555;">Tất cả Cửa hàng</td>
+                    <td style="padding: 12px 8px; text-align: right; color: #555;" th:text="${#numbers.formatInteger(group.soHoaDon, 0, 'COMMA')}"></td>
+                    <td style="padding: 12px 8px; text-align: right; color: #555;" th:text="${#numbers.formatInteger(group.soToken, 0, 'COMMA')}"></td>
+                    <td style="padding: 12px 8px; text-align: right; color: #555;" th:text="${#numbers.formatInteger(group.soLuotCap, 0, 'COMMA')}"></td>
+                    <td style="padding: 12px 8px; text-align: right; color: #0073b7;" th:text="${#numbers.formatDecimal(group.doanhThuDon, 0, 'COMMA', 0, 'POINT')}"></td>
+                    <td style="padding: 12px 8px; text-align: right; color: #f39c12;" th:text="${#numbers.formatDecimal(group.doanhThuDa, 0, 'COMMA', 0, 'POINT')}"></td>
+                    <td style="padding: 12px 8px; text-align: right; color: #00a65a; font-size: 15px;" th:text="${#numbers.formatDecimal(group.doanhThuTong, 0, 'COMMA', 0, 'POINT')}"></td>
+                  </tr>
+                  <!-- Dòng chi tiết từng cửa hàng -->
+                  <tr th:each="item : ${group.stores}" style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px 8px 10px 20px; color: #777;">↳</td>
+                    <td style="padding: 10px 8px; color: #555;" th:text="${item.tenStore}"></td>
+                    <td style="padding: 10px 8px; text-align: right; color: #555;" th:text="${#numbers.formatInteger(item.soHoaDon, 0, 'COMMA')}"></td>
+                    <td style="padding: 10px 8px; text-align: right; color: #555; font-weight: bold;" th:text="${#numbers.formatInteger(item.soToken, 0, 'COMMA')}"></td>
+                    <td style="padding: 10px 8px; text-align: right; color: #555;" th:text="${#numbers.formatInteger(item.soLuotCap, 0, 'COMMA')}"></td>
+                    <td style="padding: 10px 8px; text-align: right; color: #0073b7; font-weight: 600;" th:text="${#numbers.formatDecimal(item.doanhThuDon, 0, 'COMMA', 0, 'POINT')}"></td>
+                    <td style="padding: 10px 8px; text-align: right; color: #f39c12; font-weight: 600;" th:text="${#numbers.formatDecimal(item.doanhThuDa, 0, 'COMMA', 0, 'POINT')}"></td>
+                    <td style="padding: 10px 8px; text-align: right; color: #00a65a; font-weight: bold; font-size: 15px;" th:text="${#numbers.formatDecimal(item.doanhThuTong, 0, 'COMMA', 0, 'POINT')}"></td>
+                  </tr>
+                </th:block>
               </tbody>
             </table>
           </div>

@@ -31,6 +31,7 @@ public class SecurityConfig {
                 .requestMatchers("/quanly/staffs", "/quanly/staffs/**").hasAnyAuthority("ROLE_ADMIN", "QL_NHANVIEN")
                 .requestMatchers("/quanly/stores", "/quanly/stores/**").hasAnyAuthority("ROLE_ADMIN", "QL_CUAHANG")
                 .requestMatchers("/quanly/turns", "/quanly/turns/**").hasAnyAuthority("ROLE_ADMIN", "QL_LUOTQUAY")
+                .requestMatchers("/quanly/report", "/quanly/report/**").hasAnyAuthority("ROLE_ADMIN", "QL_BAOCAODOANHTHU")
                 .requestMatchers("/quanly", "/quanly/").authenticated()
                 .requestMatchers("/quanly/**").hasRole("ADMIN")
                 .anyRequest().permitAll() // Allow customer-facing endpoints

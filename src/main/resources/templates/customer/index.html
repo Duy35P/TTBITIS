@@ -245,7 +245,7 @@
                 <h2 class="card-title" th:text="${camp.tenChienDich}">Tên Chiến Dịch</h2>
                 <p class="card-desc" th:text="${camp.moTa}">Mô tả chiến dịch</p>
                 <div class="card-footer">
-                    <span class="card-date">Vào quay ngay!</span>
+                    <span class="card-date" th:text="${camp.timeRange != '' ? camp.timeRange : 'Vào quay ngay!'}">Vào quay ngay!</span>
                     <span class="btn-action">
                         Tham gia
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

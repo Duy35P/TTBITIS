@@ -58,7 +58,4 @@ public interface StorePrizeInventoryRepository extends JpaRepository<StorePrizeI
                                    @Param("maGiaiThuong") String maGiaiThuong, 
                                    @Param("newTongLuongCap") int newTongLuongCap);
 
-    @Modifying
-    @Query(value = "EXEC sp_RedeemStorePrize @MaStore = :maStore, @MaGiaiThuong = :maGiaiThuong", nativeQuery = true)
-    void redeemStorePrize(@Param("maStore") String maStore, @Param("maGiaiThuong") String maGiaiThuong);
 }

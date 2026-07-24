@@ -62,20 +62,10 @@ public class AdminInvoiceController {
         org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         List<Invoice> invoices = rawInvoices;
         
-        if (auth != null && auth.getPrincipal() instanceof com.bitis.luckydraw.security.CustomUserDetails) {
-            com.bitis.luckydraw.security.CustomUserDetails userDetails = (com.bitis.luckydraw.security.CustomUserDetails) auth.getPrincipal();
-            boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            
-            if (!isAdmin) {
-                if (userDetails.getAssignedStores() != null && !userDetails.getAssignedStores().isEmpty()) {
-                    invoices = rawInvoices.stream()
-                        .filter(inv -> userDetails.getAssignedStores().contains(inv.getMaStore()))
-                        .collect(Collectors.toList());
-                } else if (userDetails.getMaStore() != null) {
-                    invoices = rawInvoices.stream()
-                        .filter(inv -> userDetails.getMaStore().equals(inv.getMaStore()))
-                        .collect(Collectors.toList());
-                }
+        if (auth != null && auth.getPrincipal() instanceof com.bitis.luckydraw.security.CustomUserDetails ud) {
+            java.util.List<String> allowedStores = ud.getEffectiveStores();
+            if (allowedStores != null) {
+                invoices.removeIf(inv -> !allowedStores.contains(inv.getMaStore()));
             }
         }
         

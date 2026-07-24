@@ -199,7 +199,7 @@
           </div>
         </div>
 
-        <div class="form-group" style="margin-top: 25px;">
+        <div class="form-group" style="margin-top: 25px;" id="prizeListSettings">
           <label>Danh Sách Giải Thưởng (Slices)</label>
           <div class="prize-list-setup" id="prizeContainer">
             <!-- Dynamic Prize Rows -->
@@ -369,9 +369,6 @@
           </div>
         `;
       });
-      // Ẩn màu ô nếu là game hộp quà
-      const isWheel = config.interactionType === 'wheel' || !config.interactionType;
-      document.querySelectorAll('.prize-color-input').forEach(el => el.style.display = isWheel ? 'block' : 'none');
       drawWheelPreview();
     }
 
@@ -442,7 +439,7 @@
 
       // Toggle UI visibility
       const isWheel = config.interactionType === 'wheel' || !config.interactionType;
-      document.querySelectorAll('.prize-color-input').forEach(el => el.style.display = isWheel ? 'block' : 'none');
+      document.getElementById('prizeListSettings').style.display = isWheel ? 'block' : 'none';
 
       if (config.interactionType === 'boxes' || config.interactionType === 'single_box') {
           document.getElementById('wheelOnlySettings').style.display = 'none';

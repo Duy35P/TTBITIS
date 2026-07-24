@@ -615,6 +615,10 @@ public class AdminCampaignController {
             changes.add("hạn token");
         }
         
+        if (!java.util.Objects.equals(existing.getSoNgayHienThiThem(), newValues.getSoNgayHienThiThem())) {
+            changes.add("số ngày hiển thị thêm");
+        }
+        
         if (changes.isEmpty()) {
             return "Chỉnh sửa thông tin chiến dịch";
         }

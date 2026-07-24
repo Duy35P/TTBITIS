@@ -149,7 +149,7 @@
           <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_VOUCHER')"><a th:href="@{/quanly/vouchers}"><span>Lịch sử Trúng thưởng</span></a></li>
           <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_KIEMTRAMA')"><a th:href="@{/quanly/redemption}"><span>Kiểm tra Mã Quà tặng</span></a></li>
           <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_LUOTQUAY')"><a th:href="@{/quanly/turns}"><span>Biến động Lượt quay</span></a></li>
-          <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/quanly/report/revenue}"><span>Báo cáo Doanh thu</span></a></li>
+          <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_BAOCAODOANHTHU')"><a th:href="@{/quanly/report/revenue}"><span>Báo cáo Doanh thu</span></a></li>
           <li sec:authorize="hasRole('ADMIN') or hasAuthority('QL_HOADON')"><a th:href="@{/quanly/invoices}"><span>Tra cứu Hóa đơn</span></a></li>
           <li><a th:href="@{/quanly/profile}"><span>Cài đặt</span></a></li>
           <li>

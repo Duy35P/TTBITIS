@@ -19,11 +19,20 @@ public class AdminRedemptionController {
 
     private final RewardVoucherRepository rewardVoucherRepository;
     private final com.bitis.luckydraw.repository.StorePrizeInventoryRepository storePrizeInventoryRepository;
+    private final com.bitis.luckydraw.repository.PrizeCodeRepository prizeCodeRepository;
+    private final com.bitis.luckydraw.repository.PrizeRepository prizeRepository;
+    private final com.bitis.luckydraw.repository.CampaignRepository campaignRepository;
 
     public AdminRedemptionController(RewardVoucherRepository rewardVoucherRepository, 
-                                     com.bitis.luckydraw.repository.StorePrizeInventoryRepository storePrizeInventoryRepository) {
+                                     com.bitis.luckydraw.repository.StorePrizeInventoryRepository storePrizeInventoryRepository,
+                                     com.bitis.luckydraw.repository.PrizeCodeRepository prizeCodeRepository,
+                                     com.bitis.luckydraw.repository.PrizeRepository prizeRepository,
+                                     com.bitis.luckydraw.repository.CampaignRepository campaignRepository) {
         this.rewardVoucherRepository = rewardVoucherRepository;
         this.storePrizeInventoryRepository = storePrizeInventoryRepository;
+        this.prizeCodeRepository = prizeCodeRepository;
+        this.prizeRepository = prizeRepository;
+        this.campaignRepository = campaignRepository;
     }
 
     @GetMapping
@@ -39,6 +48,27 @@ public class AdminRedemptionController {
     public ResponseEntity<?> checkVoucher(@RequestParam("code") String code) {
         Optional<RewardVoucherListDto> opt = rewardVoucherRepository.getRewardVoucherDetail(code);
         if (opt.isEmpty()) {
+            Optional<com.bitis.luckydraw.model.PrizeCode> pcOpt = prizeCodeRepository.findByCode(code);
+            if (pcOpt.isPresent()) {
+                com.bitis.luckydraw.model.PrizeCode pc = pcOpt.get();
+                com.bitis.luckydraw.model.Prize prize = prizeRepository.findByMaGiaiThuong(pc.getMaGiaiThuong()).orElse(null);
+                String tenGiai = prize != null ? prize.getTenGiai() : "Không xác định";
+                String tenChienDich = "Không xác định";
+                if (prize != null && prize.getMaChienDich() != null) {
+                    com.bitis.luckydraw.model.Campaign camp = campaignRepository.findByMaChienDich(prize.getMaChienDich()).orElse(null);
+                    if (camp != null) tenChienDich = camp.getTenChienDich();
+                }
+                return ResponseEntity.badRequest().body(Map.of(
+                    "message", "Mã chưa được phát.",
+                    "detail", Map.of(
+                        "tenGiai", tenGiai,
+                        "tenChienDich", tenChienDich,
+                        "tenKhach", "Chưa có (Chưa phát)",
+                        "phone", "Chưa có"
+                    ),
+                    "tonKho", 0
+                ));
+            }
             return ResponseEntity.badRequest().body(Map.of("message", "Mã không tồn tại trong hệ thống."));
         }
         

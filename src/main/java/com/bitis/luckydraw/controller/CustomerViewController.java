@@ -102,6 +102,13 @@ public class CustomerViewController {
             cData.put("badgeText", badgeText);
             cData.put("badgeClass", badgeClass);
             
+            String timeRange = "";
+            java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            if (camp.getNgayBatDau() != null && camp.getNgayKetThuc() != null) {
+                timeRange = camp.getNgayBatDau().format(dtf) + " - " + camp.getNgayKetThuc().format(dtf);
+            }
+            cData.put("timeRange", timeRange);
+            
             if (turns > 0) {
                 displayCampaigns.add(cData);
             } else {

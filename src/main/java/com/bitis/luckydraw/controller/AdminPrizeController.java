@@ -107,36 +107,22 @@ public class AdminPrizeController {
         List<StoreInventoryDto> allocations = rawAllocations;
 
         // LÀM ĐƠN GIẢN: Filter allocations based on user details
-        if (!isAdmin && auth.getPrincipal() instanceof com.bitis.luckydraw.security.CustomUserDetails) {
-            com.bitis.luckydraw.security.CustomUserDetails userDetails = (com.bitis.luckydraw.security.CustomUserDetails) auth.getPrincipal();
-            if (userDetails.getAssignedStores() != null && !userDetails.getAssignedStores().isEmpty()) {
-                allocations = rawAllocations.stream()
-                    .filter(a -> userDetails.getAssignedStores().contains(a.getMaStore()))
-                    .collect(java.util.stream.Collectors.toList());
-            } else if (userDetails.getMaStore() != null) {
-                allocations = rawAllocations.stream()
-                    .filter(a -> userDetails.getMaStore().equals(a.getMaStore()))
-                    .collect(java.util.stream.Collectors.toList());
-            }
+        final java.util.List<String> allowedStores = (auth.getPrincipal() instanceof com.bitis.luckydraw.security.CustomUserDetails ud) ? ud.getEffectiveStores() : null;
+
+        if (allowedStores != null) {
+            allocations.removeIf(a -> !allowedStores.contains(a.getMaStore()));
         }
 
         if (!isAdmin) {
             java.util.Set<String> validCampaigns = allocations.stream().map(StoreInventoryDto::getMaChienDich).collect(java.util.stream.Collectors.toSet());
-            prizes = prizes.stream().filter(p -> validCampaigns.contains(p.getMaChienDich())).collect(java.util.stream.Collectors.toList());
+            prizes.removeIf(p -> !validCampaigns.contains(p.getMaChienDich()));
         }
+        
         List<Store> stores = storeRepository.findAll();
-        if (!isAdmin && auth.getPrincipal() instanceof com.bitis.luckydraw.security.CustomUserDetails) {
-            com.bitis.luckydraw.security.CustomUserDetails userDetails = (com.bitis.luckydraw.security.CustomUserDetails) auth.getPrincipal();
-            if (userDetails.getAssignedStores() != null && !userDetails.getAssignedStores().isEmpty()) {
-                stores = stores.stream()
-                    .filter(s -> userDetails.getAssignedStores().contains(s.getMaStore()))
-                    .collect(java.util.stream.Collectors.toList());
-            } else if (userDetails.getMaStore() != null) {
-                stores = stores.stream()
-                    .filter(s -> userDetails.getMaStore().equals(s.getMaStore()))
-                    .collect(java.util.stream.Collectors.toList());
-            }
+        if (allowedStores != null) {
+            stores.removeIf(s -> !allowedStores.contains(s.getMaStore()));
         }
+        
         List<CampaignStore> campaignStores = campaignStoreRepository.findAll();
 
         model.addAttribute("prizes", prizes);
@@ -599,20 +585,10 @@ public class AdminPrizeController {
                     (prizeParam != null && !prizeParam.isEmpty()) ? prizeParam : null
             );
             
-            boolean isAdmin = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
             Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            
-            if (!isAdmin && principal instanceof com.bitis.luckydraw.security.CustomUserDetails) {
-                com.bitis.luckydraw.security.CustomUserDetails userDetails = (com.bitis.luckydraw.security.CustomUserDetails) principal;
-                if (userDetails.getAssignedStores() != null && !userDetails.getAssignedStores().isEmpty()) {
-                    allocations = allocations.stream()
-                        .filter(a -> userDetails.getAssignedStores().contains(a.getMaStore()))
-                        .collect(java.util.stream.Collectors.toList());
-                } else if (userDetails.getMaStore() != null) {
-                    allocations = allocations.stream()
-                        .filter(a -> userDetails.getMaStore().equals(a.getMaStore()))
-                        .collect(java.util.stream.Collectors.toList());
-                }
+            java.util.List<String> allowedStores = (principal instanceof com.bitis.luckydraw.security.CustomUserDetails ud) ? ud.getEffectiveStores() : null;
+            if (allowedStores != null) {
+                allocations.removeIf(a -> !allowedStores.contains(a.getMaStore()));
             }
 
             

@@ -164,35 +164,7 @@ public class CustomerAuthController {
 
         // 3. Smart Routing
         if (receipt != null && !receipt.trim().isEmpty()) {
-            try {
-                // Thử tìm và sử dụng token nếu đã được POS xử lý (Webhook)
-                boolean tokenUsed = turnManagementService.useGameAccessToken(receipt, customer.getMaKhachHang());
-                
-                if (tokenUsed) {
-                    redirectAttributes.addFlashAttribute("successMessage", "Bạn đã dùng mã QR thành công và vào game.");
-                    return "redirect:/customer/index";
-                }
-                
-                // Fallback: Xử lý trực tiếp hóa đơn nếu token chưa có
-                java.util.List<String> campaigns = turnManagementService.claimInvoice(receipt, customer.getMaKhachHang());
-                if (campaigns.size() == 1) {
-                    redirectAttributes.addFlashAttribute("successMessage", "Bạn nhận được lượt quay từ mã QR " + receipt);
-                    return "redirect:/customer/spin?campaign=" + campaigns.get(0);
-                } else if (campaigns.size() > 1) {
-                    redirectAttributes.addFlashAttribute("successMessage", "Tuyệt vời! Mã QR mang lại lượt quay ở " + campaigns.size() + " chương trình. Mời bạn chọn chương trình để chơi.");
-                    return "redirect:/customer/index";
-                } else {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Mã QR (Hóa đơn) này không thỏa điều kiện nhận lượt quay.");
-                    return "redirect:/customer/index";
-                }
-            } catch (Exception e) {
-                if (e.getMessage() != null && (e.getMessage().contains("đã được sử dụng") || e.getMessage().contains("đã được nhận lượt"))) {
-                    redirectAttributes.addFlashAttribute("successMessage", "Chào mừng bạn quay lại! Hóa đơn này đã được xác nhận trước đó.");
-                } else {
-                    redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-                }
-                return "redirect:/customer/index";
-            }
+                return processReceiptAndRedirect(receipt, customer.getMaKhachHang(), redirectAttributes, "Bạn đã dùng mã QR thành công và vào game.", "Bạn nhận được lượt quay từ mã QR " + receipt, "Tuyệt vời! Mã QR mang lại lượt quay ở %d chương trình. Mời bạn chọn chương trình để chơi.");
         }
 
         redirectAttributes.addFlashAttribute("successMessage", "Đăng nhập thành công!");
@@ -301,31 +273,7 @@ public class CustomerAuthController {
 
             // Smart Routing (giống hệt mockLogin)
             if (receipt != null && !receipt.trim().isEmpty()) {
-                try {
-                    boolean tokenUsed = turnManagementService.useGameAccessToken(receipt, customer.getMaKhachHang());
-                    if (tokenUsed) {
-                        redirectAttributes.addFlashAttribute("successMessage", "Đăng nhập Zalo thành công! Bạn đã dùng mã QR vào game.");
-                        return "redirect:/customer/index";
-                    }
-                    java.util.List<String> campaigns = turnManagementService.claimInvoice(receipt, customer.getMaKhachHang());
-                    if (campaigns.size() == 1) {
-                        redirectAttributes.addFlashAttribute("successMessage", "Bạn nhận được lượt quay từ hóa đơn.");
-                        return "redirect:/customer/spin?campaign=" + campaigns.get(0);
-                    } else if (campaigns.size() > 1) {
-                        redirectAttributes.addFlashAttribute("successMessage", "Mã hóa đơn áp dụng cho " + campaigns.size() + " chương trình.");
-                        return "redirect:/customer/index";
-                    } else {
-                        redirectAttributes.addFlashAttribute("errorMessage", "Mã không thỏa điều kiện nhận lượt.");
-                        return "redirect:/customer/index";
-                    }
-                } catch (Exception e) {
-                    if (e.getMessage() != null && (e.getMessage().contains("đã được sử dụng") || e.getMessage().contains("đã được nhận lượt"))) {
-                        redirectAttributes.addFlashAttribute("successMessage", "Chào mừng bạn quay lại!");
-                    } else {
-                        redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-                    }
-                    return "redirect:/customer/index";
-                }
+                return processReceiptAndRedirect(receipt, customer.getMaKhachHang(), redirectAttributes, "Đăng nhập Zalo thành công! Bạn đã dùng mã QR vào game.", "Bạn nhận được lượt quay từ hóa đơn.", "Mã hóa đơn áp dụng cho %d chương trình.");
             }
 
             redirectAttributes.addFlashAttribute("successMessage", "Đăng nhập Zalo thành công!");
@@ -360,26 +308,30 @@ public class CustomerAuthController {
         // Xóa receipt khỏi session sau khi xử lý để tránh lặp lại
         session.removeAttribute("PENDING_RECEIPT");
 
+        return processReceiptAndRedirect(receipt, maKhachHang, redirectAttributes, "Xác nhận mã QR thành công! Lượt quay đã được cộng vào tài khoản của bạn.", "Bạn nhận được lượt quay từ hóa đơn.", "Mã hóa đơn áp dụng cho %d chương trình.");
+    }
+
+    private String processReceiptAndRedirect(String receipt, String maKhachHang, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes, String tokenSuccessMsg, String singleCampaignMsg, String multiCampaignMsgFormat) {
         try {
             boolean tokenUsed = turnManagementService.useGameAccessToken(receipt, maKhachHang);
             if (tokenUsed) {
-                redirectAttributes.addFlashAttribute("successMessage", "Xác nhận mã QR thành công! Lượt quay đã được cộng vào tài khoản của bạn.");
+                redirectAttributes.addFlashAttribute("successMessage", tokenSuccessMsg);
                 return "redirect:/customer/index";
             }
             java.util.List<String> campaigns = turnManagementService.claimInvoice(receipt, maKhachHang);
             if (campaigns.size() == 1) {
-                redirectAttributes.addFlashAttribute("successMessage", "Bạn nhận được lượt quay từ hóa đơn.");
+                redirectAttributes.addFlashAttribute("successMessage", singleCampaignMsg);
                 return "redirect:/customer/spin?campaign=" + campaigns.get(0);
             } else if (campaigns.size() > 1) {
-                redirectAttributes.addFlashAttribute("successMessage", "Mã hóa đơn áp dụng cho " + campaigns.size() + " chương trình.");
+                redirectAttributes.addFlashAttribute("successMessage", String.format(multiCampaignMsgFormat, campaigns.size()));
                 return "redirect:/customer/index";
             } else {
-                redirectAttributes.addFlashAttribute("errorMessage", "Mã không thỏa điều kiện nhận lượt.");
+                redirectAttributes.addFlashAttribute("successMessage", "Chào mừng bạn!");
                 return "redirect:/customer/index";
             }
         } catch (Exception e) {
-            if (e.getMessage() != null && (e.getMessage().contains("đã được sử dụng") || e.getMessage().contains("đã được nhận lượt"))) {
-                redirectAttributes.addFlashAttribute("successMessage", "Chào mừng bạn quay lại!");
+            if (e.getMessage() != null && (e.getMessage().contains("đã được sử dụng") || e.getMessage().contains("đã được nhận lượt") || e.getMessage().contains("Không tìm thấy hóa đơn"))) {
+                redirectAttributes.addFlashAttribute("successMessage", "Chào mừng bạn!");
             } else {
                 redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             }
