@@ -1,57 +1,18 @@
 package com.bitis.luckydraw.controller;
 
 import org.springframework.security.access.prepost.PreAuthorize;
-import com.bitis.luckydraw.model.Campaign;
-
-import com.bitis.luckydraw.repository.CampaignRepository;
-
-import org.springframework.stereotype.Controller;
-
-import org.springframework.ui.Model;
-
-import org.springframework.web.bind.annotation.*;
-
-
-import com.bitis.luckydraw.model.Store;
-
-import com.bitis.luckydraw.model.CampaignStore;
-
-import com.bitis.luckydraw.model.CampaignRule;
-
-import com.bitis.luckydraw.model.CampaignRulePayment;
-
-import com.bitis.luckydraw.model.CampaignRuleSku;
-
-import com.bitis.luckydraw.model.Prize;
-
-import com.bitis.luckydraw.repository.StoreRepository;
-
-import com.bitis.luckydraw.repository.CampaignStoreRepository;
-
-import com.bitis.luckydraw.repository.CampaignRuleRepository;
-
-import com.bitis.luckydraw.repository.CampaignRulePaymentRepository;
-
-import com.bitis.luckydraw.repository.CampaignRuleSkuRepository;
-
-import com.bitis.luckydraw.repository.PrizeRepository;
-
-import com.bitis.luckydraw.repository.SystemAuditLogRepository;
-
-import com.bitis.luckydraw.model.SystemAuditLog;
-
+import com.bitis.luckydraw.model.*;
+import com.bitis.luckydraw.repository.*;
 import com.bitis.luckydraw.dto.CampaignRuleForm;
-
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-
 import java.util.stream.Collectors;
-
-
-import org.springframework.jdbc.core.JdbcTemplate;
-
-import org.springframework.transaction.annotation.Transactional;
 
 @Controller
 @RequestMapping("/quanly/campaigns")
@@ -79,6 +40,43 @@ public class AdminCampaignController {
         this.systemAuditLogRepository = systemAuditLogRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.prizeRepository = prizeRepository;
+    }
+
+    // Helper: Lấy lỗi nguyên thủy
+    private String extractErrorMessage(Exception e) {
+        return (e.getCause() != null && e.getCause().getCause() != null) ? e.getCause().getCause().getMessage() : e.getMessage();
+    }
+
+    // Helper: Ghi log hệ thống
+    private void logAudit(String actionType, String targetRecordId, String description) {
+        SystemAuditLog log = new SystemAuditLog();
+        log.setStaffId(1L); // TODO: Get from auth
+        log.setActionType(actionType);
+        log.setTargetTable("campaign");
+        log.setTargetRecordId(targetRecordId);
+        log.setDescription(description);
+        log.setIpAddress("127.0.0.1"); // TODO: Get actual IP if needed
+        systemAuditLogRepository.save(log);
+    }
+
+    // Helper: Tìm Campaign
+    private Campaign getCampaignOrThrow(Long id) {
+        return campaignRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chiến dịch"));
+    }
+
+    // Helper: Tạo rule map từ form
+    private java.util.Map<String, Integer> buildRuleMap(List<String> keys, List<Integer> values) {
+        java.util.Map<String, Integer> map = new java.util.HashMap<>();
+        if (keys != null && values != null) {
+            for (int i = 0; i < keys.size(); i++) {
+                String key = keys.get(i);
+                Integer value = (i < values.size()) ? values.get(i) : null;
+                if (key != null && !key.trim().isEmpty() && value != null) {
+                    map.put(key.trim(), value);
+                }
+            }
+        }
+        return map;
     }
 
     @GetMapping
@@ -192,7 +190,7 @@ public class AdminCampaignController {
         campaignRepository.save(campaign);
         
         if (isNew) {
-            com.bitis.luckydraw.model.Prize losePrize = new com.bitis.luckydraw.model.Prize();
+            Prize losePrize = new Prize();
             losePrize.setMaChienDich(campaign.getMaChienDich());
             losePrize.setMaGiaiThuong("TRUOT-" + System.currentTimeMillis());
             losePrize.setTenGiai("Chúc may mắn lần sau");
@@ -210,14 +208,7 @@ public class AdminCampaignController {
             for (String table : relatedTables) jdbcTemplate.update("UPDATE " + table + " SET ma_chien_dich = ? WHERE ma_chien_dich = ?", newMaChienDich, oldMaChienDich);
         }
         
-        SystemAuditLog log = new SystemAuditLog();
-        log.setStaffId(1L);
-        log.setActionType(isNew ? "CREATE" : "UPDATE");
-        log.setTargetTable("campaign");
-        log.setTargetRecordId(campaign.getMaChienDich());
-        log.setDescription(actionDescription);
-        log.setIpAddress("127.0.0.1");
-        systemAuditLogRepository.save(log);
+        logAudit(isNew ? "CREATE" : "UPDATE", campaign.getMaChienDich(), actionDescription);
     }
 
     private void validateExclusiveStores(Campaign currentCampaign, java.util.Set<String> storeMasToValidate) throws IllegalArgumentException {
@@ -256,8 +247,7 @@ public class AdminCampaignController {
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
-            String errorMsg = e.getCause() != null && e.getCause().getCause() != null ? e.getCause().getCause().getMessage() : e.getMessage();
-            redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
+            redirectAttributes.addFlashAttribute("errorMessage", extractErrorMessage(e));
         }
         return "redirect:/quanly/campaigns";
     }
@@ -275,9 +265,8 @@ public class AdminCampaignController {
             response.put("success", false);
             response.put("message", e.getMessage());
         } catch (Exception e) {
-            String errorMsg = e.getCause() != null && e.getCause().getCause() != null ? e.getCause().getCause().getMessage() : e.getMessage();
             response.put("success", false);
-            response.put("message", "Lỗi máy chủ: " + errorMsg);
+            response.put("message", "Lỗi máy chủ: " + extractErrorMessage(e));
         }
         return response;
     }
@@ -285,35 +274,28 @@ public class AdminCampaignController {
     @PostMapping("/toggle-status")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CHIENDICH_EDIT')")
     public String toggleStatus(@RequestParam Long campaignId, @RequestParam Integer status, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
-        campaignRepository.findById(campaignId).ifPresent(campaign -> {
-            if (status == 1) { // Đang yêu cầu Kích hoạt
-                String maChienDich = campaign.getMaChienDich();
-                boolean hasRules = campaignRuleRepository.findByMaChienDich(maChienDich).isPresent() ||
-                                   !campaignRulePaymentRepository.findByMaChienDich(maChienDich).isEmpty() ||
-                                   !campaignRuleSkuRepository.findByMaChienDich(maChienDich).isEmpty();
-                
-                if (!hasRules) {
-                    redirectAttributes.addFlashAttribute("errorMessage", "Không thể kích hoạt vì chiến dịch chưa được cấu hình luật chơi (Basic, SKU, hoặc Payment).");
-                    return;
-                }
-            }
-            campaign.setTrangThai(status);
-            campaignRepository.save(campaign);
+        Campaign campaign = getCampaignOrThrow(campaignId);
+        if (status == 1) { // Đang yêu cầu Kích hoạt
+            String maChienDich = campaign.getMaChienDich();
+            boolean hasRules = campaignRuleRepository.findByMaChienDich(maChienDich).isPresent() ||
+                               !campaignRulePaymentRepository.findByMaChienDich(maChienDich).isEmpty() ||
+                               !campaignRuleSkuRepository.findByMaChienDich(maChienDich).isEmpty();
             
-            SystemAuditLog log = new SystemAuditLog();
-            log.setStaffId(1L); // TODO: Get from auth
-            log.setActionType("UPDATE");
-            log.setTargetTable("campaign");
-            log.setTargetRecordId(campaign.getMaChienDich());
-            log.setDescription(status == 1 ? "Yêu cầu kích hoạt chiến dịch" : "Tạm ngưng chiến dịch");
-            log.setIpAddress("127.0.0.1"); // TODO: Get actual IP if needed
-            systemAuditLogRepository.save(log);
-        });
+            if (!hasRules) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Không thể kích hoạt vì chiến dịch chưa được cấu hình luật chơi (Basic, SKU, hoặc Payment).");
+                return "redirect:/quanly/campaigns";
+            }
+        }
+        campaign.setTrangThai(status);
+        campaignRepository.save(campaign);
+        
+        logAudit("UPDATE", campaign.getMaChienDich(), status == 1 ? "Yêu cầu kích hoạt chiến dịch" : "Tạm ngưng chiến dịch");
         return "redirect:/quanly/campaigns";
     }
+
     @GetMapping("/{campaignId}/history")
     public String getCampaignHistoryModal(@PathVariable Long campaignId, Model model) {
-        Campaign campaign = campaignRepository.findById(campaignId).orElseThrow();
+        Campaign campaign = getCampaignOrThrow(campaignId);
         List<SystemAuditLog> historyList = systemAuditLogRepository.findByTargetTableAndTargetRecordIdOrderByIdDesc("campaign", campaign.getMaChienDich());
         
         model.addAttribute("campaign", campaign);
@@ -324,37 +306,29 @@ public class AdminCampaignController {
 
     @GetMapping("/{campaignId}/stores")
     public String getStoreAllocationModal(@PathVariable Long campaignId, Model model) {
-        // Find all active stores
         List<Store> activeStores = storeRepository.findByTrangThai(1);
-        
-        // Find currently assigned stores
-        Campaign campaign = campaignRepository.findById(campaignId).orElseThrow();
+        Campaign campaign = getCampaignOrThrow(campaignId);
         List<String> assignedStoreMas = campaignStoreRepository.findByMaChienDich(campaign.getMaChienDich())
-                .stream()
-                .map(CampaignStore::getMaStore)
-                .collect(Collectors.toList());
+                .stream().map(CampaignStore::getMaStore).collect(Collectors.toList());
                 
         model.addAttribute("campaignId", campaignId);
         model.addAttribute("activeStores", activeStores);
         model.addAttribute("assignedStoreMas", assignedStoreMas);
         
-        // Return a fragment HTML to be injected into the modal body
         return "quanly/fragments/store-allocation-fragment :: content";
     }
     
     @PostMapping("/{campaignId}/stores/save")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CHIENDICH_EDIT')")
     public String saveStoreAllocation(@PathVariable Long campaignId, @RequestParam(required = false) List<String> storeMas, RedirectAttributes redirectAttributes) {
-        Campaign campaign = campaignRepository.findById(campaignId).orElseThrow();
+        Campaign campaign = getCampaignOrThrow(campaignId);
         String maChienDich = campaign.getMaChienDich();
         
         List<CampaignStore> oldStores = campaignStoreRepository.findByMaChienDich(maChienDich);
         java.util.Set<String> oldStoreMas = oldStores.stream().map(CampaignStore::getMaStore).collect(java.util.stream.Collectors.toSet());
         
         java.util.Set<String> newStoreMas = new java.util.HashSet<>();
-        if (storeMas != null) {
-            newStoreMas.addAll(storeMas);
-        }
+        if (storeMas != null) newStoreMas.addAll(storeMas);
         
         if (Boolean.TRUE.equals(campaign.getDocQuyen())) {
             try {
@@ -371,10 +345,8 @@ public class AdminCampaignController {
         java.util.Set<String> removedStores = new java.util.HashSet<>(oldStoreMas);
         removedStores.removeAll(newStoreMas);
 
-        // Delete old assignments
         campaignStoreRepository.deleteByMaChienDich(maChienDich);
         
-        // Save new ones
         if (storeMas != null) {
             for (String storeMa : storeMas) {
                 CampaignStore mapping = new CampaignStore();
@@ -386,24 +358,12 @@ public class AdminCampaignController {
         
         if (!addedStores.isEmpty() || !removedStores.isEmpty()) {
             StringBuilder desc = new StringBuilder("Thay đổi phân bổ cửa hàng:");
-            if (!addedStores.isEmpty()) {
-                desc.append(" thêm ");
-                desc.append(formatStoreList(addedStores));
-            }
+            if (!addedStores.isEmpty()) desc.append(" thêm ").append(formatStoreList(addedStores));
             if (!removedStores.isEmpty()) {
                 if (!addedStores.isEmpty()) desc.append(",");
-                desc.append(" gỡ bỏ ");
-                desc.append(formatStoreList(removedStores));
+                desc.append(" gỡ bỏ ").append(formatStoreList(removedStores));
             }
-            
-            SystemAuditLog log = new SystemAuditLog();
-            log.setStaffId(1L); // TODO: Get from auth
-            log.setActionType("UPDATE");
-            log.setTargetTable("campaign");
-            log.setTargetRecordId(maChienDich);
-            log.setDescription(desc.toString());
-            log.setIpAddress("127.0.0.1");
-            systemAuditLogRepository.save(log);
+            logAudit("UPDATE", maChienDich, desc.toString());
         }
         
         return "redirect:/quanly/campaigns";
@@ -411,7 +371,7 @@ public class AdminCampaignController {
 
     @GetMapping("/{campaignId}/rules")
     public String getCampaignRulesModal(@PathVariable Long campaignId, Model model) {
-        Campaign campaign = campaignRepository.findById(campaignId).orElseThrow();
+        Campaign campaign = getCampaignOrThrow(campaignId);
         String maChienDich = campaign.getMaChienDich();
         CampaignRule rule = campaignRuleRepository.findByMaChienDich(maChienDich).orElse(new CampaignRule());
         List<CampaignRulePayment> payments = campaignRulePaymentRepository.findByMaChienDich(maChienDich);
@@ -429,10 +389,9 @@ public class AdminCampaignController {
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACT_CHIENDICH_EDIT')")
     public String saveCampaignRules(@PathVariable Long campaignId, @ModelAttribute CampaignRuleForm form, RedirectAttributes redirectAttributes) {
         try {
-            Campaign campaign = campaignRepository.findById(campaignId).orElseThrow();
+            Campaign campaign = getCampaignOrThrow(campaignId);
             String maChienDich = campaign.getMaChienDich();
             
-            // Fetch old rules for comparison
             CampaignRule oldBasicRule = campaignRuleRepository.findByMaChienDich(maChienDich).orElse(null);
             List<CampaignRulePayment> oldPayments = campaignRulePaymentRepository.findByMaChienDich(maChienDich);
             List<CampaignRuleSku> oldSkus = campaignRuleSkuRepository.findByMaChienDich(maChienDich);
@@ -441,48 +400,18 @@ public class AdminCampaignController {
             Double newMinOrder = form.getGiaTriDonHangToiThieu();
             boolean basicChanged = !java.util.Objects.equals(oldMinOrder, newMinOrder);
             
-            java.util.Map<String, Integer> oldPaymentMap = new java.util.HashMap<>();
-            if (oldPayments != null) {
-                for (CampaignRulePayment p : oldPayments) {
-                    oldPaymentMap.put(p.getPhuongThucThanhToan(), p.getSoLuotThuong());
-                }
-            }
-            java.util.Map<String, Integer> newPaymentMap = new java.util.HashMap<>();
-            if (form.getPaymentMethods() != null && form.getPaymentTurns() != null) {
-                for (int i = 0; i < form.getPaymentMethods().size(); i++) {
-                    String method = form.getPaymentMethods().get(i);
-                    Integer turn = form.getPaymentTurns().get(i);
-                    if (method != null && !method.trim().isEmpty() && turn != null) {
-                        newPaymentMap.put(method.trim(), turn);
-                    }
-                }
-            }
+            java.util.Map<String, Integer> oldPaymentMap = oldPayments.stream().collect(Collectors.toMap(CampaignRulePayment::getPhuongThucThanhToan, CampaignRulePayment::getSoLuotThuong));
+            java.util.Map<String, Integer> newPaymentMap = buildRuleMap(form.getPaymentMethods(), form.getPaymentTurns());
             boolean paymentChanged = !oldPaymentMap.equals(newPaymentMap);
             
-            java.util.Map<String, Integer> oldSkuMap = new java.util.HashMap<>();
-            if (oldSkus != null) {
-                for (CampaignRuleSku s : oldSkus) {
-                    oldSkuMap.put(s.getMaSku(), s.getSoLuotThuong());
-                }
-            }
-            java.util.Map<String, Integer> newSkuMap = new java.util.HashMap<>();
-            if (form.getSkuCodes() != null && form.getSkuTurns() != null) {
-                for (int i = 0; i < form.getSkuCodes().size(); i++) {
-                    String sku = form.getSkuCodes().get(i);
-                    Integer turn = form.getSkuTurns().get(i);
-                    if (sku != null && !sku.trim().isEmpty() && turn != null) {
-                        newSkuMap.put(sku.trim(), turn);
-                    }
-                }
-            }
+            java.util.Map<String, Integer> oldSkuMap = oldSkus.stream().collect(Collectors.toMap(CampaignRuleSku::getMaSku, CampaignRuleSku::getSoLuotThuong));
+            java.util.Map<String, Integer> newSkuMap = buildRuleMap(form.getSkuCodes(), form.getSkuTurns());
             boolean skuChanged = !oldSkuMap.equals(newSkuMap);
 
-            // 1. Delete old rules
             campaignRuleRepository.deleteByMaChienDich(maChienDich);
             campaignRulePaymentRepository.deleteByMaChienDich(maChienDich);
             campaignRuleSkuRepository.deleteByMaChienDich(maChienDich);
             
-            // 2. Save Basic Rule
             if (form.getGiaTriDonHangToiThieu() != null) {
                 CampaignRule rule = new CampaignRule();
                 rule.setMaChienDich(maChienDich);
@@ -490,7 +419,6 @@ public class AdminCampaignController {
                 campaignRuleRepository.save(rule);
             }
             
-            // 3. Save Payment Rules
             for (java.util.Map.Entry<String, Integer> entry : newPaymentMap.entrySet()) {
                 CampaignRulePayment payment = new CampaignRulePayment();
                 payment.setMaChienDich(maChienDich);
@@ -499,7 +427,6 @@ public class AdminCampaignController {
                 campaignRulePaymentRepository.save(payment);
             }
             
-            // 4. Save SKU Rules
             for (java.util.Map.Entry<String, Integer> entry : newSkuMap.entrySet()) {
                 CampaignRuleSku ruleSku = new CampaignRuleSku();
                 ruleSku.setMaChienDich(maChienDich);
@@ -514,27 +441,14 @@ public class AdminCampaignController {
             if (skuChanged) updatedRules.add("sản phẩm (SKU)");
             
             if (!updatedRules.isEmpty()) {
-                String ruleDesc = "Chỉnh sửa luật ưu đãi: cập nhật " + String.join(", ", updatedRules) + " của chiến dịch";
-                if (newMinOrder == null && newPaymentMap.isEmpty() && newSkuMap.isEmpty()) {
-                    ruleDesc = "Xóa toàn bộ luật ưu đãi của chiến dịch";
-                }
-                
-                SystemAuditLog log = new SystemAuditLog();
-                log.setStaffId(1L); // TODO: Get from auth
-                log.setActionType("UPDATE");
-                log.setTargetTable("campaign");
-                log.setTargetRecordId(maChienDich);
-                log.setDescription(ruleDesc);
-                log.setIpAddress("127.0.0.1");
-                systemAuditLogRepository.save(log);
+                String ruleDesc = (newMinOrder == null && newPaymentMap.isEmpty() && newSkuMap.isEmpty()) 
+                                ? "Xóa toàn bộ luật ưu đãi của chiến dịch" 
+                                : "Chỉnh sửa luật ưu đãi: cập nhật " + String.join(", ", updatedRules) + " của chiến dịch";
+                logAudit("UPDATE", maChienDich, ruleDesc);
             }
             
         } catch (Exception e) {
-            String errorMsg = "Đã xảy ra lỗi khi lưu cấu hình luật.";
-            if (e.getCause() != null && e.getCause().getCause() != null) {
-                errorMsg = e.getCause().getCause().getMessage();
-            }
-            redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
+            redirectAttributes.addFlashAttribute("errorMessage", "Đã xảy ra lỗi khi lưu cấu hình luật: " + extractErrorMessage(e));
         }
         
         return "redirect:/quanly/campaigns";
@@ -542,11 +456,8 @@ public class AdminCampaignController {
 
     @GetMapping("/{campaignId}/design")
     public String designMinigame(@PathVariable Long campaignId, Model model) {
-        Campaign campaign = campaignRepository.findById(campaignId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chiến dịch"));
-        
+        Campaign campaign = getCampaignOrThrow(campaignId);
         List<Prize> prizes = prizeRepository.findByMaChienDich(campaign.getMaChienDich());
-        
         model.addAttribute("campaign", campaign);
         model.addAttribute("prizes", prizes);
         return "quanly/minigame-builder";
@@ -558,80 +469,45 @@ public class AdminCampaignController {
     public org.springframework.http.ResponseEntity<?> saveDesign(@RequestBody java.util.Map<String, String> payload) {
         try {
             Long campaignId = Long.parseLong(payload.get("campaignId"));
-            String slug = payload.get("slug");
-            String configJson = payload.get("configJson");
-            String bannerUrl = payload.get("bannerUrl");
+            Campaign campaign = getCampaignOrThrow(campaignId);
             
-            Campaign campaign = campaignRepository.findById(campaignId)
-                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chiến dịch"));
-            
-            campaign.setDuongDanSlug(slug);
-            campaign.setCauhinhThemeJson(configJson);
-            if (bannerUrl != null && !bannerUrl.isEmpty()) {
-                campaign.setHinhAnhUrl(bannerUrl);
+            campaign.setDuongDanSlug(payload.get("slug"));
+            campaign.setCauhinhThemeJson(payload.get("configJson"));
+            if (payload.get("bannerUrl") != null && !payload.get("bannerUrl").isEmpty()) {
+                campaign.setHinhAnhUrl(payload.get("bannerUrl"));
             }
-            
             campaignRepository.save(campaign);
             
             return org.springframework.http.ResponseEntity.ok(java.util.Map.of("status", "success"));
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", "Từ khóa đường dẫn (Slug) đã tồn tại. Vui lòng chọn từ khóa khác."));
         } catch (Exception e) {
-            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", extractErrorMessage(e)));
         }
     }
 
     private String getUpdateDescription(Campaign existing, Campaign newValues) {
         List<String> changes = new java.util.ArrayList<>();
-        if (!java.util.Objects.equals(existing.getMaChienDich(), newValues.getMaChienDich())) {
-            changes.add("mã chiến dịch");
-        }
-        if (!java.util.Objects.equals(existing.getTenChienDich(), newValues.getTenChienDich())) {
-            changes.add("tên chiến dịch");
-        }
-        if (!java.util.Objects.equals(existing.getNgayBatDau(), newValues.getNgayBatDau())) {
-            changes.add("ngày bắt đầu");
-        }
-        if (!java.util.Objects.equals(existing.getNgayKetThuc(), newValues.getNgayKetThuc())) {
-            changes.add("ngày kết thúc");
-        }
-        if (!java.util.Objects.equals(existing.getDuongDanSlug(), newValues.getDuongDanSlug())) {
-            changes.add("đường dẫn slug");
-        }
-        if (newValues.getTrangThai() != null && !java.util.Objects.equals(existing.getTrangThai(), newValues.getTrangThai())) {
-            changes.add("trạng thái");
-        }
-        if (!java.util.Objects.equals(existing.getMoTa(), newValues.getMoTa())) {
-            changes.add("mô tả");
-        }
+        if (!java.util.Objects.equals(existing.getMaChienDich(), newValues.getMaChienDich())) changes.add("mã chiến dịch");
+        if (!java.util.Objects.equals(existing.getTenChienDich(), newValues.getTenChienDich())) changes.add("tên chiến dịch");
+        if (!java.util.Objects.equals(existing.getNgayBatDau(), newValues.getNgayBatDau())) changes.add("ngày bắt đầu");
+        if (!java.util.Objects.equals(existing.getNgayKetThuc(), newValues.getNgayKetThuc())) changes.add("ngày kết thúc");
+        if (!java.util.Objects.equals(existing.getDuongDanSlug(), newValues.getDuongDanSlug())) changes.add("đường dẫn slug");
+        if (newValues.getTrangThai() != null && !java.util.Objects.equals(existing.getTrangThai(), newValues.getTrangThai())) changes.add("trạng thái");
+        if (!java.util.Objects.equals(existing.getMoTa(), newValues.getMoTa())) changes.add("mô tả");
         
         Boolean oldDocQuyen = existing.getDocQuyen() != null ? existing.getDocQuyen() : false;
         Boolean newDocQuyen = newValues.getDocQuyen() != null ? newValues.getDocQuyen() : false;
-        if (!java.util.Objects.equals(oldDocQuyen, newDocQuyen)) {
-            changes.add("thiết lập độc quyền");
-        }
+        if (!java.util.Objects.equals(oldDocQuyen, newDocQuyen)) changes.add("thiết lập độc quyền");
+        if (!java.util.Objects.equals(existing.getHanTokenNgay(), newValues.getHanTokenNgay())) changes.add("hạn token");
+        if (!java.util.Objects.equals(existing.getSoNgayHienThiThem(), newValues.getSoNgayHienThiThem())) changes.add("số ngày hiển thị thêm");
         
-        if (!java.util.Objects.equals(existing.getHanTokenNgay(), newValues.getHanTokenNgay())) {
-            changes.add("hạn token");
-        }
-        
-        if (!java.util.Objects.equals(existing.getSoNgayHienThiThem(), newValues.getSoNgayHienThiThem())) {
-            changes.add("số ngày hiển thị thêm");
-        }
-        
-        if (changes.isEmpty()) {
-            return "Chỉnh sửa thông tin chiến dịch";
-        }
-        return "Chỉnh sửa " + String.join(", ", changes) + " của chiến dịch";
+        return changes.isEmpty() ? "Chỉnh sửa thông tin chiến dịch" : "Chỉnh sửa " + String.join(", ", changes) + " của chiến dịch";
     }
 
     private String formatStoreList(java.util.Set<String> stores) {
         List<String> list = new java.util.ArrayList<>(stores);
-        if (list.size() <= 5) {
-            return String.join(", ", list);
-        } else {
-            return String.join(", ", list.subList(0, 5)) + " và " + (list.size() - 5) + " cửa hàng khác";
-        }
+        return list.size() <= 5 ? String.join(", ", list) : String.join(", ", list.subList(0, 5)) + " và " + (list.size() - 5) + " cửa hàng khác";
     }
 
     @GetMapping("/export-excel")
